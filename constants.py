@@ -9,6 +9,7 @@ START_X, START_Y = 100, 500
 # Track parameters
 NUM_LAPS = 3
 MAGNIFICENT_MEADOW_TRACK_IMAGE = "assets/tracks/magnificent_meadow.png"
+MAGNIFICENT_MEADOW_TRACK_IMAGE_BW = "assets/tracks/magnificent_meadow_bw.png"
 
 # Music
 MAGNIFICENT_MEADOW_MUSIC_START = "assets/music/magnificent_meadow_start.mp3"
