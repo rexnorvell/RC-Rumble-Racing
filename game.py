@@ -2,6 +2,7 @@ import pygame
 import math
 import sys
 import constants
+import numpy as np
 
 def start():
 
@@ -29,13 +30,17 @@ def start():
     car_angle = 0
     car_speed = 0
 
-    # Define the finish line and checkpoints
+    # Define the finish line and the checkpoint
     finish_line = pygame.Rect(12, 400, 180, 50)
     checkpoint_1 = pygame.Rect(1200, 350, 200, 50)
 
-    # Load the image
+    # Load the image of the track, scaling it to the size of the window
     track_image = pygame.image.load(constants.MAGNIFICENT_MEADOW_TRACK_IMAGE).convert()
     track_image = pygame.transform.scale(track_image, (constants.WIDTH, constants.HEIGHT))
+
+    # Load the black and white image of the track, scaling it to the size of the window
+    track_image_bw = pygame.image.load(constants.MAGNIFICENT_MEADOW_TRACK_IMAGE_BW).convert()
+    track_image_bw = pygame.transform.scale(track_image_bw, (constants.WIDTH, constants.HEIGHT))
 
     # Create the text for the lap count
     lap_count_font = pygame.font.Font(constants.TEXT_FONT_PATH, 45)
@@ -47,11 +52,10 @@ def start():
 
     # --- Countdown Timer ---
     countdown_start_time = pygame.time.get_ticks()
-    countdown_duration = 4000
 
     # Masks
-    track_pixels = pygame.surfarray.array3d(track_image)
-    offroad_mask = (track_pixels[:, :, 1] > 100) & (track_pixels[:, :, 0] < 100) & (track_pixels[:, :, 2] < 100)
+    track_pixels = pygame.surfarray.array3d(track_image_bw)
+    off_road_mask = np.all(track_pixels == 255, axis=2)
 
     # Load and play background music
     play_next_track(current_track)
@@ -59,7 +63,7 @@ def start():
 
     running = True
     while running:
-        dt = clock.tick(60) / 1000  # seconds per frame
+        clock.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -86,7 +90,7 @@ def start():
                 countdown_text = "Go!"
             else:
                 before_race = False
-                countdown_text = None  # stop showing countdown
+                countdown_text = None
 
         else:
             countdown_text = None
@@ -122,8 +126,8 @@ def start():
         draw_lap_count(screen, lap_count_text, lap_count_text_rect)
         draw_car(screen, car_x, car_y, car_angle)
 
-        # Offroad detection
-        if check_offroad(offroad_mask, car_x, car_y):
+        # Off-road detection
+        if check_off_road(off_road_mask, car_x, car_y):
             car_speed = car_speed * 0.9
 
         # Checkpoint detection
@@ -202,10 +206,10 @@ def draw_car(screen, x, y, angle):
     rect = rotated_car.get_rect(center=(x, y))
     screen.blit(rotated_car, rect.topleft)
 
-def check_offroad(offroad_mask, x, y):
+def check_off_road(off_road_mask, x, y):
     ix, iy = int(x), int(y)
-    if 0 <= ix < offroad_mask.shape[0] and 0 <= iy < offroad_mask.shape[1]:
-        if offroad_mask[ix, iy]:
+    if 0 <= ix < off_road_mask.shape[0] and 0 <= iy < off_road_mask.shape[1]:
+        if off_road_mask[ix, iy]:
             return True
     return False
 
