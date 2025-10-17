@@ -1,1 +1,8 @@
+# Virtual environment
 .venv/*
+
+# Bytecode
+__pycache__/
+
+# Mac OS
+.DS_Store
