@@ -198,13 +198,199 @@ def get_car_corners(center, size, angle):
         world_corners.append((cx + rv.x, cy + rv.y))
     return world_corners
 
+"""
+
+# SPORTS_CAR_DESIGN
 def draw_car(screen, x, y, angle):
-    car_surface = pygame.Surface((constants.CAR_WIDTH, constants.CAR_HEIGHT), pygame.SRCALPHA)
-    pygame.draw.rect(car_surface, constants.CAR_COLOR, (0, 0, constants.CAR_WIDTH, constants.CAR_HEIGHT))
-    pygame.draw.rect(car_surface, (0, 0, 0), (0, 0, constants.CAR_WIDTH, constants.CAR_HEIGHT), width=2)
-    rotated_car = pygame.transform.rotate(car_surface, -angle)
-    rect = rotated_car.get_rect(center=(x, y))
-    screen.blit(rotated_car, rect.topleft)
+	# This is the extra space on the sides for wheels and spoiler (overhang)
+	# This is the x-position where the *main car body* will start on the new, wider surface
+	body_offset_x = 3
+
+	# Define a shorter "nose" height to create the oval shape
+	oval_nose_height = 8
+
+	# Radius of the front
+	radius = constants.CAR_WIDTH // 2
+
+	# Create a new, WIDER surface to fit the overhang
+	new_width = constants.CAR_WIDTH + (2 * body_offset_x)
+	car_surface = pygame.Surface((new_width, constants.CAR_HEIGHT), pygame.SRCALPHA)
+
+	# Note: All x-coordinates for the body are shifted by 'body_offset_x'
+	body_rect = (body_offset_x, radius, constants.CAR_WIDTH, constants.CAR_HEIGHT - radius)
+	pygame.draw.rect(car_surface, constants.CAR_COLOR, body_rect)
+
+	# Draw the rounded front
+	ellipse_rect = (body_offset_x, 0, constants.CAR_WIDTH, oval_nose_height * 2)
+	pygame.draw.ellipse(car_surface, constants.CAR_COLOR, ellipse_rect)
+
+	# Add Windshield
+	windshield_color = (173, 216, 230) # Light blue
+	windshield_height = 5
+	windshield_y = oval_nose_height + 1 # Just behind the nose
+	windshield_x = body_offset_x + 3 # Inset from the body edge
+	windshield_width = constants.CAR_WIDTH - 6 # Inset on both sides
+	windshield_rect = (windshield_x, windshield_y, windshield_width, windshield_height)
+	pygame.draw.rect(car_surface, windshield_color, windshield_rect)
+
+	# Add Headlights
+	headlight_color = (255, 255, 200) # Light yellow
+	headlight_radius = 2
+	headlight_y = oval_nose_height - 5 
+
+	# Left headlight
+	pygame.draw.circle(car_surface, headlight_color, (body_offset_x + (radius // 2), headlight_y), headlight_radius)
+    
+	# Right headlight
+	pygame.draw.circle(car_surface, headlight_color, (body_offset_x + (radius + radius // 2), headlight_y), headlight_radius)
+
+	# Add Spoiler
+	spoiler_color = (50, 50, 50) # Dim Grey
+	spoiler_height = 5
+	spoiler_y = constants.CAR_HEIGHT - spoiler_height
+	spoiler_rect = (0, spoiler_y, new_width, spoiler_height)
+	pygame.draw.rect(car_surface, spoiler_color, spoiler_rect)    
+
+	# Add Wheels
+	wheel_color = (20, 20, 20) # Very dark gray
+	wheel_width = body_offset_x # Use the overhang value
+	wheel_height = 8
+
+	# Position wheels vertically
+	front_wheel_y = oval_nose_height
+	rear_wheel_y = constants.CAR_HEIGHT - wheel_height - spoiler_height - 2
+    
+	# Left wheels (at x=0)
+	pygame.draw.rect(car_surface, wheel_color, (0, front_wheel_y, wheel_width, wheel_height))
+	pygame.draw.rect(car_surface, wheel_color, (0, rear_wheel_y, wheel_width, wheel_height))
+
+	# Right wheels (at the far right edge)
+	right_wheel_x = new_width - wheel_width
+	pygame.draw.rect(car_surface, wheel_color, (right_wheel_x, front_wheel_y, wheel_width, wheel_height))
+	pygame.draw.rect(car_surface, wheel_color, (right_wheel_x, rear_wheel_y, wheel_width, wheel_height))
+
+	# Rotate and draw the car
+	rotated_car = pygame.transform.rotate(car_surface, -angle)
+	rect = rotated_car.get_rect(center=(x, y))
+	screen.blit(rotated_car, rect.topleft)
+
+"""
+
+# OPEN_WHELL_CAR_DESGIN
+def draw_car(screen, x, y, angle):
+	# Define car dimensions
+	body_width = 12 	# The narrowest part of the chassis
+	new_car_length = 60	# The full length of the car
+	total_width = 48	# Full width of the drawing surface (body_width * 4)
+
+	# This is the x-position where the narrow body will start
+	# We center it on the wide surface
+	body_x_start = (total_width - body_width) // 2	# 18
+	body_x_end = body_x_start + body_width		# 30
+
+	# Create the wide surface
+	car_surface = pygame.Surface((total_width, new_car_length), pygame.SRCALPHA)
+
+	# Colors
+	wheel_color = (20, 20, 20)
+	axle_color = (50, 50, 50)
+	wing_color = (0, 0, 0) # Black for wings
+
+	# Draw Main Body
+
+	# Draw an oval nose at the front
+	nose_height = 10
+	ellipse_rect = (body_x_start, 0, body_width, nose_height * 2)
+	pygame.draw.ellipse(car_surface, constants.CAR_COLOR, ellipse_rect)
+
+	# The polygon body
+	# Define the new wider "sidepod" dimensions
+	sidepod_width = 24
+	sidepod_x_start = (total_width - sidepod_width) // 2	# 12
+	sidepod_x_end = sidepod_x_start + sidepod_width		# 36
+	
+	# Define the Y-positions for the body shape
+	taper_start_y = 26	# Just behind front wheels
+	sidepod_start_y = 38	# Just before rear wheels
+	sidepod_end_y = 49	# Middle of rear wheels
+
+	# Define the 10 points of the polygon
+	body_points = [
+		(body_x_start, nose_height),     # 1. Top-left of body (at nose
+		(body_x_end, nose_height),       # 2. Top-right of body (at nose
+		(body_x_end, taper_start_y),     # 3. Start of taper (right)
+		(sidepod_x_end, sidepod_start_y),# 4. End of taper (right)
+		(sidepod_x_end, sidepod_end_y),  # 5. Back of sidepod (right)
+		(body_x_end, new_car_length),    # 6. Very back of car (right)
+		(body_x_start, new_car_length),  # 7. Very back of car (left)
+		(sidepod_x_start, sidepod_end_y),# 8. Back of sidepod (left)
+		(sidepod_x_start, sidepod_start_y),# 9. End of taper (left)
+		(body_x_start, taper_start_y)    # 10. Start of taper (left)
+	]
+
+	pygame.draw.polygon(car_surface, constants.CAR_COLOR, body_points)
+
+	# Draw Cockpit
+	cockpit_color = (0, 0, 0)
+	cockpit_height = 10
+
+	cockpit_y = 31 # This ends at y=41, just before the rear wheels
+	cockpit_rect = (body_x_start, cockpit_y, body_width, cockpit_height)
+	pygame.draw.rect(car_surface, cockpit_color, cockpit_rect)
+
+	# Draw Wings
+	front_wing_height = 6
+	front_wing_width = total_width - 20 # Was total_width - 10
+	front_wing_x = (total_width - front_wing_width) // 2
+	front_wing_y = 2
+	pygame.draw.rect(car_surface, wing_color, (front_wing_x, front_wing_y, front_wing_width, front_wing_height))
+
+	rear_wing_height = 6
+	rear_wing_width = 16 # Was total_width - 16
+	rear_wing_x = (total_width - rear_wing_width) // 2
+	rear_wing_y = new_car_length - rear_wing_height - 2
+	pygame.draw.rect(car_surface, wing_color, (rear_wing_x, rear_wing_y, rear_wing_width, rear_wing_height))
+	
+	# --- 5. Draw Wheels & Axles ---
+	wheel_width = 8
+	wheel_height = 12
+	axle_width = 2
+
+	# Wheel Y positions
+	front_wheel_y = nose_height + 2				#12
+	rear_wheel_y = new_car_length - wheel_height - 5	#43
+
+	# Left wheel X (far left)
+	left_wheel_x = 4
+
+	# Right wheel X (far right)
+	right_wheel_x = total_width - wheel_width - 4		#36
+
+	# Draw the 4 wheels
+	pygame.draw.rect(car_surface, wheel_color, (left_wheel_x, front_wheel_y, wheel_width, wheel_height))
+	pygame.draw.rect(car_surface, wheel_color, (right_wheel_x, front_wheel_y, wheel_width, wheel_height))
+	pygame.draw.rect(car_surface, wheel_color, (left_wheel_x, rear_wheel_y, wheel_width, wheel_height))
+	pygame.draw.rect(car_surface, wheel_color, (right_wheel_x, rear_wheel_y, wheel_width, wheel_height))
+
+	# Draw the 4 axles
+	# Front-left axle
+	pygame.draw.line(car_surface, axle_color, (left_wheel_x + wheel_width, front_wheel_y + wheel_height // 2), (body_x_start, front_wheel_y + wheel_height // 2), axle_width)
+
+	# Front-right axle
+	pygame.draw.line(car_surface, axle_color, (body_x_start + body_width, front_wheel_y + wheel_height // 2), (right_wheel_x, front_wheel_y + wheel_height // 2), axle_width)
+
+	# Rear-left axle
+	pygame.draw.line(car_surface, axle_color, (left_wheel_x + wheel_width, rear_wheel_y + wheel_height // 2), (body_x_start, rear_wheel_y + wheel_height // 2), axle_width)
+
+	# Rear-right axle
+	pygame.draw.line(car_surface, axle_color, (body_x_start + body_width, rear_wheel_y + wheel_height // 2), (right_wheel_x, rear_wheel_y + wheel_height // 2), axle_width)
+
+	# Rotate and draw the car
+	rotated_car = pygame.transform.rotate(car_surface, -angle)
+	rect = rotated_car.get_rect(center=(x, y))
+	screen.blit(rotated_car, rect.topleft)
+
+
 
 def check_off_road(off_road_mask, x, y):
     ix, iy = int(x), int(y)
