@@ -8,18 +8,33 @@ import constants
 class Track:
     """Handles all track-related logic, images, and collision geometry."""
 
-    def __init__(self) -> None:
-        self.finish_line: pygame.Rect = pygame.Rect(12, 400, 180, 50)
-        self.checkpoint_1: pygame.Rect = pygame.Rect(1200, 350, 200, 50)
+    def __init__(self, name) -> None:
+        self.name = name
 
-        self.track_image: pygame.Surface = pygame.image.load(constants.MAGNIFICENT_MEADOW_TRACK_IMAGE).convert()
+        self.finish_line: pygame.Rect = constants.FINISH_LINE_LOCATIONS[self.name]
+        self.checkpoint_1: pygame.Rect = constants.CHECKPOINT_LOCATIONS[self.name]
+
+        self.track_image: pygame.Surface = pygame.image.load(f"{constants.TRACK_IMAGE_PATH}{self.name}{constants.TRACK_IMAGE_EXTENSION}").convert()
         self.track_image = pygame.transform.scale(self.track_image, (constants.WIDTH, constants.HEIGHT))
 
-        track_image_bw: pygame.Surface = pygame.image.load(constants.MAGNIFICENT_MEADOW_TRACK_IMAGE_BW).convert()
+        track_image_bw: pygame.Surface = pygame.image.load(f"{constants.TRACK_IMAGE_PATH}{self.name}_bw{constants.TRACK_IMAGE_EXTENSION}").convert()
         track_image_bw = pygame.transform.scale(track_image_bw, (constants.WIDTH, constants.HEIGHT))
 
         track_pixels: npt.NDArray = pygame.surfarray.array3d(track_image_bw)
         self.off_road_mask: npt.NDArray[np.bool_] = np.all(track_pixels == 255, axis=2)
+
+        self.playlist = self._create_playlist()
+
+    def _create_playlist(self) -> list[tuple[str, int]]:
+        """Creates the playlist for the track."""
+        playlist: list[tuple[str, int]] = [
+            (f"{constants.MUSIC_PATH}{constants.COUNTDOWN_MUSIC_EXTENSION}", 0),
+            (f"{constants.MUSIC_PATH}{self.name}{constants.LOOP_MUSIC_EXTENSION}", -1),
+            (f"{constants.MUSIC_PATH}{constants.FINAL_LAP_EXTENSION}", 0),
+            (f"{constants.MUSIC_PATH}{self.name}{constants.FAST_MUSIC_EXTENSION}", -1),
+            (f"{constants.MUSIC_PATH}{constants.TRACK_COMPLETE_EXTENSION}", 0)
+        ]
+        return playlist
 
     def draw(self, screen: pygame.Surface) -> None:
         """Draws the main track image onto the screen."""
