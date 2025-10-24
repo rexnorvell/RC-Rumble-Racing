@@ -4,5 +4,8 @@
 # Bytecode
 __pycache__/
 
-# Mac OS
+# macOS
 .DS_Store
+
+# PyCharm files
+.idea/
