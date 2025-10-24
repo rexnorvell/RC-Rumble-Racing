@@ -11,7 +11,7 @@ from track import Track
 class Game:
     """Manages the overall game state, main loop, and coordination between Car and Track."""
 
-    def __init__(self) -> None:
+    def __init__(self, track_name: str) -> None:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
@@ -19,8 +19,8 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
 
-        self.track: Track = Track()
-        self.car: Car = Car(self.screen)
+        self.track: Track = Track(track_name)
+        self.car: Car = Car(self.screen, self.track.name)
 
         # State
         self.current_lap: int = 1
@@ -48,8 +48,8 @@ class Game:
 
     def _play_next_track(self) -> None:
         """Loads and plays the next audio track in the playlist."""
-        if self.current_track_index < len(constants.MAGNIFICENT_MEADOW_PLAYLIST):
-            track_path, loops = constants.MAGNIFICENT_MEADOW_PLAYLIST[self.current_track_index]
+        if self.current_track_index < len(self.track.playlist):
+            track_path, loops = self.track.playlist[self.current_track_index]
             pygame.mixer.music.load(track_path)
             pygame.mixer.music.play(loops)
             self.current_track_index += 1
@@ -60,7 +60,7 @@ class Game:
         if is_finished:
             text = "Finish!"
         else:
-            text = f"Lap {self.current_lap} of {constants.NUM_LAPS}"
+            text = f"Lap {self.current_lap} of {constants.NUM_LAPS[self.track.name]}"
 
         self.lap_count_text = self.lap_count_font.render(text, True, constants.TEXT_COLOR)
         self.lap_count_text_rect = self.lap_count_text.get_rect(center=(constants.WIDTH - 250, constants.HEIGHT - 90))
@@ -112,13 +112,13 @@ class Game:
             self.has_checkpoint = False
             self.current_lap += 1
 
-            if self.current_lap > constants.NUM_LAPS:
+            if self.current_lap > constants.NUM_LAPS[self.track.name]:
                 self.during_race = False
                 self.race_over = True
                 self.race_end_time = pygame.time.get_ticks()
                 self._update_lap_text(is_finished=True)
             else:
-                if self.current_lap == constants.NUM_LAPS:
+                if self.current_lap == constants.NUM_LAPS[self.track.name]:
                     self._play_next_track()
                 self._update_lap_text()
 
