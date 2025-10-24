@@ -7,11 +7,11 @@ import constants
 class Car:
     """Represents the player's car, handling its state, movement, input, and drawing."""
 
-    def __init__(self, screen: pygame.Surface) -> None:
+    def __init__(self, screen: pygame.Surface, track_name: str) -> None:
         self.screen: pygame.Surface = screen
-        self.x: float = constants.START_X
-        self.y: float = constants.START_Y
-        self.angle: float = 0.0
+        self.x: float = constants.START_X[track_name]
+        self.y: float = constants.START_Y[track_name]
+        self.angle: float = constants.START_ROTATION[track_name]
         self.speed: float = 0.0
         self.width: int = constants.CAR_WIDTH
         self.height: int = constants.CAR_HEIGHT
