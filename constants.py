@@ -1,3 +1,18 @@
+import pygame
+
+
+# Track parameters
+TRACK_NAMES: list[str] = ["magnificent_meadow",
+                          "dusty_dunes"]
+NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
+                            TRACK_NAMES[1]: 3}
+CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200, 350, 200, 50),
+                                                 TRACK_NAMES[1]: pygame.Rect(565, 50, 50, 300)}
+FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12, 400, 180, 50),
+                                                TRACK_NAMES[1]: pygame.Rect(680, 590, 50, 180)}
+TRACK_IMAGE_PATH: str = "assets/tracks/"
+TRACK_IMAGE_EXTENSION: str = ".png"
+
 # Car parameters
 CAR_WIDTH: int = 20
 CAR_HEIGHT: int = 40
@@ -5,28 +20,23 @@ MAX_SPEED: float = 6.0
 ACCELERATION: float = 0.2
 FRICTION: float = 0.1
 TURN_SPEED: float = 2.5
-START_X: float = 100.0
-START_Y: float = 500.0
+START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0,
+                             TRACK_NAMES[1]: 780.0}
+START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0,
+                             TRACK_NAMES[1]: 670.0}
+START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
+                                  TRACK_NAMES[1]: 270}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 
-# Track parameters
-NUM_LAPS: int = 3
-MAGNIFICENT_MEADOW_TRACK_IMAGE: str = "assets/tracks/magnificent_meadow.png"
-MAGNIFICENT_MEADOW_TRACK_IMAGE_BW: str = "assets/tracks/magnificent_meadow_bw.png"
+# Music and audio paths
+MUSIC_PATH: str = "assets/music/"
+COUNTDOWN_MUSIC_EXTENSION: str = "track_start.mp3"
+LOOP_MUSIC_EXTENSION: str = "_loop.mp3"
+FINAL_LAP_EXTENSION: str = "final_lap.mp3"
+FAST_MUSIC_EXTENSION: str = "_fast.mp3"
+TRACK_COMPLETE_EXTENSION: str = "track_complete.mp3"
 
-# Music and Audio paths
-MAGNIFICENT_MEADOW_MUSIC_START: str = "assets/music/magnificent_meadow_start.mp3"
-MAGNIFICENT_MEADOW_MUSIC_LOOP: str = "assets/music/magnificent_meadow_loop.mp3"
-MAGNIFICENT_MEADOW_MUSIC_FAST: str = "assets/music/magnificent_meadow_fast.mp3"
-TRACK_COMPLETE_MUSIC: str = "assets/music/track_complete.mp3"
-
-# Playlist: (track_path, loop_count). 0 means play once, -1 means loop indefinitely.
-MAGNIFICENT_MEADOW_PLAYLIST: list[tuple[str, int]] = [
-    (MAGNIFICENT_MEADOW_MUSIC_START, 0),
-    (MAGNIFICENT_MEADOW_MUSIC_LOOP, -1),
-    (MAGNIFICENT_MEADOW_MUSIC_FAST, -1),
-    (TRACK_COMPLETE_MUSIC, 0)
-]
+# Volume settings
 MUSIC_VOLUME: float = 0.5
 
 # Display
