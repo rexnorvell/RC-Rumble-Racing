@@ -6,6 +6,7 @@ import pygame
 import constants
 from car import Car
 from track import Track
+from title_screen import TitleScreen
 
 
 class Game:
@@ -42,9 +43,6 @@ class Game:
         self.lap_count_text: pygame.Surface
         self.lap_count_text_rect: pygame.Rect
         self._update_lap_text()
-
-        # Music
-        self._play_next_track()
 
     def _play_next_track(self) -> None:
         """Loads and plays the next audio track in the playlist."""
@@ -122,8 +120,29 @@ class Game:
                     self._play_next_track()
                 self._update_lap_text()
 
+    def welcome(self):
+        """Displays the title screen and starts the game when the button is clicked."""
+        title_screen: TitleScreen = TitleScreen(self.screen)
+        title_clock: pygame.time.Clock = pygame.time.Clock()
+        running = True
+        while running:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    running = False
+
+            next_action = title_screen.handle_events(events)
+            if next_action == "start_game":
+                print("Time to start!")
+                self.run()
+
+            title_screen.draw()
+            title_clock.tick(60)
+
     def run(self) -> None:
         """The main game loop."""
+        self._play_next_track()
+        self.countdown_start_time = pygame.time.get_ticks()
         running: bool = True
         while running:
             self.clock.tick(60)
