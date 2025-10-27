@@ -7,12 +7,13 @@ import constants
 from car import Car
 from track import Track
 from title_screen import TitleScreen
+from track_selection import TrackSelection
 
 
 class Game:
     """Manages the overall game state, main loop, and coordination between Car and Track."""
 
-    def __init__(self, track_name: str) -> None:
+    def __init__(self) -> None:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
@@ -20,8 +21,13 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
 
-        self.track: Track = Track(track_name)
-        self.car: Car = Car(self.screen, self.track.name)
+        # Track and car
+        self.track: Track
+        self.car: Car
+
+        # Menu screens
+        self.title_screen: TitleScreen
+        self.track_selection: TrackSelection
 
         # State
         self.current_lap: int = 1
@@ -42,7 +48,6 @@ class Game:
         # Text surfaces
         self.lap_count_text: pygame.Surface
         self.lap_count_text_rect: pygame.Rect
-        self._update_lap_text()
 
     def _play_next_track(self) -> None:
         """Loads and plays the next audio track in the playlist."""
@@ -121,7 +126,7 @@ class Game:
                 self._update_lap_text()
 
     def welcome(self):
-        """Displays the title screen and starts the game when the button is clicked."""
+        """Displays the title screen and displays the track selection screen when the button is clicked."""
         title_screen: TitleScreen = TitleScreen(self.screen)
         title_clock: pygame.time.Clock = pygame.time.Clock()
         running = True
@@ -132,15 +137,39 @@ class Game:
                     running = False
 
             next_action = title_screen.handle_events(events)
-            if next_action == "start_game":
-                print("Time to start!")
-                self.run()
+            if next_action == "exit":
+                self.quit()
+            elif next_action == "track_selection":
+                self.track_select()
 
             title_screen.draw()
             title_clock.tick(60)
 
+    def track_select(self):
+        """Displays the track selection screen and starts the game a track is selected."""
+        self.track_selection = TrackSelection(self.screen)
+        track_select_clock: pygame.time.Clock = pygame.time.Clock()
+        running = True
+        while running:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    running = False
+
+            next_action = self.track_selection.handle_events(events)
+            if next_action == "exit":
+                self.quit()
+            elif next_action != "":
+                self.track = Track(next_action)
+                self.car = Car(self.screen, self.track.name)
+                self.run()
+
+            self.track_selection.draw()
+            track_select_clock.tick(60)
+
     def run(self) -> None:
         """The main game loop."""
+        self._update_lap_text()
         self._play_next_track()
         self.countdown_start_time = pygame.time.get_ticks()
         running: bool = True
@@ -180,6 +209,9 @@ class Game:
 
             pygame.display.flip()
 
+        self.quit()
+
+    def quit(self):
+        """Quits the game."""
         pygame.quit()
         sys.exit()
-
