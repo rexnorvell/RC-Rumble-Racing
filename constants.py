@@ -3,17 +3,28 @@ import pygame
 
 # Title screen
 TITLE_IMAGE_PATH: str = "assets/images/title_screen/"
-TITLE_IMAGE_WITH_BUTTON_EXTENSION: str = "title_screen_with_button.jpg"
+TITLE_IMAGE_DEFAULT_EXTENSION: str = "title_screen.png"
+TITLE_IMAGE_HOVER_EXTENSION: str = "title_screen_hover.png"
+TITLE_IMAGE_CLICK_EXTENSION: str = "title_screen_click.png"
+
+# Track selection screen
+TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/"
+TRACK_SELECTION_DEFAULT_EXTENSION: str = "track_selection.png"
+TRACK_SELECTION_HOVER_EXTENSION: str = "_hover.png"
 
 # Track parameters
 TRACK_NAMES: list[str] = ["magnificent_meadow",
-                          "dusty_dunes"]
+                          "dusty_dunes",
+                          "glistening_glacier"]
 NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
-                            TRACK_NAMES[1]: 3}
+                            TRACK_NAMES[1]: 3,
+                            TRACK_NAMES[2]: 3}
 CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200, 350, 200, 50),
-                                                 TRACK_NAMES[1]: pygame.Rect(565, 50, 50, 300)}
+                                                TRACK_NAMES[1]: pygame.Rect(565, 50, 50, 300),
+                                                TRACK_NAMES[2]: pygame.Rect(0, 400, 200, 50)}
 FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12, 400, 180, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(680, 590, 50, 180)}
+                                                TRACK_NAMES[1]: pygame.Rect(680, 590, 50, 180),
+                                                TRACK_NAMES[2]: pygame.Rect(1220, 330, 180, 50)}
 TRACK_IMAGE_PATH: str = "assets/images/tracks/"
 TRACK_IMAGE_EXTENSION: str = ".png"
 
@@ -25,11 +36,14 @@ ACCELERATION: float = 0.2
 FRICTION: float = 0.1
 TURN_SPEED: float = 2.5
 START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0,
-                             TRACK_NAMES[1]: 780.0}
+                             TRACK_NAMES[1]: 780.0,
+                             TRACK_NAMES[2]: 1310.0}
 START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0,
-                             TRACK_NAMES[1]: 670.0}
+                             TRACK_NAMES[1]: 670.0,
+                             TRACK_NAMES[2]: 450.0,}
 START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
-                                  TRACK_NAMES[1]: 270}
+                                  TRACK_NAMES[1]: 270,
+                                  TRACK_NAMES[2]: 0}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 
 # Music and audio paths
