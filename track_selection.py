@@ -37,6 +37,7 @@ class TrackSelection:
             self.current_image = self.track_selection_hover_3_image
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+            self.current_image = self.track_selection_default_image
         for event in events:
             if event.type == pygame.QUIT:
                 return "exit"
