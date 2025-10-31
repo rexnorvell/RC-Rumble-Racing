@@ -7,7 +7,7 @@ import constants
 class Car:
     """Represents the player's car, handling its state, movement, input, and drawing."""
 
-    def __init__(self, screen: pygame.Surface, track_name: str) -> None:
+    def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool) -> None:
         self.screen: pygame.Surface = screen
         self.x: float = constants.START_X[track_name]
         self.y: float = constants.START_Y[track_name]
@@ -16,6 +16,7 @@ class Car:
         self.width: int = constants.CAR_WIDTH
         self.height: int = constants.CAR_HEIGHT
         self.color: tuple[int, int, int] = constants.CAR_COLOR
+        self.opacity: int = 128 if is_ghost else 255
 
     def get_car_corners(self, center: tuple[float, float], size: tuple[int, int], angle: float) -> list[tuple[float, float]]:
         """Calculates the four corner coordinates of the rotated car body."""
@@ -60,11 +61,12 @@ class Car:
         self.x += float(math.sin(math.radians(self.angle)) * self.speed)
         self.y -= float(math.cos(math.radians(self.angle)) * self.speed)
 
-    def draw(self, car_design_id: int = 1) -> None:
-        if car_design_id == 1:
-            self._draw_car1()
-        else:
-            self._draw_car2()
+    def draw(self, scaled_image: pygame.Surface = 1) -> None:
+        """Draws the car on the track."""
+        rotated_image = pygame.transform.rotate(scaled_image, -self.angle)
+        rotated_image.set_alpha(self.opacity)
+        rect = rotated_image.get_rect(center=(self.x, self.y))
+        self.screen.blit(rotated_image, rect)
 
     def _draw_car2(self) -> None:
         body_offset_x: int = 3
