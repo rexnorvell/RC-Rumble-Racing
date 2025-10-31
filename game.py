@@ -1,3 +1,6 @@
+import csv
+import json
+from pathlib import Path
 import sys
 from typing import Optional
 
@@ -24,6 +27,16 @@ class Game:
         # Track and car
         self.track: Track
         self.car: Car
+        self.car_sprite: pygame.Surface
+        self.car_type_index = 0
+
+        # Ghost
+        self.show_ghost: bool = True
+        self.found_ghost: bool = False
+        self.ghost_done: bool = False
+        self.ghost_car: Car
+        self.ghost_car_sprite: pygame.Surface
+        self.ghost_filename: str
 
         # Menu screens
         self.title_screen: TitleScreen
@@ -39,7 +52,11 @@ class Game:
         self.current_track_index: int = 0
         self.race_start_time: Optional[int] = None
         self.race_end_time: Optional[int] = None
-        self.countdown_start_time: int = pygame.time.get_ticks()
+        self.countdown_start_time: int = 0
+
+        # Sounds
+        self.next_lap_sound = pygame.mixer.Sound(constants.MUSIC_PATH.format(track_name="general", song_type="next_lap"))
+        self.next_lap_sound.set_volume(0.5)
 
         # Fonts
         self.lap_count_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 45)
@@ -59,12 +76,7 @@ class Game:
 
     def _update_lap_text(self, is_finished: bool = False) -> None:
         """Generates the lap counter text surface."""
-        text: str
-        if is_finished:
-            text = "Finish!"
-        else:
-            text = f"Lap {self.current_lap} of {constants.NUM_LAPS[self.track.name]}"
-
+        text: str = "Finish!" if is_finished else f"Lap {self.current_lap} of {constants.NUM_LAPS[self.track.name]}"
         self.lap_count_text = self.lap_count_font.render(text, True, constants.TEXT_COLOR)
         self.lap_count_text_rect = self.lap_count_text.get_rect(center=(constants.WIDTH - 250, constants.HEIGHT - 90))
 
@@ -92,10 +104,10 @@ class Game:
             countdown_rect: pygame.Rect = countdown_surface.get_rect(center=(constants.WIDTH / 2, constants.HEIGHT / 2))
             self.screen.blit(countdown_surface, countdown_rect)
 
-    def _display_race_time(self) -> None:
+    def _display_race_time(self) -> float:
         """Draws the final race time after the race is over."""
         if self.race_start_time is None or self.race_end_time is None:
-            return  # Should not happen if race_over is True, but good for type safety
+            return sys.float_info.max # Should not happen if race_over is True, but good for type safety
 
         total_time_ms: int = self.race_end_time - self.race_start_time
         total_seconds: float = total_time_ms / 1000
@@ -105,6 +117,8 @@ class Game:
         time_surface: pygame.Surface = time_font.render(formatted_time, True, constants.TEXT_COLOR)
         time_rect: pygame.Rect = time_surface.get_rect(center=(constants.WIDTH / 2, constants.HEIGHT / 2))
         self.screen.blit(time_surface, time_rect)
+
+        return total_seconds
 
     def _check_lap_completion(self) -> None:
         """Checks for checkpoint and finish line crosses and updates lap count."""
@@ -123,9 +137,11 @@ class Game:
             else:
                 if self.current_lap == constants.NUM_LAPS[self.track.name]:
                     self._play_next_track()
+                else:
+                    self.next_lap_sound.play()
                 self._update_lap_text()
 
-    def welcome(self):
+    def welcome(self) -> None:
         """Displays the title screen and displays the track selection screen when the button is clicked."""
         title_screen: TitleScreen = TitleScreen(self.screen)
         title_clock: pygame.time.Clock = pygame.time.Clock()
@@ -138,14 +154,14 @@ class Game:
 
             next_action = title_screen.handle_events(events)
             if next_action == "exit":
-                self.quit()
+                self._quit()
             elif next_action == "track_selection":
-                self.track_select()
+                self._track_select()
 
             title_screen.draw()
             title_clock.tick(60)
 
-    def track_select(self):
+    def _track_select(self) -> None:
         """Displays the track selection screen and starts the game a track is selected."""
         self.track_selection = TrackSelection(self.screen)
         track_select_clock: pygame.time.Clock = pygame.time.Clock()
@@ -158,19 +174,27 @@ class Game:
 
             next_action = self.track_selection.handle_events(events)
             if next_action == "exit":
-                self.quit()
+                self._quit()
             elif next_action != "":
                 self.track = Track(next_action)
-                self.car = Car(self.screen, self.track.name)
-                self.run()
+                self.car = Car(self.screen, self.track.name, is_ghost=False)
+                self._run()
 
             self.track_selection.draw()
             track_select_clock.tick(60)
 
-    def run(self) -> None:
+    def _run(self) -> None:
         """The main game loop."""
+        found_ghost: bool = False
+        if self.show_ghost:
+            found_ghost = self._get_ghost_info()
+        next_ghost_index: int = 1
+        compared_to_best: bool = False
+        self.car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
+        self.car_sprite = pygame.transform.scale(self.car_sprite,(self.car.width, self.car.height))
         self._update_lap_text()
         self._play_next_track()
+        self._create_replay_file()
         self.countdown_start_time = pygame.time.get_ticks()
         running: bool = True
         while running:
@@ -180,6 +204,9 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_g:
+                        self.show_ghost = not self.show_ghost
 
             if not pygame.mixer.music.get_busy() and not self.race_over:
                 self._play_next_track()
@@ -195,23 +222,89 @@ class Game:
 
             self.track.draw(self.screen)
             self.screen.blit(self.lap_count_text, self.lap_count_text_rect)
-            self.car.draw(car_design_id=1)
 
             if self.before_race:
                 self._draw_countdown(current_time)
-            elif self.during_race:
+            if self.during_race:
                 self._check_lap_completion()
+                self._log_car_properties()
+                if found_ghost and self.show_ghost and not self.ghost_done:
+                    self.ghost_done = self._draw_ghost(next_ghost_index, self.ghost_car_sprite)
+                next_ghost_index += 1
             elif self.race_over:
-                self._display_race_time()
+                total_time: float = self._display_race_time()
+                if not compared_to_best:
+                    self._compare_to_best(total_time)
+                    compared_to_best = True
                 if not self.applause_played:
                     self.applause_played = True
                     self._play_next_track()
 
+            self.car.draw(self.car_sprite)
             pygame.display.flip()
 
-        self.quit()
+        self._quit()
 
-    def quit(self):
+    def _create_replay_file(self) -> None:
+        """Creates a new .csv file when the race begins to log the user's car position."""
+        with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "w", newline=""):
+            pass
+
+    def _get_ghost_info(self) -> bool:
+        """Set ghost parameters and return True if the ghost file was found."""
+        self.ghost_car = Car(self.screen, self.track.name, is_ghost=True)
+        self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
+        self.ghost_car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
+        self.ghost_car_sprite = pygame.transform.scale(self.ghost_car_sprite, (self.ghost_car.width, self.ghost_car.height))
+        return Path(self.ghost_filename).exists()
+
+    def _compare_to_best(self, total_time: float) -> None:
+        """Compare the current time to the personal best, and if it was beaten, replace the personal best."""
+        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
+
+        best_time: float = float("inf")
+        if personal_best_metadata_path.exists():
+            with open(personal_best_metadata_path, "r") as personal_best:
+                personal_best_data = json.load(personal_best)
+            best_time: float = personal_best_data.get("time", float("inf"))
+
+        if total_time < best_time:
+            metadata = {
+                "time": total_time,
+                "car_type_index": self.car_type_index
+            }
+            with open(personal_best_metadata_path, "w") as personal_best:
+                json.dump(metadata, personal_best)
+
+            if current_race_file.exists():
+                new_personal_best: Path = current_race_file.with_name(constants.PERSONAL_BEST_FILE_NAME)
+                current_race_file.rename(new_personal_best)
+
+        elif current_race_file.exists():
+            current_race_file.unlink()
+
+
+    def _draw_ghost(self, next_ghost_index: int, ghost_car_sprite: pygame.Surface) -> bool:
+        """Retrieves the ghost's position at this frame and draws it on the screen, returning False if the ghost has finished the race."""
+        found: bool = False
+        with open(self.ghost_filename, newline="") as ghost_file:
+            reader = csv.reader(ghost_file)
+            for i, row in enumerate(reader):
+                if i == next_ghost_index:
+                    self.ghost_car.x, self.ghost_car.y, self.ghost_car.angle = map(float, row)
+                    found = True
+                    break
+        self.ghost_car.draw(ghost_car_sprite)
+        return not found
+
+    def _log_car_properties(self) -> None:
+        """Write the car's position and angle to the .csv file."""
+        with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "a", newline="") as replay_file:
+            csv_writer = csv.writer(replay_file)
+            csv_writer.writerow([self.car.x, self.car.y, self.car.angle])
+
+    def _quit(self) -> None:
         """Quits the game."""
         pygame.quit()
         sys.exit()
