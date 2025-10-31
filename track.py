@@ -14,10 +14,10 @@ class Track:
         self.finish_line: pygame.Rect = constants.FINISH_LINE_LOCATIONS[self.name]
         self.checkpoint_1: pygame.Rect = constants.CHECKPOINT_LOCATIONS[self.name]
 
-        self.track_image: pygame.Surface = pygame.image.load(f"{constants.TRACK_IMAGE_PATH}{self.name}{constants.TRACK_IMAGE_EXTENSION}").convert()
+        self.track_image: pygame.Surface = pygame.image.load(constants.TRACK_IMAGE_PATH.format(track_name=self.name, image_type=constants.TRACK_IMAGE_TYPES[0])).convert()
         self.track_image = pygame.transform.scale(self.track_image, (constants.WIDTH, constants.HEIGHT))
 
-        track_image_bw: pygame.Surface = pygame.image.load(f"{constants.TRACK_IMAGE_PATH}{self.name}_bw{constants.TRACK_IMAGE_EXTENSION}").convert()
+        track_image_bw: pygame.Surface = pygame.image.load(constants.TRACK_IMAGE_PATH.format(track_name=self.name, image_type=constants.TRACK_IMAGE_TYPES[1])).convert()
         track_image_bw = pygame.transform.scale(track_image_bw, (constants.WIDTH, constants.HEIGHT))
 
         track_pixels: npt.NDArray = pygame.surfarray.array3d(track_image_bw)
@@ -28,11 +28,11 @@ class Track:
     def _create_playlist(self) -> list[tuple[str, int]]:
         """Creates the playlist for the track."""
         playlist: list[tuple[str, int]] = [
-            (f"{constants.MUSIC_PATH}{constants.COUNTDOWN_MUSIC_EXTENSION}", 0),
-            (f"{constants.MUSIC_PATH}{self.name}{constants.LOOP_MUSIC_EXTENSION}", -1),
-            (f"{constants.MUSIC_PATH}{constants.FINAL_LAP_EXTENSION}", 0),
-            (f"{constants.MUSIC_PATH}{self.name}{constants.FAST_MUSIC_EXTENSION}", -1),
-            (f"{constants.MUSIC_PATH}{constants.TRACK_COMPLETE_EXTENSION}", 0)
+            (constants.MUSIC_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[0]), 0),
+            (constants.MUSIC_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[1]), -1),
+            (constants.MUSIC_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[2]), 0),
+            (constants.MUSIC_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[3]), -1),
+            (constants.MUSIC_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[4]), 0)
         ]
         return playlist
 
