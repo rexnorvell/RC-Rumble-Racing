@@ -25,12 +25,12 @@ CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200
 FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12, 400, 180, 50),
                                                 TRACK_NAMES[1]: pygame.Rect(680, 590, 50, 180),
                                                 TRACK_NAMES[2]: pygame.Rect(1220, 330, 180, 50)}
-TRACK_IMAGE_PATH: str = "assets/images/tracks/"
-TRACK_IMAGE_EXTENSION: str = ".png"
+TRACK_IMAGE_PATH: str = "assets/images/tracks/{track_name}/{image_type}.png"
+TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_bw"]
 
 # Car parameters
-CAR_WIDTH: int = 20
-CAR_HEIGHT: int = 40
+CAR_WIDTH: int = 30
+CAR_HEIGHT: int = 60
 MAX_SPEED: float = 6.0
 ACCELERATION: float = 0.2
 FRICTION: float = 0.1
@@ -45,14 +45,22 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[1]: 270,
                                   TRACK_NAMES[2]: 0}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
+CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
+CAR_TYPES: list[str] = ["f1_car"]
+
+# Replay files
+REPLAY_FILE_PATH: str = "assets/replays/{track_name}/current_race.csv"
+PERSONAL_BEST_FILE_PATH: str = "assets/replays/{track_name}/personal_best.csv"
+PERSONAL_BEST_FILE_NAME: str = "personal_best.csv"
+PERSONAL_BEST_METADATA_FILE_PATH: str = "assets/replays/{track_name}/personal_best.json"
+
+# Ghost files
+GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/{difficulty}.csv"
+GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
 
 # Music and audio paths
-MUSIC_PATH: str = "assets/music/tracks/"
-COUNTDOWN_MUSIC_EXTENSION: str = "track_start.mp3"
-LOOP_MUSIC_EXTENSION: str = "_loop.mp3"
-FINAL_LAP_EXTENSION: str = "final_lap.mp3"
-FAST_MUSIC_EXTENSION: str = "_fast.mp3"
-TRACK_COMPLETE_EXTENSION: str = "track_complete.mp3"
+MUSIC_PATH: str = "assets/music/tracks/{track_name}/{song_type}.mp3"
+TRACK_SONG_TYPES: list[str] = ["track_start", "loop", "final_lap", "fast", "track_complete"]
 
 # Volume settings
 MUSIC_VOLUME: float = 0.5
