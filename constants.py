@@ -1,11 +1,14 @@
 import pygame
 
+# Cursor
+CURSOR_IMAGE_PATH: str = "assets/images/general/cursor.png"
+CURSOR_WIDTH: int = 40
+CURSOR_HEIGHT: int = 40
 
 # Title screen
-TITLE_IMAGE_PATH: str = "assets/images/title_screen/"
-TITLE_IMAGE_DEFAULT_EXTENSION: str = "title_screen.png"
-TITLE_IMAGE_HOVER_EXTENSION: str = "title_screen_hover.png"
-TITLE_IMAGE_CLICK_EXTENSION: str = "title_screen_click.png"
+TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
+INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
+INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 
 # Track selection screen
 TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/"
@@ -59,8 +62,9 @@ GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/{difficulty}.csv"
 GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
 
 # Music and audio paths
-MUSIC_PATH: str = "assets/music/tracks/{track_name}/{song_type}.mp3"
+TRACK_MUSIC_PATH: str = "assets/music/tracks/{track_name}/{song_type}.mp3"
 TRACK_SONG_TYPES: list[str] = ["track_start", "loop", "final_lap", "fast", "track_complete"]
+GENERAL_MUSIC_PATH: str = "assets/music/general/{song_name}.mp3"
 
 # Volume settings
 MUSIC_VOLUME: float = 0.5
