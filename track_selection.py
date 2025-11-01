@@ -73,4 +73,3 @@ class TrackSelection:
     def draw(self) -> None:
         """Draws the track selection screen."""
         self.screen.blit(self.current_image, (0, 0))
-        pygame.display.flip()
