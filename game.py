@@ -20,6 +20,7 @@ class Game:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
+        pygame.mouse.set_visible(False)
         self.screen: pygame.Surface = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
@@ -41,6 +42,8 @@ class Game:
         # Menu screens
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
+        self.custom_cursor_image = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
+        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
 
         # State
         self.current_lap: int = 1
@@ -55,7 +58,7 @@ class Game:
         self.countdown_start_time: int = 0
 
         # Sounds
-        self.next_lap_sound = pygame.mixer.Sound(constants.MUSIC_PATH.format(track_name="general", song_type="next_lap"))
+        self.next_lap_sound = pygame.mixer.Sound(constants.TRACK_MUSIC_PATH.format(track_name="general", song_type="next_lap"))
         self.next_lap_sound.set_volume(0.5)
 
         # Fonts
@@ -143,23 +146,34 @@ class Game:
 
     def welcome(self) -> None:
         """Displays the title screen and displays the track selection screen when the button is clicked."""
-        title_screen: TitleScreen = TitleScreen(self.screen)
+        pygame.mixer.music.load(constants.GENERAL_MUSIC_PATH.format(song_name="intro"))
+        pygame.mixer.music.play(-1)
+        self.title_screen = TitleScreen(self.screen)
         title_clock: pygame.time.Clock = pygame.time.Clock()
+        if not self.title_screen.play_intro():
+            self._quit()
         running = True
         while running:
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
-                    running = False
-
-            next_action = title_screen.handle_events(events)
+                    self._quit()
+            next_action = self.title_screen.handle_events(events)
             if next_action == "exit":
                 self._quit()
             elif next_action == "track_selection":
                 self._track_select()
 
-            title_screen.draw()
+            self.title_screen.draw()
+            self._draw_cursor()
+            pygame.display.flip()
             title_clock.tick(60)
+
+    def _draw_cursor(self) -> None:
+        """Draws the custom cursor on the screen."""
+        mouse_pos = pygame.mouse.get_pos()
+        if mouse_pos[0] not in [0, constants.WIDTH - 1] and mouse_pos[1] not in [0, constants.HEIGHT - 1]:
+            self.screen.blit(self.custom_cursor_image, mouse_pos)
 
     def _track_select(self) -> None:
         """Displays the track selection screen and starts the game a track is selected."""
@@ -170,7 +184,7 @@ class Game:
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
-                    running = False
+                    self._quit()
 
             next_action = self.track_selection.handle_events(events)
             if next_action == "exit":
@@ -181,6 +195,8 @@ class Game:
                 self._run()
 
             self.track_selection.draw()
+            self._draw_cursor()
+            pygame.display.flip()
             track_select_clock.tick(60)
 
     def _run(self) -> None:
@@ -203,7 +219,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self._quit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_g:
                         self.show_ghost = not self.show_ghost
@@ -239,11 +255,28 @@ class Game:
                 if not self.applause_played:
                     self.applause_played = True
                     self._play_next_track()
+                if not pygame.mixer.music.get_busy():
+                    running = False
 
             self.car.draw(self.car_sprite)
             pygame.display.flip()
 
-        self._quit()
+        self._reset_game_state()
+        self._track_select()
+
+    def _reset_game_state(self) -> None:
+        """Resets the variables storing the game's state after the track is complete."""
+        self.current_lap = 1
+        self.has_checkpoint = False
+        self.before_race = True
+        self.during_race = False
+        self.race_over = False
+        self.applause_played = False
+        self.current_track_index = 0
+        self.race_start_time = None
+        self.race_end_time = None
+        self.countdown_start_time = 0
+        self.show_ghost = True
 
     def _create_replay_file(self) -> None:
         """Creates a new .csv file when the race begins to log the user's car position."""
