@@ -7,13 +7,13 @@ CURSOR_HEIGHT: int = 40
 
 # Title screen
 TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
+CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
+HOVER_SOUND_PATH: str = "assets/audio/general/hover.mp3"
 INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
 INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 
 # Track selection screen
-TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/"
-TRACK_SELECTION_DEFAULT_EXTENSION: str = "track_selection.png"
-TRACK_SELECTION_HOVER_EXTENSION: str = "_hover.png"
+TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{image_name}.png"
 
 # Track parameters
 TRACK_NAMES: list[str] = ["magnificent_meadow",
@@ -62,9 +62,9 @@ GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/{difficulty}.csv"
 GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
 
 # Music and audio paths
-TRACK_MUSIC_PATH: str = "assets/music/tracks/{track_name}/{song_type}.mp3"
+TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.mp3"
 TRACK_SONG_TYPES: list[str] = ["track_start", "loop", "final_lap", "fast", "track_complete"]
-GENERAL_MUSIC_PATH: str = "assets/music/general/{song_name}.mp3"
+GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
 
 # Volume settings
 MUSIC_VOLUME: float = 0.5
