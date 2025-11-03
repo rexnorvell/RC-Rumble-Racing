@@ -27,6 +27,7 @@ class Game:
 
         # Track and car
         self.track: Track
+        self.personal_best_time: float
         self.car: Car
         self.car_sprite: pygame.Surface
         self.car_type_index = 0
@@ -42,8 +43,10 @@ class Game:
         # Menu screens
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
-        self.custom_cursor_image = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
+        self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
         self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
+        self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
+        self.click_sound.set_volume(0.2)
 
         # State
         self.current_lap: int = 1
@@ -58,7 +61,7 @@ class Game:
         self.countdown_start_time: int = 0
 
         # Sounds
-        self.next_lap_sound = pygame.mixer.Sound(constants.TRACK_MUSIC_PATH.format(track_name="general", song_type="next_lap"))
+        self.next_lap_sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
         self.next_lap_sound.set_volume(0.5)
 
         # Fonts
@@ -146,7 +149,7 @@ class Game:
 
     def welcome(self) -> None:
         """Displays the title screen and displays the track selection screen when the button is clicked."""
-        pygame.mixer.music.load(constants.GENERAL_MUSIC_PATH.format(song_name="intro"))
+        pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
         pygame.mixer.music.play(-1)
         self.title_screen = TitleScreen(self.screen)
         title_clock: pygame.time.Clock = pygame.time.Clock()
@@ -162,6 +165,7 @@ class Game:
             if next_action == "exit":
                 self._quit()
             elif next_action == "track_selection":
+                self.click_sound.play()
                 self._track_select()
 
             self.title_screen.draw()
@@ -190,6 +194,7 @@ class Game:
             if next_action == "exit":
                 self._quit()
             elif next_action != "":
+                self.click_sound.play()
                 self.track = Track(next_action)
                 self.car = Car(self.screen, self.track.name, is_ghost=False)
                 self._run()
@@ -199,20 +204,37 @@ class Game:
             pygame.display.flip()
             track_select_clock.tick(60)
 
+    def _get_personal_best_time(self) -> None:
+        """Get the user's personal best time for the current track."""
+        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        best_time: float = float("inf")
+        if personal_best_metadata_path.exists():
+            with open(personal_best_metadata_path, "r") as personal_best:
+                personal_best_data = json.load(personal_best)
+            best_time = personal_best_data.get("time", float("inf"))
+        self.personal_best_time = best_time
+
     def _run(self) -> None:
-        """The main game loop."""
+        """The main game loop when the user is racing on a track."""
+
+        # Flags
         found_ghost: bool = False
+        running: bool = True
+        compared_to_best: bool = False
+
+        # Initialization
+        self._get_personal_best_time()
+        self._create_replay_file()
+        self._update_lap_text()
         if self.show_ghost:
             found_ghost = self._get_ghost_info()
         next_ghost_index: int = 1
-        compared_to_best: bool = False
         self.car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
         self.car_sprite = pygame.transform.scale(self.car_sprite,(self.car.width, self.car.height))
-        self._update_lap_text()
-        self._play_next_track()
-        self._create_replay_file()
         self.countdown_start_time = pygame.time.get_ticks()
-        running: bool = True
+        self._play_next_track()
+
+        # Main loop
         while running:
             self.clock.tick(60)
             current_time: int = pygame.time.get_ticks()
@@ -242,8 +264,10 @@ class Game:
             if self.before_race:
                 self._draw_countdown(current_time)
             if self.during_race:
+                elapsed_time: float = (current_time - self.race_start_time) / 1000
                 self._check_lap_completion()
-                self._log_car_properties()
+                if elapsed_time < self.personal_best_time:
+                    self._log_car_properties()
                 if found_ghost and self.show_ghost and not self.ghost_done:
                     self.ghost_done = self._draw_ghost(next_ghost_index, self.ghost_car_sprite)
                 next_ghost_index += 1
@@ -277,6 +301,7 @@ class Game:
         self.race_end_time = None
         self.countdown_start_time = 0
         self.show_ghost = True
+        self.ghost_done = False
 
     def _create_replay_file(self) -> None:
         """Creates a new .csv file when the race begins to log the user's car position."""
@@ -296,13 +321,7 @@ class Game:
         personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
 
-        best_time: float = float("inf")
-        if personal_best_metadata_path.exists():
-            with open(personal_best_metadata_path, "r") as personal_best:
-                personal_best_data = json.load(personal_best)
-            best_time: float = personal_best_data.get("time", float("inf"))
-
-        if total_time < best_time:
+        if total_time < self.personal_best_time:
             metadata = {
                 "time": total_time,
                 "car_type_index": self.car_type_index
