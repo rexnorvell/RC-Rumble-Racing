@@ -21,7 +21,8 @@ class Game:
         pygame.font.init()
         pygame.mixer.init()
         pygame.mouse.set_visible(False)
-        self.screen: pygame.Surface = pygame.display.set_mode((constants.WIDTH, constants.HEIGHT))
+        self.screen: pygame.Surface = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        self.game_surface: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
 
@@ -44,7 +45,8 @@ class Game:
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
         self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
-        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
+        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
+                                                          (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
         self.click_sound.set_volume(0.2)
 
@@ -60,8 +62,15 @@ class Game:
         self.race_end_time: Optional[int] = None
         self.countdown_start_time: int = 0
 
+        # Lap Timers (from old)
+        self.lap_start_time: Optional[int] = None
+        self.lap_times: list[int] = []
+        self.timer_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 30)
+        self.lap_box: pygame.Rect = pygame.Rect(constants.WIDTH - 320, 20, 260, 250)
+
         # Sounds
-        self.next_lap_sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
+        self.next_lap_sound = pygame.mixer.Sound(
+            constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
         self.next_lap_sound.set_volume(0.5)
 
         # Fonts
@@ -71,6 +80,23 @@ class Game:
         # Text surfaces
         self.lap_count_text: pygame.Surface
         self.lap_count_text_rect: pygame.Rect
+
+    def _scale_mouse_pos(self, pos: tuple[int, int], window_size: tuple[int, int]) -> tuple[int, int]:
+        """Scales mouse position from window coordinates to game_surface coordinates."""
+        game_surface_size = self.game_surface.get_size()
+        if window_size[0] == 0 or window_size[1] == 0:
+            return 0, 0
+        scale_x = game_surface_size[0] / window_size[0]
+        scale_y = game_surface_size[1] / window_size[1]
+        return int(pos[0] * scale_x), int(pos[1] * scale_y)
+
+    def _format_time_simple(self, time_ms: int) -> str:
+        """Formats time in MM:SS:ms."""
+        total_seconds: float = time_ms / 1000.0
+        minutes: int = int(total_seconds // 60)
+        seconds: int = int(total_seconds % 60)
+        milliseconds: int = int((time_ms % 1000) // 10)
+        return f"{minutes:02}:{seconds:02}:{milliseconds:02}"
 
     def _play_next_track(self) -> None:
         """Loads and plays the next audio track in the playlist."""
@@ -101,6 +127,7 @@ class Game:
             if not self.during_race:
                 self.during_race = True
                 self.race_start_time = pygame.time.get_ticks()
+                self.lap_start_time = self.race_start_time
             countdown_text = "Go!"
         else:
             self.before_race = False
@@ -108,12 +135,12 @@ class Game:
         if countdown_text:
             countdown_surface: pygame.Surface = self.countdown_font.render(countdown_text, True, constants.TEXT_COLOR)
             countdown_rect: pygame.Rect = countdown_surface.get_rect(center=(constants.WIDTH / 2, constants.HEIGHT / 2))
-            self.screen.blit(countdown_surface, countdown_rect)
+            self.game_surface.blit(countdown_surface, countdown_rect)
 
     def _display_race_time(self) -> float:
         """Draws the final race time after the race is over."""
         if self.race_start_time is None or self.race_end_time is None:
-            return sys.float_info.max # Should not happen if race_over is True, but good for type safety
+            return sys.float_info.max  # Should not happen if race_over is True, but good for type safety
 
         total_time_ms: int = self.race_end_time - self.race_start_time
         total_seconds: float = total_time_ms / 1000
@@ -122,7 +149,7 @@ class Game:
         time_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 60)
         time_surface: pygame.Surface = time_font.render(formatted_time, True, constants.TEXT_COLOR)
         time_rect: pygame.Rect = time_surface.get_rect(center=(constants.WIDTH / 2, constants.HEIGHT / 2))
-        self.screen.blit(time_surface, time_rect)
+        self.game_surface.blit(time_surface, time_rect)
 
         return total_seconds
 
@@ -133,6 +160,13 @@ class Game:
 
         if self.has_checkpoint and self.track.check_finish_line(self.car.x, self.car.y):
             self.has_checkpoint = False
+
+            if self.lap_start_time:
+                current_time: int = pygame.time.get_ticks()
+                lap_time_ms: int = current_time - self.lap_start_time
+                self.lap_times.append(lap_time_ms)
+                self.lap_start_time = current_time
+
             self.current_lap += 1
 
             if self.current_lap > constants.NUM_LAPS[self.track.name]:
@@ -140,6 +174,7 @@ class Game:
                 self.race_over = True
                 self.race_end_time = pygame.time.get_ticks()
                 self._update_lap_text(is_finished=True)
+                self.lap_start_time = None
             else:
                 if self.current_lap == constants.NUM_LAPS[self.track.name]:
                     self._play_next_track()
@@ -151,9 +186,9 @@ class Game:
         """Displays the title screen and displays the track selection screen when the button is clicked."""
         pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
         pygame.mixer.music.play(-1)
-        self.title_screen = TitleScreen(self.screen)
+        self.title_screen = TitleScreen(self.game_surface)
         title_clock: pygame.time.Clock = pygame.time.Clock()
-        if not self.title_screen.play_intro():
+        if not self.title_screen.play_intro(self.screen):
             self._quit()
         running = True
         while running:
@@ -161,7 +196,10 @@ class Game:
             for event in events:
                 if event.type == pygame.QUIT:
                     self._quit()
-            next_action = self.title_screen.handle_events(events)
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            next_action = self.title_screen.handle_events(events, self.screen.get_size())
             if next_action == "exit":
                 self._quit()
             elif next_action == "track_selection":
@@ -170,18 +208,27 @@ class Game:
 
             self.title_screen.draw()
             self._draw_cursor()
+
+            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
+            self.screen.blit(scaled_surface, (0, 0))
             pygame.display.flip()
             title_clock.tick(60)
 
     def _draw_cursor(self) -> None:
-        """Draws the custom cursor on the screen."""
-        mouse_pos = pygame.mouse.get_pos()
+        """Draws the custom cursor on the game surface."""
+        unscaled_mouse_pos = pygame.mouse.get_pos()
+        window_size = self.screen.get_size()
+        if window_size[0] == 0 or window_size[1] == 0:
+            return
+
+        mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos, window_size)
+
         if mouse_pos[0] not in [0, constants.WIDTH - 1] and mouse_pos[1] not in [0, constants.HEIGHT - 1]:
-            self.screen.blit(self.custom_cursor_image, mouse_pos)
+            self.game_surface.blit(self.custom_cursor_image, mouse_pos)
 
     def _track_select(self) -> None:
         """Displays the track selection screen and starts the game a track is selected."""
-        self.track_selection = TrackSelection(self.screen)
+        self.track_selection = TrackSelection(self.game_surface)
         track_select_clock: pygame.time.Clock = pygame.time.Clock()
         running = True
         while running:
@@ -189,24 +236,30 @@ class Game:
             for event in events:
                 if event.type == pygame.QUIT:
                     self._quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
-            next_action = self.track_selection.handle_events(events)
+            next_action = self.track_selection.handle_events(events, self.screen.get_size())
             if next_action == "exit":
                 self._quit()
             elif next_action != "":
                 self.click_sound.play()
                 self.track = Track(next_action)
-                self.car = Car(self.screen, self.track.name, is_ghost=False)
+                self.car = Car(self.game_surface, self.track.name, is_ghost=False)
                 self._run()
 
             self.track_selection.draw()
             self._draw_cursor()
+
+            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
+            self.screen.blit(scaled_surface, (0, 0))
             pygame.display.flip()
             track_select_clock.tick(60)
 
     def _get_personal_best_time(self) -> None:
         """Get the user's personal best time for the current track."""
-        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        personal_best_metadata_path: Path = Path(
+            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         best_time: float = float("inf")
         if personal_best_metadata_path.exists():
             with open(personal_best_metadata_path, "r") as personal_best:
@@ -229,8 +282,9 @@ class Game:
         if self.show_ghost:
             found_ghost = self._get_ghost_info()
         next_ghost_index: int = 1
-        self.car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
-        self.car_sprite = pygame.transform.scale(self.car_sprite,(self.car.width, self.car.height))
+        self.car_sprite = pygame.image.load(
+            constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
+        self.car_sprite = pygame.transform.scale(self.car_sprite, (self.car.width, self.car.height))
         self.countdown_start_time = pygame.time.get_ticks()
         self._play_next_track()
 
@@ -239,12 +293,15 @@ class Game:
             self.clock.tick(60)
             current_time: int = pygame.time.get_ticks()
 
-            for event in pygame.event.get():
+            events = pygame.event.get()
+            for event in events:
                 if event.type == pygame.QUIT:
                     self._quit()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_g:
                         self.show_ghost = not self.show_ghost
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
             if not pygame.mixer.music.get_busy() and not self.race_over:
                 self._play_next_track()
@@ -258,8 +315,50 @@ class Game:
 
             self.car.update_position(max_speed)
 
-            self.track.draw(self.screen)
-            self.screen.blit(self.lap_count_text, self.lap_count_text_rect)
+            self.track.draw(self.game_surface)
+            self.game_surface.blit(self.lap_count_text, self.lap_count_text_rect)
+
+            # --- Timer and Lap Box Drawing Logic ---
+            if self.race_start_time:
+                # 2. Draw Total Timer
+                total_time_ms: int
+                if self.race_over and self.race_end_time:
+                    total_time_ms = self.race_end_time - self.race_start_time
+                else:
+                    total_time_ms = current_time - self.race_start_time
+
+                time_str: str = f"Total: {self._format_time_simple(total_time_ms)}"
+                time_surf: pygame.Surface = self.timer_font.render(time_str, True, constants.TEXT_COLOR)
+                time_rect: pygame.Rect = time_surf.get_rect(midtop=(self.lap_box.centerx, self.lap_box.y))
+                self.game_surface.blit(time_surf, time_rect)
+
+                # 3. Draw Lap Times Box
+                box_y_start: int = time_rect.bottom + 10
+                lap_box_main: pygame.Rect = pygame.Rect(self.lap_box.x, box_y_start, self.lap_box.width,
+                                                        self.lap_box.height)
+
+                # Draw box background (using semi-transparent surface)
+                s: pygame.Surface = pygame.Surface((lap_box_main.width, lap_box_main.height), pygame.SRCALPHA)
+                s.fill((30, 30, 30, 180))  # R, G, B, Alpha
+                self.game_surface.blit(s, lap_box_main.topleft)
+                pygame.draw.rect(self.game_surface, (255, 255, 255), lap_box_main, 2)  # White border
+
+                # Draw title
+                title_surf: pygame.Surface = self.timer_font.render("Lap Times", True, (255, 255, 255))
+                title_rect: pygame.Rect = title_surf.get_rect(midtop=(lap_box_main.centerx, lap_box_main.y + 10))
+                self.game_surface.blit(title_surf, title_rect)
+
+                # Draw lap times
+                y_offset: int = title_rect.bottom + 10
+                for i, lap_ms in enumerate(self.lap_times):
+                    lap_str: str = f"Lap {i + 1}: {self._format_time_simple(lap_ms)}"
+                    lap_surf: pygame.Surface = self.timer_font.render(lap_str, True, (220, 220, 220))
+                    lap_rect: pygame.Rect = lap_surf.get_rect(topright=(lap_box_main.right - 15, y_offset))
+
+                    if lap_rect.bottom < lap_box_main.bottom - 10:  # Check if it fits
+                        self.game_surface.blit(lap_surf, lap_rect)
+                        y_offset += 35
+            # --- End Timer Logic ---
 
             if self.before_race:
                 self._draw_countdown(current_time)
@@ -283,6 +382,9 @@ class Game:
                     running = False
 
             self.car.draw(self.car_sprite)
+
+            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
+            self.screen.blit(scaled_surface, (0, 0))
             pygame.display.flip()
 
         self._reset_game_state()
@@ -302,6 +404,8 @@ class Game:
         self.countdown_start_time = 0
         self.show_ghost = True
         self.ghost_done = False
+        self.lap_start_time = None
+        self.lap_times = []
 
     def _create_replay_file(self) -> None:
         """Creates a new .csv file when the race begins to log the user's car position."""
@@ -310,15 +414,18 @@ class Game:
 
     def _get_ghost_info(self) -> bool:
         """Set ghost parameters and return True if the ghost file was found."""
-        self.ghost_car = Car(self.screen, self.track.name, is_ghost=True)
+        self.ghost_car = Car(self.game_surface, self.track.name, is_ghost=True)
         self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
-        self.ghost_car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
-        self.ghost_car_sprite = pygame.transform.scale(self.ghost_car_sprite, (self.ghost_car.width, self.ghost_car.height))
+        self.ghost_car_sprite = pygame.image.load(
+            constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
+        self.ghost_car_sprite = pygame.transform.scale(self.ghost_car_sprite,
+                                                       (self.ghost_car.width, self.ghost_car.height))
         return Path(self.ghost_filename).exists()
 
     def _compare_to_best(self, total_time: float) -> None:
         """Compare the current time to the personal best, and if it was beaten, replace the personal best."""
-        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        personal_best_metadata_path: Path = Path(
+            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
 
         if total_time < self.personal_best_time:
@@ -335,7 +442,6 @@ class Game:
 
         elif current_race_file.exists():
             current_race_file.unlink()
-
 
     def _draw_ghost(self, next_ghost_index: int, ghost_car_sprite: pygame.Surface) -> bool:
         """Retrieves the ghost's position at this frame and draws it on the screen, returning False if the ghost has finished the race."""
