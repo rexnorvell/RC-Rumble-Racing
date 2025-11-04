@@ -9,14 +9,22 @@ class TrackSelection:
     def __init__(self, screen) -> None:
         self.screen: pygame.Surface = screen
 
-        self.track_selection_default_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
-        self.track_selection_default_image = pygame.transform.scale(self.track_selection_default_image, (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_1_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="1")).convert()
-        self.track_selection_hover_1_image = pygame.transform.scale(self.track_selection_hover_1_image,(constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_2_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="2")).convert()
-        self.track_selection_hover_2_image = pygame.transform.scale(self.track_selection_hover_2_image,(constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_3_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="3")).convert()
-        self.track_selection_hover_3_image = pygame.transform.scale(self.track_selection_hover_3_image,(constants.WIDTH, constants.HEIGHT))
+        self.track_selection_default_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
+        self.track_selection_default_image = pygame.transform.scale(self.track_selection_default_image,
+                                                                    (constants.WIDTH, constants.HEIGHT))
+        self.track_selection_hover_1_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="1")).convert()
+        self.track_selection_hover_1_image = pygame.transform.scale(self.track_selection_hover_1_image,
+                                                                    (constants.WIDTH, constants.HEIGHT))
+        self.track_selection_hover_2_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="2")).convert()
+        self.track_selection_hover_2_image = pygame.transform.scale(self.track_selection_hover_2_image,
+                                                                    (constants.WIDTH, constants.HEIGHT))
+        self.track_selection_hover_3_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="3")).convert()
+        self.track_selection_hover_3_image = pygame.transform.scale(self.track_selection_hover_3_image,
+                                                                    (constants.WIDTH, constants.HEIGHT))
         self.current_image: pygame.Surface = self.track_selection_default_image
 
         button_width: int = 435
@@ -31,19 +39,20 @@ class TrackSelection:
         self.hover_sound.set_volume(0.1)
         self.hover_sound_played: bool = False
 
-    def _scale_mouse_pos(self, pos: tuple[int, int], window_size: tuple[int, int]) -> tuple[int, int]:
-        """Scales mouse position from window coordinates to game_surface coordinates."""
-        game_surface_size = self.screen.get_size()
-        if window_size[0] == 0 or window_size[1] == 0:
-            return 0, 0
-        scale_x = game_surface_size[0] / window_size[0]
-        scale_y = game_surface_size[1] / window_size[1]
-        return int(pos[0] * scale_x), int(pos[1] * scale_y)
-
     def handle_events(self, events, window_size: tuple[int, int]) -> str:
         """Handles events like button presses."""
-        unscaled_mouse_pos: tuple[int, int] = pygame.mouse.get_pos()
-        mouse_pos: tuple[int, int] = self._scale_mouse_pos(unscaled_mouse_pos, window_size)
+
+        # Scale mouse position
+        unscaled_mouse_pos = pygame.mouse.get_pos()
+        mouse_pos: tuple[int, int]
+        if window_size[0] == 0 or window_size[1] == 0:
+            mouse_pos = (0, 0)
+        else:
+            game_surface_size = self.screen.get_size()
+            scale_x = game_surface_size[0] / window_size[0]
+            scale_y = game_surface_size[1] / window_size[1]
+            mouse_pos = (int(unscaled_mouse_pos[0] * scale_x), int(unscaled_mouse_pos[1] * scale_y))
+
         hovered_index: int
 
         if self.button_rect_1.collidepoint(mouse_pos):
