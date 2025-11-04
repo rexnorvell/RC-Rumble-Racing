@@ -460,7 +460,6 @@ class Game:
                         if lap_rect.bottom < lap_box_main.bottom - 10:  # Check if it fits
                             self.game_surface.blit(lap_surf, lap_rect)
                             y_offset += 35
-                # --- End Timer Logic ---
 
                 if self.before_race:
                     self._draw_countdown(current_time)
@@ -485,19 +484,13 @@ class Game:
 
                 self.car.draw(self.car_sprite)
 
-            # If paused, draw the menu on top of the (now frozen) game surface
             if self.is_paused:
                 self._draw_pause_menu()
 
-            # Always draw the cursor on the game surface (so it's scaled)
             self._draw_cursor()
-
-            # --- SCALING AND DISPLAY ---
-            # Scale the entire game_surface to fit the window and blit it
             scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
             self.screen.blit(scaled_surface, (0, 0))
             pygame.display.flip()
-            # --- END SCALING AND DISPLAY ---
 
         pygame.mixer.music.stop()
         pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
