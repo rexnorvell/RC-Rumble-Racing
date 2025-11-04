@@ -51,6 +51,18 @@ CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 CAR_TYPES: list[str] = ["f1_car"]
 
+# Pause Menu
+PAUSE_OVERLAY_COLOR: tuple[int, int, int, int] = (0, 0, 0, 180)
+PAUSE_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
+PAUSE_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
+PAUSE_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
+PAUSE_BUTTON_WIDTH: int = 350
+PAUSE_BUTTON_HEIGHT: int = 60
+PAUSE_TITLE_Y: int = 150
+PAUSE_RESUME_Y: int = 300
+PAUSE_REPLAY_Y: int = 400
+PAUSE_EXIT_Y: int = 500
+
 # Replay files
 REPLAY_FILE_PATH: str = "assets/replays/{track_name}/current_race.csv"
 PERSONAL_BEST_FILE_PATH: str = "assets/replays/{track_name}/personal_best.csv"
