@@ -20,7 +20,7 @@ class Game:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
-        
+
         self.screen: pygame.Surface = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
         self.game_surface: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         self.clock: pygame.time.Clock = pygame.time.Clock()
@@ -95,9 +95,9 @@ class Game:
 
         # Pause menu button rects
         button_x: float = (constants.WIDTH - constants.PAUSE_BUTTON_WIDTH) / 2
-        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y, constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y, constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y,constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y,constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH,constants.PAUSE_BUTTON_HEIGHT)
 
         # Race over menu state
         self.race_over_hover_index: int = 0  # 0=None, 1=Retry, 2=Exit
@@ -107,14 +107,55 @@ class Game:
         self.retry_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_RETRY_Y, constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
         self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_EXIT_Y, constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
 
-    def _scale_mouse_pos(self, pos: tuple[int, int], window_size: tuple[int, int]) -> tuple[int, int]:
+        # Letterbox scaling
+        self.scale_factor: float = 1.0
+        self.offset_x: int = 0
+        self.offset_y: int = 0
+
+    def _draw_letterboxed_surface(self) -> None:
+        """Calculates letterbox scaling and blits the game_surface to the screen."""
+        window_width, window_height = self.screen.get_size()
+        if window_width == 0 or window_height == 0:
+            return  # Avoid division by zero if window is minimized
+
+        game_width = constants.WIDTH
+        game_height = constants.HEIGHT
+
+        # Calculate aspect ratios
+        window_aspect = window_width / window_height
+        game_aspect = game_width / game_height
+
+        # Determine scaling factor
+        if window_aspect > game_aspect:
+            # Window is wider than game (pillarbox)
+            self.scale_factor = window_height / game_height
+            new_height = window_height
+            new_width = int(game_width * self.scale_factor)
+        else:
+            # Window is taller than game (letterbox)
+            self.scale_factor = window_width / game_width
+            new_width = window_width
+            new_height = int(game_height * self.scale_factor)
+
+        # Calculate offsets for centering
+        self.offset_x = (window_width - new_width) // 2
+        self.offset_y = (window_height - new_height) // 2
+
+        # Scale and blit
+        scaled_surface = pygame.transform.scale(self.game_surface, (new_width, new_height))
+        self.screen.fill((0, 0, 0))  # Fill with black bars
+        self.screen.blit(scaled_surface, (self.offset_x, self.offset_y))
+
+    def _scale_mouse_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
         """Scales mouse position from window coordinates to game_surface coordinates."""
-        game_surface_size = self.game_surface.get_size()
-        if window_size[0] == 0 or window_size[1] == 0:
+        if self.scale_factor == 0:  # Prevent divide-by-zero
             return 0, 0
-        scale_x = game_surface_size[0] / window_size[0]
-        scale_y = game_surface_size[1] / window_size[1]
-        return int(pos[0] * scale_x), int(pos[1] * scale_y)
+
+        # Un-scale and un-offset the mouse position
+        game_x = (pos[0] - self.offset_x) / self.scale_factor
+        game_y = (pos[1] - self.offset_y) / self.scale_factor
+
+        return int(game_x), int(game_y)
 
     def _format_time_simple(self, time_ms: int) -> str:
         """Formats time in MM:SS:ms."""
@@ -231,7 +272,11 @@ class Game:
                 if event.type == pygame.VIDEORESIZE:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
-            next_action = self.title_screen.handle_events(events, self.screen.get_size())
+            # Get scaled mouse position *once* per frame
+            unscaled_mouse_pos = pygame.mouse.get_pos()
+            scaled_mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos)
+
+            next_action = self.title_screen.handle_events(events, scaled_mouse_pos)
 
             if next_action == "exit":
                 self._quit()
@@ -240,25 +285,19 @@ class Game:
                 running = False  # Exit the welcome loop
 
             self.title_screen.draw()
-            self._draw_cursor()
+            self._draw_cursor(scaled_mouse_pos)
 
-            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
-            self.screen.blit(scaled_surface, (0, 0))
+            # Draw the letterboxed game_surface to the screen
+            self._draw_letterboxed_surface()
             pygame.display.flip()
             title_clock.tick(60)
 
         # After the loop, go to track selection
         self._track_select()
 
-    def _draw_cursor(self) -> None:
+    def _draw_cursor(self, mouse_pos: tuple[int, int]) -> None:
         """Draws the custom cursor on the game surface."""
-        unscaled_mouse_pos = pygame.mouse.get_pos()
-        window_size = self.screen.get_size()
-        if window_size[0] == 0 or window_size[1] == 0:
-            return
-
-        mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos, window_size)
-
+        # Use the already-scaled mouse_pos
         if mouse_pos[0] not in [0, constants.WIDTH - 1] and mouse_pos[1] not in [0, constants.HEIGHT - 1]:
             self.game_surface.blit(self.custom_cursor_image, mouse_pos)
 
@@ -281,7 +320,11 @@ class Game:
                 if event.type == pygame.VIDEORESIZE:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
-            next_action = self.track_selection.handle_events(events, self.screen.get_size())
+            # Get scaled mouse position *once* per frame
+            unscaled_mouse_pos = pygame.mouse.get_pos()
+            scaled_mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos)
+
+            next_action = self.track_selection.handle_events(events, scaled_mouse_pos)
 
             if next_action == "exit":
                 self._quit()
@@ -306,10 +349,10 @@ class Game:
                         break
 
             self.track_selection.draw()
-            self._draw_cursor()
+            self._draw_cursor(scaled_mouse_pos)
 
-            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
-            self.screen.blit(scaled_surface, (0, 0))
+            # Draw the letterboxed game_surface to the screen
+            self._draw_letterboxed_surface()
             pygame.display.flip()
             track_select_clock.tick(60)
 
@@ -350,6 +393,10 @@ class Game:
             current_time: int = pygame.time.get_ticks()
             events = pygame.event.get()
 
+            # Get scaled mouse position *once* per frame
+            unscaled_mouse_pos = pygame.mouse.get_pos()
+            scaled_mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos)
+
             # --- FLAG TO PREVENT EVENT CONFLICT ---
             just_paused: bool = False
 
@@ -385,7 +432,7 @@ class Game:
 
             # --- PAUSE LOGIC ---
             if self.is_paused and not just_paused:  # <--- CHECK THE FLAG
-                pause_action = self._handle_pause_menu(events)
+                pause_action = self._handle_pause_menu(events, scaled_mouse_pos)
 
                 if pause_action == "resume":
                     self.is_paused = False
@@ -485,7 +532,7 @@ class Game:
                     self._display_race_time()
 
                     # Handle menu input
-                    race_over_action = self._handle_race_over_menu(events)
+                    race_over_action = self._handle_race_over_menu(events, scaled_mouse_pos)
                     if race_over_action == "replay":
                         return "replay"
                     elif race_over_action == "exit_to_menu":
@@ -507,10 +554,10 @@ class Game:
 
             # Only draw the cursor if we are in a menu
             if self.is_paused or self.race_over:
-                self._draw_cursor()
+                self._draw_cursor(scaled_mouse_pos)
 
-            scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
-            self.screen.blit(scaled_surface, (0, 0))
+            # Draw the letterboxed game_surface to the screen
+            self._draw_letterboxed_surface()
             pygame.display.flip()
 
         # Default exit action
@@ -538,14 +585,8 @@ class Game:
         self.lap_times = []
         self.race_over_hover_index = 0
 
-    def _handle_pause_menu(self, events) -> str:
+    def _handle_pause_menu(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles input for the pause menu."""
-        # Scale mouse position for menu interaction
-        unscaled_mouse_pos = pygame.mouse.get_pos()
-        window_size = self.screen.get_size()
-        if window_size[0] == 0 or window_size[1] == 0:
-            return ""
-        mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos, window_size)
 
         # Check hover
         if self.resume_button_rect.collidepoint(mouse_pos):
@@ -597,14 +638,9 @@ class Game:
         self.game_surface.blit(replay_text, replay_text.get_rect(center=self.replay_button_rect.center))
         self.game_surface.blit(exit_text, exit_text.get_rect(center=self.exit_button_rect.center))
 
-    def _handle_race_over_menu(self, events) -> str:
+    def _handle_race_over_menu(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles input for the race over menu."""
-        # Scale mouse position for menu interaction
-        unscaled_mouse_pos = pygame.mouse.get_pos()
-        window_size = self.screen.get_size()
-        if window_size[0] == 0 or window_size[1] == 0:
-            return ""
-        mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos, window_size)
+        # Note: mouse_pos is already scaled
 
         # Check hover
         if self.retry_button_rect.collidepoint(mouse_pos):

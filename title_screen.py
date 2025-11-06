@@ -52,27 +52,42 @@ class TitleScreen:
                         screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
                 surface = pygame.image.frombuffer(frame.tobytes(), self.intro_clip.size, "RGB")
-                scaled_surface = pygame.transform.scale(surface, screen.get_size())
-                screen.blit(scaled_surface, (0, 0))
+
+                # --- Letterbox Logic ---
+                window_width, window_height = screen.get_size()
+                game_width, game_height = self.intro_clip.size
+
+                if window_width == 0 or window_height == 0:
+                    continue  # Skip frame if minimized
+
+                window_aspect = window_width / window_height
+                game_aspect = game_width / game_height
+
+                scale_factor: float
+                if window_aspect > game_aspect:
+                    scale_factor = window_height / game_height
+                    new_height = window_height
+                    new_width = int(game_width * scale_factor)
+                else:
+                    scale_factor = window_width / game_width
+                    new_width = window_width
+                    new_height = int(game_height * scale_factor)
+
+                offset_x = (window_width - new_width) // 2
+                offset_y = (window_height - new_height) // 2
+
+                scaled_surface = pygame.transform.scale(surface, (new_width, new_height))
+                screen.fill((0, 0, 0))
+                screen.blit(scaled_surface, (offset_x, offset_y))
                 pygame.display.flip()
                 clock.tick(self.intro_clip.fps)
         finally:
             self.intro_clip.close()
         return True
 
-    def handle_events(self, events, window_size: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles events like button presses."""
-
-        # Scale mouse position
-        unscaled_mouse_pos = pygame.mouse.get_pos()
-        mouse_pos: tuple[int, int]
-        if window_size[0] == 0 or window_size[1] == 0:
-            mouse_pos = (0, 0)
-        else:
-            game_surface_size = self.screen.get_size()
-            scale_x = game_surface_size[0] / window_size[0]
-            scale_y = game_surface_size[1] / window_size[1]
-            mouse_pos = (int(unscaled_mouse_pos[0] * scale_x), int(unscaled_mouse_pos[1] * scale_y))
+        # Note: mouse_pos is already scaled
 
         hovered_index: int
 

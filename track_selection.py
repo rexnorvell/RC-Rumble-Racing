@@ -39,19 +39,9 @@ class TrackSelection:
         self.hover_sound.set_volume(0.1)
         self.hover_sound_played: bool = False
 
-    def handle_events(self, events, window_size: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles events like button presses."""
-
-        # Scale mouse position
-        unscaled_mouse_pos = pygame.mouse.get_pos()
-        mouse_pos: tuple[int, int]
-        if window_size[0] == 0 or window_size[1] == 0:
-            mouse_pos = (0, 0)
-        else:
-            game_surface_size = self.screen.get_size()
-            scale_x = game_surface_size[0] / window_size[0]
-            scale_y = game_surface_size[1] / window_size[1]
-            mouse_pos = (int(unscaled_mouse_pos[0] * scale_x), int(unscaled_mouse_pos[1] * scale_y))
+        # Note: mouse_pos is already scaled
 
         hovered_index: int
 
