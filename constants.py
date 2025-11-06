@@ -15,6 +15,10 @@ INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 # Track selection screen
 TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{image_name}.png"
 
+# Track Exit Button
+TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
+TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
+
 # Track parameters
 TRACK_NAMES: list[str] = ["magnificent_meadow",
                           "dusty_dunes",
