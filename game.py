@@ -20,7 +20,7 @@ class Game:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
-        pygame.mouse.set_visible(False)
+        
         self.screen: pygame.Surface = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
         self.game_surface: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         self.clock: pygame.time.Clock = pygame.time.Clock()
@@ -45,8 +45,7 @@ class Game:
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
         self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
-        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
-                                                          (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
+        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
         self.click_sound.set_volume(0.2)
 
@@ -96,12 +95,17 @@ class Game:
 
         # Pause menu button rects
         button_x: float = (constants.WIDTH - constants.PAUSE_BUTTON_WIDTH) / 2
-        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y,
-                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y,
-                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y,
-                                                         constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y, constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y, constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+
+        # Race over menu state
+        self.race_over_hover_index: int = 0  # 0=None, 1=Retry, 2=Exit
+
+        # Race over menu button rects
+        race_over_button_x: float = (constants.WIDTH - constants.RACE_OVER_BUTTON_WIDTH) / 2
+        self.retry_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_RETRY_Y, constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
+        self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_EXIT_Y, constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
 
     def _scale_mouse_pos(self, pos: tuple[int, int], window_size: tuple[int, int]) -> tuple[int, int]:
         """Scales mouse position from window coordinates to game_surface coordinates."""
@@ -172,7 +176,7 @@ class Game:
 
         time_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 60)
         time_surface: pygame.Surface = time_font.render(formatted_time, True, constants.TEXT_COLOR)
-        time_rect: pygame.Rect = time_surface.get_rect(center=(constants.WIDTH / 2, constants.HEIGHT / 2))
+        time_rect: pygame.Rect = time_surface.get_rect(center=(constants.WIDTH / 2, 325))
         self.game_surface.blit(time_surface, time_rect)
 
         return total_seconds
@@ -208,6 +212,9 @@ class Game:
 
     def welcome(self) -> None:
         """Displays the title screen and displays the track selection screen when the button is clicked."""
+        # Re-hide the mouse in case the video player showed it
+        pygame.mouse.set_visible(False)
+
         pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
         pygame.mixer.music.play(-1)
         self.title_screen = TitleScreen(self.game_surface)
@@ -283,19 +290,20 @@ class Game:
                 track_name_to_load = next_action
 
                 while True:
+                    self._reset_game_state()
+
                     self.track = Track(track_name_to_load)
-                    # Use game_surface, not screen, for Car
                     self.car = Car(self.game_surface, self.track.name, is_ghost=False)
 
-                    run_action = self._run()  # _run now handles all music transitions
+                    run_action = self._run()
 
                     if run_action == "replay":
-                        self._reset_game_state()
+                        # No need to reset here, loop will do it
                         continue
                     else:
                         # "exit_to_menu" or normal race finish
-                        self._reset_game_state()
-                        break  # Go back to track selection screen
+                        # No need to reset here, we are breaking
+                        break
 
             self.track_selection.draw()
             self._draw_cursor()
@@ -331,8 +339,7 @@ class Game:
         if self.show_ghost:
             found_ghost = self._get_ghost_info()
         next_ghost_index: int = 1
-        self.car_sprite = pygame.image.load(
-            constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
+        self.car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
         self.car_sprite = pygame.transform.scale(self.car_sprite, (self.car.width, self.car.height))
         self.countdown_start_time = pygame.time.get_ticks()
         self._play_next_track()
@@ -353,21 +360,23 @@ class Game:
                 elif event.type == pygame.KEYDOWN:
 
                     if event.key == pygame.K_ESCAPE:
-                        self.is_paused = not self.is_paused
-                        if self.is_paused:
-                            # Just Paused
-                            pygame.mixer.music.pause()
-                            self.pause_start_time = pygame.time.get_ticks()
-                            self.pause_hover_index = 0
-                            just_paused = True  # <--- SET THE FLAG
-                        else:
-                            # Just Un-paused (by Esc)
-                            pygame.mixer.music.unpause()
+                        # Prevent pausing if race is over
+                        if not self.race_over:
+                            self.is_paused = not self.is_paused
+                            if self.is_paused:
+                                # Just Paused
+                                pygame.mixer.music.pause()
+                                self.pause_start_time = pygame.time.get_ticks()
+                                self.pause_hover_index = 0
+                                just_paused = True  # <--- SET THE FLAG
+                            else:
+                                # Just Un-paused (by Esc)
+                                pygame.mixer.music.unpause()
 
-                            pause_duration = pygame.time.get_ticks() - self.pause_start_time
-                            self.countdown_start_time += pause_duration
-                            if self.race_start_time is not None:
-                                self.race_start_time += pause_duration
+                                pause_duration = pygame.time.get_ticks() - self.pause_start_time
+                                self.countdown_start_time += pause_duration
+                                if self.race_start_time is not None:
+                                    self.race_start_time += pause_duration
 
                     if event.key == pygame.K_g and not self.is_paused:
                         self.show_ghost = not self.show_ghost
@@ -375,12 +384,10 @@ class Game:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
             # --- PAUSE LOGIC ---
-            # Check if paused, AND we didn't *just* pause this frame
             if self.is_paused and not just_paused:  # <--- CHECK THE FLAG
                 pause_action = self._handle_pause_menu(events)
 
                 if pause_action == "resume":
-                    # This is triggered by the mouse click
                     self.is_paused = False
                     pygame.mixer.music.unpause()
 
@@ -398,9 +405,8 @@ class Game:
                     pygame.mixer.music.play(-1)
                     return "exit_to_menu"
 
-            # If we *just* paused, draw the menu once and skip game logic
             elif self.is_paused and just_paused:
-                pass  # We will draw the menu later, outside the 'if not self.is_paused' block
+                pass  # We will draw the menu later
 
             # --- REGULAR GAME LOGIC (if not paused) ---
             if not self.is_paused:
@@ -421,7 +427,6 @@ class Game:
 
                 # --- Timer and Lap Box Drawing Logic ---
                 if self.race_start_time:
-                    # 2. Draw Total Timer
                     total_time_ms: int
                     if self.race_over and self.race_end_time:
                         total_time_ms = self.race_end_time - self.race_start_time
@@ -433,31 +438,24 @@ class Game:
                     time_rect: pygame.Rect = time_surf.get_rect(midtop=(self.lap_box.centerx, self.lap_box.y))
                     self.game_surface.blit(time_surf, time_rect)
 
-                    # 3. Draw Lap Times Box
+                    # LAP BOX LOGIC
                     box_y_start: int = time_rect.bottom + 10
-                    lap_box_main: pygame.Rect = pygame.Rect(self.lap_box.x, box_y_start, self.lap_box.width,
-                                                            self.lap_box.height)
-
-                    # Draw box background (using semi-transparent surface)
+                    lap_box_main: pygame.Rect = pygame.Rect(self.lap_box.x, box_y_start, self.lap_box.width, self.lap_box.height)
                     s: pygame.Surface = pygame.Surface((lap_box_main.width, lap_box_main.height), pygame.SRCALPHA)
-                    s.fill((30, 30, 30, 180))  # R, G, B, Alpha
+                    s.fill((30, 30, 30, 180))
                     self.game_surface.blit(s, lap_box_main.topleft)
-                    pygame.draw.rect(self.game_surface, (255, 255, 255), lap_box_main, 2)  # White border
+                    pygame.draw.rect(self.game_surface, (255, 255, 255), lap_box_main, 2)
 
-                    # Draw title
                     title_surf: pygame.Surface = self.timer_font.render("Lap Times", True, (255, 255, 255))
-                    title_rect: pygame.Rect = title_surf.get_rect(
-                        midtop=(lap_box_main.centerx, lap_box_main.y + 10))
+                    title_rect: pygame.Rect = title_surf.get_rect(midtop=(lap_box_main.centerx, lap_box_main.y + 10))
                     self.game_surface.blit(title_surf, title_rect)
-
-                    # Draw lap times
                     y_offset: int = title_rect.bottom + 10
+
                     for i, lap_ms in enumerate(self.lap_times):
                         lap_str: str = f"Lap {i + 1}: {self._format_time_simple(lap_ms)}"
                         lap_surf: pygame.Surface = self.timer_font.render(lap_str, True, (220, 220, 220))
                         lap_rect: pygame.Rect = lap_surf.get_rect(topright=(lap_box_main.right - 15, y_offset))
-
-                        if lap_rect.bottom < lap_box_main.bottom - 10:  # Check if it fits
+                        if lap_rect.bottom < lap_box_main.bottom - 10:
                             self.game_surface.blit(lap_surf, lap_rect)
                             y_offset += 35
 
@@ -471,27 +469,51 @@ class Game:
                     if found_ghost and self.show_ghost and not self.ghost_done:
                         self.ghost_done = self._draw_ghost(next_ghost_index, self.ghost_car_sprite)
                     next_ghost_index += 1
+
                 elif self.race_over:
-                    total_time: float = self._display_race_time()
+                    # Run one-time actions
                     if not compared_to_best:
+                        # Call _display_race_time *once* to get the final time
+                        total_time: float = self._display_race_time()
                         self._compare_to_best(total_time)
                         compared_to_best = True
                     if not self.applause_played:
                         self.applause_played = True
                         self._play_next_track()
-                    if not pygame.mixer.music.get_busy():
-                        running = False
+
+                    # Keep drawing the final time
+                    self._display_race_time()
+
+                    # Handle menu input
+                    race_over_action = self._handle_race_over_menu(events)
+                    if race_over_action == "replay":
+                        return "replay"
+                    elif race_over_action == "exit_to_menu":
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
+                        pygame.mixer.music.play(-1)
+                        return "exit_to_menu"
 
                 self.car.draw(self.car_sprite)
 
+            # --- DRAW OVERLAYS ---
             if self.is_paused:
                 self._draw_pause_menu()
 
-            self._draw_cursor()
+            # Draw the race over menu if the race is over (and not paused)
+            if self.race_over and not self.is_paused:
+                self._draw_race_over_menu()
+            # --- END DRAW CALL ---
+
+            # Only draw the cursor if we are in a menu
+            if self.is_paused or self.race_over:
+                self._draw_cursor()
+
             scaled_surface = pygame.transform.scale(self.game_surface, self.screen.get_size())
             self.screen.blit(scaled_surface, (0, 0))
             pygame.display.flip()
 
+        # Default exit action
         pygame.mixer.music.stop()
         pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
         pygame.mixer.music.play(-1)
@@ -514,6 +536,7 @@ class Game:
         self.is_paused = False
         self.lap_start_time = None
         self.lap_times = []
+        self.race_over_hover_index = 0
 
     def _handle_pause_menu(self, events) -> str:
         """Handles input for the pause menu."""
@@ -573,6 +596,57 @@ class Game:
         self.game_surface.blit(resume_text, resume_text.get_rect(center=self.resume_button_rect.center))
         self.game_surface.blit(replay_text, replay_text.get_rect(center=self.replay_button_rect.center))
         self.game_surface.blit(exit_text, exit_text.get_rect(center=self.exit_button_rect.center))
+
+    def _handle_race_over_menu(self, events) -> str:
+        """Handles input for the race over menu."""
+        # Scale mouse position for menu interaction
+        unscaled_mouse_pos = pygame.mouse.get_pos()
+        window_size = self.screen.get_size()
+        if window_size[0] == 0 or window_size[1] == 0:
+            return ""
+        mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos, window_size)
+
+        # Check hover
+        if self.retry_button_rect.collidepoint(mouse_pos):
+            self.race_over_hover_index = 1
+        elif self.exit_race_over_button_rect.collidepoint(mouse_pos):
+            self.race_over_hover_index = 2
+        else:
+            self.race_over_hover_index = 0
+
+        for event in events:
+            if event.type == pygame.QUIT:
+                self._quit()
+
+            if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                if self.race_over_hover_index == 1:
+                    self.click_sound.play()
+                    return "replay"
+                elif self.race_over_hover_index == 2:
+                    self.click_sound.play()
+                    return "exit_to_menu"
+        return ""
+
+    def _draw_race_over_menu(self) -> None:
+        """Draws the race over menu buttons onto the game_surface."""
+        # Note: This menu does *not* draw the dark overlay, so the
+        # final time and track are visible underneath.
+
+        # Draw Title
+        title_text = self.pause_title_font.render("Race Finished!", True, constants.RACE_OVER_TITLE_COLOR)
+        title_rect = title_text.get_rect(center=(constants.WIDTH / 2, constants.RACE_OVER_TITLE_Y))
+        self.game_surface.blit(title_text, title_rect)
+
+        # Determine button colors based on hover
+        retry_color = constants.RACE_OVER_BUTTON_HOVER_COLOR if self.race_over_hover_index == 1 else constants.RACE_OVER_BUTTON_COLOR
+        exit_color = constants.RACE_OVER_BUTTON_HOVER_COLOR if self.race_over_hover_index == 2 else constants.RACE_OVER_BUTTON_COLOR
+
+        # Create and draw button text
+        retry_text = self.pause_button_font.render("Retry", True, retry_color)
+        exit_text = self.pause_button_font.render("Exit to Menu", True, exit_color)
+
+        self.game_surface.blit(retry_text, retry_text.get_rect(center=self.retry_button_rect.center))
+        self.game_surface.blit(exit_text, exit_text.get_rect(center=self.exit_race_over_button_rect.center))
 
     def _create_replay_file(self) -> None:
         """Creates a new .csv file when the race begins to log the user's car position."""

@@ -87,3 +87,13 @@ TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
 WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"
+
+# Race Over Menu
+RACE_OVER_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
+RACE_OVER_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
+RACE_OVER_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
+RACE_OVER_BUTTON_WIDTH: int = 350
+RACE_OVER_BUTTON_HEIGHT: int = 60
+RACE_OVER_TITLE_Y: int = 250
+RACE_OVER_RETRY_Y: int = 400
+RACE_OVER_EXIT_Y: int = 500
