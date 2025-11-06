@@ -21,7 +21,7 @@ class Game:
         pygame.font.init()
         pygame.mixer.init()
 
-        self.screen: pygame.Surface = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+        self.screen: pygame.Surface = pygame.display.set_mode((1024, 576), pygame.RESIZABLE)
         self.game_surface: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
@@ -29,6 +29,7 @@ class Game:
         # Track and car
         self.track: Track
         self.personal_best_time: float
+        self.fastest_lap_record: float = float("inf")  # All-time fastest lap
         self.car: Car
         self.car_sprite: pygame.Surface
         self.car_type_index = 0
@@ -45,7 +46,8 @@ class Game:
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
         self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
-        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
+        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
+                                                          (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
         self.click_sound.set_volume(0.2)
 
@@ -64,8 +66,8 @@ class Game:
         # Lap Timers
         self.lap_start_time: Optional[int] = None
         self.lap_times: list[int] = []
+        self.fastest_lap_in_race: Optional[int] = None  # Fastest lap this race
         self.timer_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 30)
-        self.lap_box: pygame.Rect = pygame.Rect(constants.WIDTH - 320, 20, 260, 250)
 
         # Sounds
         self.next_lap_sound = pygame.mixer.Sound(
@@ -73,12 +75,7 @@ class Game:
         self.next_lap_sound.set_volume(0.5)
 
         # Fonts
-        self.lap_count_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 45)
         self.countdown_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 120)
-
-        # Text surfaces
-        self.lap_count_text: pygame.Surface
-        self.lap_count_text_rect: pygame.Rect
 
         # Pause state
         self.is_paused: bool = False
@@ -95,17 +92,24 @@ class Game:
 
         # Pause menu button rects
         button_x: float = (constants.WIDTH - constants.PAUSE_BUTTON_WIDTH) / 2
-        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y,constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y,constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH,constants.PAUSE_BUTTON_HEIGHT)
+        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y,
+                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y,
+                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
+        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH,
+                                                         constants.PAUSE_BUTTON_HEIGHT)
 
         # Race over menu state
         self.race_over_hover_index: int = 0  # 0=None, 1=Retry, 2=Exit
 
         # Race over menu button rects
         race_over_button_x: float = (constants.WIDTH - constants.RACE_OVER_BUTTON_WIDTH) / 2
-        self.retry_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_RETRY_Y, constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
-        self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_EXIT_Y, constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
+        self.retry_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_RETRY_Y,
+                                                          constants.RACE_OVER_BUTTON_WIDTH,
+                                                          constants.RACE_OVER_BUTTON_HEIGHT)
+        self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_EXIT_Y,
+                                                                   constants.RACE_OVER_BUTTON_WIDTH,
+                                                                   constants.RACE_OVER_BUTTON_HEIGHT)
 
         # Letterbox scaling
         self.scale_factor: float = 1.0
@@ -159,6 +163,8 @@ class Game:
 
     def _format_time_simple(self, time_ms: int) -> str:
         """Formats time in MM:SS:ms."""
+        if time_ms < 0:
+            return "--:--:--"
         total_seconds: float = time_ms / 1000.0
         minutes: int = int(total_seconds // 60)
         seconds: int = int(total_seconds % 60)
@@ -172,13 +178,6 @@ class Game:
             pygame.mixer.music.load(track_path)
             pygame.mixer.music.play(loops)
             self.current_track_index += 1
-
-    def _update_lap_text(self, is_finished: bool = False) -> None:
-        """Generates the lap counter text surface."""
-        text: str = "Finish!" if is_finished else f"Lap {self.current_lap} of {constants.NUM_LAPS[self.track.name]}"
-        self.lap_count_text = self.lap_count_font.render(text, True, constants.TEXT_COLOR)
-        self.lap_count_text_rect = self.lap_count_text.get_rect(
-            center=(constants.WIDTH - 250, constants.HEIGHT - 90))
 
     def _draw_countdown(self, current_time: int) -> None:
         """Calculates and draws the pre-race countdown timer."""
@@ -236,20 +235,22 @@ class Game:
                 self.lap_times.append(lap_time_ms)
                 self.lap_start_time = current_time
 
+                # Update fastest lap in this race
+                if self.fastest_lap_in_race is None or lap_time_ms < self.fastest_lap_in_race:
+                    self.fastest_lap_in_race = lap_time_ms
+
             self.current_lap += 1
 
             if self.current_lap > constants.NUM_LAPS[self.track.name]:
                 self.during_race = False
                 self.race_over = True
                 self.race_end_time = pygame.time.get_ticks()
-                self._update_lap_text(is_finished=True)
                 self.lap_start_time = None
             else:
                 if self.current_lap == constants.NUM_LAPS[self.track.name]:
                     self._play_next_track()
                 else:
                     self.next_lap_sound.play()
-                self._update_lap_text()
 
     def welcome(self) -> None:
         """Displays the title screen and displays the track selection screen when the button is clicked."""
@@ -361,11 +362,15 @@ class Game:
         personal_best_metadata_path: Path = Path(
             constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         best_time: float = float("inf")
+        best_lap: float = float("inf")
         if personal_best_metadata_path.exists():
             with open(personal_best_metadata_path, "r") as personal_best:
                 personal_best_data = json.load(personal_best)
             best_time = personal_best_data.get("time", float("inf"))
+            best_lap = personal_best_data.get("fastest_lap", float("inf"))
+
         self.personal_best_time = best_time
+        self.fastest_lap_record = best_lap
 
     def _run(self) -> str:
         """The main game loop when the user is racing on a track. Returns an action string."""
@@ -378,11 +383,11 @@ class Game:
         # Initialization
         self._get_personal_best_time()
         self._create_replay_file()
-        self._update_lap_text()
         if self.show_ghost:
             found_ghost = self._get_ghost_info()
         next_ghost_index: int = 1
-        self.car_sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
+        self.car_sprite = pygame.image.load(
+            constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.car_type_index])).convert_alpha()
         self.car_sprite = pygame.transform.scale(self.car_sprite, (self.car.width, self.car.height))
         self.countdown_start_time = pygame.time.get_ticks()
         self._play_next_track()
@@ -470,41 +475,9 @@ class Game:
                 self.car.update_position(max_speed)
 
                 self.track.draw(self.game_surface)
-                self.game_surface.blit(self.lap_count_text, self.lap_count_text_rect)
 
-                # --- Timer and Lap Box Drawing Logic ---
-                if self.race_start_time:
-                    total_time_ms: int
-                    if self.race_over and self.race_end_time:
-                        total_time_ms = self.race_end_time - self.race_start_time
-                    else:
-                        total_time_ms = current_time - self.race_start_time
-
-                    time_str: str = f"Total: {self._format_time_simple(total_time_ms)}"
-                    time_surf: pygame.Surface = self.timer_font.render(time_str, True, constants.TEXT_COLOR)
-                    time_rect: pygame.Rect = time_surf.get_rect(midtop=(self.lap_box.centerx, self.lap_box.y))
-                    self.game_surface.blit(time_surf, time_rect)
-
-                    # LAP BOX LOGIC
-                    box_y_start: int = time_rect.bottom + 10
-                    lap_box_main: pygame.Rect = pygame.Rect(self.lap_box.x, box_y_start, self.lap_box.width, self.lap_box.height)
-                    s: pygame.Surface = pygame.Surface((lap_box_main.width, lap_box_main.height), pygame.SRCALPHA)
-                    s.fill((30, 30, 30, 180))
-                    self.game_surface.blit(s, lap_box_main.topleft)
-                    pygame.draw.rect(self.game_surface, (255, 255, 255), lap_box_main, 2)
-
-                    title_surf: pygame.Surface = self.timer_font.render("Lap Times", True, (255, 255, 255))
-                    title_rect: pygame.Rect = title_surf.get_rect(midtop=(lap_box_main.centerx, lap_box_main.y + 10))
-                    self.game_surface.blit(title_surf, title_rect)
-                    y_offset: int = title_rect.bottom + 10
-
-                    for i, lap_ms in enumerate(self.lap_times):
-                        lap_str: str = f"Lap {i + 1}: {self._format_time_simple(lap_ms)}"
-                        lap_surf: pygame.Surface = self.timer_font.render(lap_str, True, (220, 220, 220))
-                        lap_rect: pygame.Rect = lap_surf.get_rect(topright=(lap_box_main.right - 15, y_offset))
-                        if lap_rect.bottom < lap_box_main.bottom - 10:
-                            self.game_surface.blit(lap_surf, lap_rect)
-                            y_offset += 35
+                # --- Draw New Race UI ---
+                self._draw_race_ui(current_time)
 
                 if self.before_race:
                     self._draw_countdown(current_time)
@@ -566,6 +539,75 @@ class Game:
         pygame.mixer.music.play(-1)
         return "exit_to_menu"
 
+    def _draw_race_ui(self, current_time: int) -> None:
+        """Draws the main race UI elements (lap, times) onto the game surface."""
+
+        # --- Top Left UI ---
+
+        # Lap Counter
+        if self.race_over:
+            lap_str = "Finish!"
+        else:
+            lap_str = f"Lap {self.current_lap}/{constants.NUM_LAPS[self.track.name]}"
+
+        # Total Time
+        total_time_ms = -1
+        if self.race_start_time:
+            if self.race_over and self.race_end_time:
+                total_time_ms = self.race_end_time - self.race_start_time
+            else:
+                total_time_ms = current_time - self.race_start_time
+        total_time_str = f"Total Time {self._format_time_simple(total_time_ms)}"
+
+        # --- Top Right UI ---
+
+        # Total Record
+        total_record_ms = -1
+        if self.personal_best_time != float("inf"):
+            total_record_ms = int(self.personal_best_time * 1000)
+        total_record_str = f"Total Record {self._format_time_simple(total_record_ms)}"
+
+        # Fastest Lap Record
+        fastest_lap_ms = -1
+        if self.fastest_lap_record != float("inf"):
+            fastest_lap_ms = int(self.fastest_lap_record * 1000)
+        fastest_lap_str = f"Fastest Lap {self._format_time_simple(fastest_lap_ms)}"
+
+        # --- Render and Blit ---
+        lap_surf = self.timer_font.render(lap_str, True, constants.TEXT_COLOR)
+        total_time_surf = self.timer_font.render(total_time_str, True, constants.TEXT_COLOR)
+
+        total_record_surf = self.timer_font.render(total_record_str, True, constants.TEXT_COLOR)
+        fastest_lap_surf = self.timer_font.render(fastest_lap_str, True, constants.TEXT_COLOR)
+
+        # Blit Top Left
+        self.game_surface.blit(lap_surf, (20, 130))
+        self.game_surface.blit(total_time_surf, (20, 165))
+
+        # Blit Lap List
+        num_laps = constants.NUM_LAPS[self.track.name]
+        y_offset = 200  # Start below Total Time
+
+        for i in range(num_laps):
+            lap_num = i + 1
+            lap_str = ""
+
+            if i < len(self.lap_times):  # Completed lap
+                lap_str += self._format_time_simple(self.lap_times[i])
+            elif i == self.current_lap - 1 and self.lap_start_time:  # Current lap
+                current_lap_ms = current_time - self.lap_start_time
+                lap_str += self._format_time_simple(current_lap_ms)
+            else:  # Future lap
+                lap_str += "--:--:--"
+
+            lap_list_surf = self.timer_font.render(lap_str, True, constants.TEXT_COLOR)
+            self.game_surface.blit(lap_list_surf, (20, y_offset))
+            y_offset += 35
+
+        # Blit Top Right
+        self.game_surface.blit(total_record_surf, (constants.WIDTH - total_record_surf.get_width() - 20, 20))
+        self.game_surface.blit(fastest_lap_surf, (constants.WIDTH - fastest_lap_surf.get_width() - 20, 55))
+
     def _reset_game_state(self) -> None:
         """Resets the variables storing the game's state after the track is complete."""
         self.current_lap = 1
@@ -583,10 +625,12 @@ class Game:
         self.is_paused = False
         self.lap_start_time = None
         self.lap_times = []
+        self.fastest_lap_in_race = None
         self.race_over_hover_index = 0
 
     def _handle_pause_menu(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles input for the pause menu."""
+        # Note: mouse_pos is already scaled
 
         # Check hover
         if self.resume_button_rect.collidepoint(mouse_pos):
@@ -705,20 +749,48 @@ class Game:
             constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
 
-        if total_time < self.personal_best_time:
+        # Check for new fastest lap in this race
+        current_fastest_lap_ms = min(self.lap_times) if self.lap_times else float("inf")
+        current_fastest_lap_sec = current_fastest_lap_ms / 1000.0
+
+        is_new_total_record = total_time < self.personal_best_time
+        is_new_lap_record = current_fastest_lap_sec < self.fastest_lap_record
+
+        # Only save if we set a new *total time* record
+        if is_new_total_record:
             metadata = {
                 "time": total_time,
                 "car_type_index": self.car_type_index
             }
+            # If it's a new total record, save the fastest lap from *this* race
+            # This also handles setting the first-ever fastest lap
+            if self.lap_times:
+                metadata["fastest_lap"] = current_fastest_lap_sec
+
             with open(personal_best_metadata_path, "w") as personal_best:
                 json.dump(metadata, personal_best)
 
             if current_race_file.exists():
                 new_personal_best: Path = current_race_file.with_name(constants.PERSONAL_BEST_FILE_NAME)
-                current_race_file.rename(new_personal_best)
+                # Use .replace() to overwrite the destination file if it exists
+                current_race_file.replace(new_personal_best)
 
+        # If we *only* set a new lap record (but not total time), save it
+        elif is_new_lap_record:
+            # Load existing data, update, and save
+            metadata = {}
+            if personal_best_metadata_path.exists():
+                with open(personal_best_metadata_path, "r") as f:
+                    metadata = json.load(f)
+
+            metadata["fastest_lap"] = current_fastest_lap_sec  # Update fastest lap
+            with open(personal_best_metadata_path, "w") as personal_best:
+                json.dump(metadata, personal_best)
+
+        # If no records, delete the replay file
         elif current_race_file.exists():
             current_race_file.unlink()
+
 
     def _draw_ghost(self, next_ghost_index: int, ghost_car_sprite: pygame.Surface) -> bool:
         """Retrieves the ghost's position at this frame and draws it on the screen, returning False if the ghost has finished the race."""
@@ -733,11 +805,13 @@ class Game:
         self.ghost_car.draw(ghost_car_sprite)
         return not found
 
+
     def _log_car_properties(self) -> None:
         """Write the car's position and angle to the .csv file."""
         with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "a", newline="") as replay_file:
             csv_writer = csv.writer(replay_file)
             csv_writer.writerow([self.car.x, self.car.y, self.car.angle])
+
 
     def _quit(self) -> None:
         """Quits the game."""
