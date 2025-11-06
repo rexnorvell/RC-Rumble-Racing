@@ -83,7 +83,7 @@ MUSIC_VOLUME: float = 0.5
 
 # Display
 TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
-TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
+TEXT_FONT_PATH: str = "assets/fonts/Aldrich-Regular.ttf"
 WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"
