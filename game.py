@@ -14,8 +14,7 @@ from track_selection import TrackSelection
 
 
 class Game:
-    """Manages the overall game state, main loop, and coordination between Car and Track."""
-
+    #Manages the overall game state, main loop, and coordination between Car and Track
     def __init__(self) -> None:
         pygame.init()
         pygame.font.init()
@@ -117,7 +116,8 @@ class Game:
         self.offset_y: int = 0
 
     def _draw_letterboxed_surface(self) -> None:
-        """Calculates letterbox scaling and blits the game_surface to the screen."""
+        #Calculates letterbox scaling and blits the game_surface to the screen
+
         window_width, window_height = self.screen.get_size()
         if window_width == 0 or window_height == 0:
             return  # Avoid division by zero if window is minimized
@@ -131,12 +131,12 @@ class Game:
 
         # Determine scaling factor
         if window_aspect > game_aspect:
-            # Window is wider than game (pillarbox)
+            # Window is wider than game
             self.scale_factor = window_height / game_height
             new_height = window_height
             new_width = int(game_width * self.scale_factor)
         else:
-            # Window is taller than game (letterbox)
+            # Window is taller than game
             self.scale_factor = window_width / game_width
             new_width = window_width
             new_height = int(game_height * self.scale_factor)
@@ -151,7 +151,7 @@ class Game:
         self.screen.blit(scaled_surface, (self.offset_x, self.offset_y))
 
     def _scale_mouse_pos(self, pos: tuple[int, int]) -> tuple[int, int]:
-        """Scales mouse position from window coordinates to game_surface coordinates."""
+        #Scales mouse position from window coordinates to game_surface coordinates
         if self.scale_factor == 0:  # Prevent divide-by-zero
             return 0, 0
 
@@ -162,7 +162,7 @@ class Game:
         return int(game_x), int(game_y)
 
     def _format_time_simple(self, time_ms: int) -> str:
-        """Formats time in MM:SS:ms."""
+        #Formats time in MM:SS:ms.
         if time_ms < 0:
             return "--:--:--"
         total_seconds: float = time_ms / 1000.0
@@ -172,7 +172,7 @@ class Game:
         return f"{minutes:02}:{seconds:02}:{milliseconds:02}"
 
     def _play_next_track(self) -> None:
-        """Loads and plays the next audio track in the playlist."""
+        #Loads and plays the next audio track in the playlist
         if self.current_track_index < len(self.track.playlist):
             track_path, loops = self.track.playlist[self.current_track_index]
             pygame.mixer.music.load(track_path)
@@ -180,7 +180,7 @@ class Game:
             self.current_track_index += 1
 
     def _draw_countdown(self, current_time: int) -> None:
-        """Calculates and draws the pre-race countdown timer."""
+        #Calculates and draws the pre-race countdown timer
         elapsed: int = current_time - self.countdown_start_time
         countdown_text: Optional[str] = None
 
@@ -206,7 +206,7 @@ class Game:
             self.game_surface.blit(countdown_surface, countdown_rect)
 
     def _display_race_time(self) -> float:
-        """Draws the final race time after the race is over."""
+        #Draws the final race time after the race is over
         if self.race_start_time is None or self.race_end_time is None:
             return sys.float_info.max
 
@@ -222,7 +222,7 @@ class Game:
         return total_seconds
 
     def _check_lap_completion(self) -> None:
-        """Checks for checkpoint and finish line crosses and updates lap count."""
+        #Checks for checkpoint and finish line crosses and updates lap count
         if self.track.check_checkpoint(self.car.x, self.car.y):
             self.has_checkpoint = True
 
@@ -253,7 +253,7 @@ class Game:
                     self.next_lap_sound.play()
 
     def welcome(self) -> None:
-        """Displays the title screen and displays the track selection screen when the button is clicked."""
+        #Displays the title screen and displays the track selection screen when the button is clicked
         # Re-hide the mouse in case the video player showed it
         pygame.mouse.set_visible(False)
 
@@ -297,13 +297,12 @@ class Game:
         self._track_select()
 
     def _draw_cursor(self, mouse_pos: tuple[int, int]) -> None:
-        """Draws the custom cursor on the game surface."""
-        # Use the already-scaled mouse_pos
+        #Draws the custom cursor on the game surface
         if mouse_pos[0] not in [0, constants.WIDTH - 1] and mouse_pos[1] not in [0, constants.HEIGHT - 1]:
             self.game_surface.blit(self.custom_cursor_image, mouse_pos)
 
     def _track_select(self) -> None:
-        """Displays the track selection screen and starts the game a track is selected."""
+        #Displays the track selection screen and starts the game a track is selected
         self.track_selection = TrackSelection(self.game_surface)
         track_select_clock: pygame.time.Clock = pygame.time.Clock()
         running = True
@@ -342,11 +341,9 @@ class Game:
                     run_action = self._run()
 
                     if run_action == "replay":
-                        # No need to reset here, loop will do it
                         continue
                     else:
                         # "exit_to_menu" or normal race finish
-                        # No need to reset here, we are breaking
                         break
 
             self.track_selection.draw()
@@ -358,7 +355,7 @@ class Game:
             track_select_clock.tick(60)
 
     def _get_personal_best_time(self) -> None:
-        """Get the user's personal best time for the current track."""
+        #Get the user's personal best time for the current track
         personal_best_metadata_path: Path = Path(
             constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         best_time: float = float("inf")
@@ -373,7 +370,7 @@ class Game:
         self.fastest_lap_record = best_lap
 
     def _run(self) -> str:
-        """The main game loop when the user is racing on a track. Returns an action string."""
+        #The main game loop when the user is racing on a track. Returns an action string
 
         # Flags
         found_ghost: bool = False
@@ -401,11 +398,8 @@ class Game:
             # Get scaled mouse position *once* per frame
             unscaled_mouse_pos = pygame.mouse.get_pos()
             scaled_mouse_pos = self._scale_mouse_pos(unscaled_mouse_pos)
-
-            # --- FLAG TO PREVENT EVENT CONFLICT ---
             just_paused: bool = False
 
-            # --- CONSOLIDATED EVENT LOOP ---
             for event in events:
                 if event.type == pygame.QUIT:
                     self._quit()
@@ -420,7 +414,7 @@ class Game:
                                 pygame.mixer.music.pause()
                                 self.pause_start_time = pygame.time.get_ticks()
                                 self.pause_hover_index = 0
-                                just_paused = True  # <--- SET THE FLAG
+                                just_paused = True
                             else:
                                 # Just Un-paused (by Esc)
                                 pygame.mixer.music.unpause()
@@ -435,8 +429,8 @@ class Game:
                 if event.type == pygame.VIDEORESIZE:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
-            # --- PAUSE LOGIC ---
-            if self.is_paused and not just_paused:  # <--- CHECK THE FLAG
+            #Pause Logic
+            if self.is_paused and not just_paused:
                 pause_action = self._handle_pause_menu(events, scaled_mouse_pos)
 
                 if pause_action == "resume":
@@ -458,9 +452,8 @@ class Game:
                     return "exit_to_menu"
 
             elif self.is_paused and just_paused:
-                pass  # We will draw the menu later
+                pass
 
-            # --- REGULAR GAME LOGIC (if not paused) ---
             if not self.is_paused:
                 if not pygame.mixer.music.get_busy() and not self.race_over:
                     self._play_next_track()
@@ -474,9 +467,18 @@ class Game:
 
                 self.car.update_position(max_speed)
 
-                self.track.draw(self.game_surface)
+                #Calculate camera offset to center car
+                camera_x = self.car.x - (constants.WIDTH / 2)
+                camera_y = self.car.y - (constants.HEIGHT / 2)
 
-                # --- Draw New Race UI ---
+                #Fill the screen with the track's ground color
+                #Temporary until the maps are drawn bigger to have more detail past edges
+                self.game_surface.fill(constants.TRACK_FILL_COLORS[self.track.name])
+
+                #Pass camera offset to track drawing
+                self.track.draw(self.game_surface, camera_x, camera_y)
+
+                #Draw Race UI
                 self._draw_race_ui(current_time)
 
                 if self.before_race:
@@ -487,7 +489,8 @@ class Game:
                     if elapsed_time < self.personal_best_time:
                         self._log_car_properties()
                     if found_ghost and self.show_ghost and not self.ghost_done:
-                        self.ghost_done = self._draw_ghost(next_ghost_index, self.ghost_car_sprite)
+                        #Pass camera offset to ghost drawing
+                        self.ghost_done = self._draw_ghost(next_ghost_index, self.ghost_car_sprite, camera_x, camera_y)
                     next_ghost_index += 1
 
                 elif self.race_over:
@@ -514,22 +517,22 @@ class Game:
                         pygame.mixer.music.play(-1)
                         return "exit_to_menu"
 
-                self.car.draw(self.car_sprite)
+                #Pass camera offset to player car drawing
+                self.car.draw(self.car_sprite, camera_x, camera_y)
 
-            # --- DRAW OVERLAYS ---
+            #Overlays
             if self.is_paused:
                 self._draw_pause_menu()
 
-            # Draw the race over menu if the race is over (and not paused)
+            #Draw the race over menu if the race is over (and not paused)
             if self.race_over and not self.is_paused:
                 self._draw_race_over_menu()
-            # --- END DRAW CALL ---
 
-            # Only draw the cursor if we are in a menu
+            #Only draw the cursor if we are in a menu
             if self.is_paused or self.race_over:
                 self._draw_cursor(scaled_mouse_pos)
 
-            # Draw the letterboxed game_surface to the screen
+            #Draw the letterboxed game_surface to the screen
             self._draw_letterboxed_surface()
             pygame.display.flip()
 
@@ -540,10 +543,9 @@ class Game:
         return "exit_to_menu"
 
     def _draw_race_ui(self, current_time: int) -> None:
-        """Draws the main race UI elements (lap, times) onto the game surface."""
+        #Draws the main race UI elements (lap, times) onto the game surface
 
-        # --- Top Left UI ---
-
+        #Top Left UI
         # Lap Counter
         if self.race_over:
             lap_str = "Finish!"
@@ -559,7 +561,7 @@ class Game:
                 total_time_ms = current_time - self.race_start_time
         total_time_str = f"Total Time {self._format_time_simple(total_time_ms)}"
 
-        # --- Top Right UI ---
+        #Top Right UI
 
         # Total Record
         total_record_ms = -1
@@ -573,16 +575,16 @@ class Game:
             fastest_lap_ms = int(self.fastest_lap_record * 1000)
         fastest_lap_str = f"Fastest Lap {self._format_time_simple(fastest_lap_ms)}"
 
-        # --- Render and Blit ---
+        #Render and Blit
         lap_surf = self.timer_font.render(lap_str, True, constants.TEXT_COLOR)
         total_time_surf = self.timer_font.render(total_time_str, True, constants.TEXT_COLOR)
 
         total_record_surf = self.timer_font.render(total_record_str, True, constants.TEXT_COLOR)
         fastest_lap_surf = self.timer_font.render(fastest_lap_str, True, constants.TEXT_COLOR)
 
-        # Blit Top Left
-        self.game_surface.blit(lap_surf, (20, 130))
-        self.game_surface.blit(total_time_surf, (20, 165))
+        # Blit Top Left (Moved down)
+        self.game_surface.blit(lap_surf, (20, 100))
+        self.game_surface.blit(total_time_surf, (20, 135))
 
         # Blit Lap List
         num_laps = constants.NUM_LAPS[self.track.name]
@@ -590,7 +592,7 @@ class Game:
 
         for i in range(num_laps):
             lap_num = i + 1
-            lap_str = ""
+            lap_str = f"Lap {lap_num}: "
 
             if i < len(self.lap_times):  # Completed lap
                 lap_str += self._format_time_simple(self.lap_times[i])
@@ -609,7 +611,7 @@ class Game:
         self.game_surface.blit(fastest_lap_surf, (constants.WIDTH - fastest_lap_surf.get_width() - 20, 55))
 
     def _reset_game_state(self) -> None:
-        """Resets the variables storing the game's state after the track is complete."""
+        #Resets the variables storing the game's state after the track is complete
         self.current_lap = 1
         self.has_checkpoint = False
         self.before_race = True
@@ -629,8 +631,7 @@ class Game:
         self.race_over_hover_index = 0
 
     def _handle_pause_menu(self, events, mouse_pos: tuple[int, int]) -> str:
-        """Handles input for the pause menu."""
-        # Note: mouse_pos is already scaled
+        #Handles input for the pause menu
 
         # Check hover
         if self.resume_button_rect.collidepoint(mouse_pos):
@@ -659,7 +660,7 @@ class Game:
         return ""
 
     def _draw_pause_menu(self) -> None:
-        """Draws the pause menu overlay and buttons onto the game_surface."""
+        #Draws the pause menu overlay and buttons onto the game_surface
         # Draw the semi-transparent overlay
         self.game_surface.blit(self.pause_overlay, (0, 0))
 
@@ -683,8 +684,7 @@ class Game:
         self.game_surface.blit(exit_text, exit_text.get_rect(center=self.exit_button_rect.center))
 
     def _handle_race_over_menu(self, events, mouse_pos: tuple[int, int]) -> str:
-        """Handles input for the race over menu."""
-        # Note: mouse_pos is already scaled
+        #Handles input for the race over menu
 
         # Check hover
         if self.retry_button_rect.collidepoint(mouse_pos):
@@ -708,7 +708,7 @@ class Game:
         return ""
 
     def _draw_race_over_menu(self) -> None:
-        """Draws the race over menu buttons onto the game_surface."""
+        #Draws the race over menu buttons onto the game_surface
         # Note: This menu does *not* draw the dark overlay, so the
         # final time and track are visible underneath.
 
@@ -729,12 +729,12 @@ class Game:
         self.game_surface.blit(exit_text, exit_text.get_rect(center=self.exit_race_over_button_rect.center))
 
     def _create_replay_file(self) -> None:
-        """Creates a new .csv file when the race begins to log the user's car position."""
+        #Creates a new .csv file when the race begins to log the user's car position
         with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "w", newline=""):
             pass
 
     def _get_ghost_info(self) -> bool:
-        """Set ghost parameters and return True if the ghost file was found."""
+        #Set ghost parameters and return True if the ghost file was found
         self.ghost_car = Car(self.game_surface, self.track.name, is_ghost=True)
         self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
         self.ghost_car_sprite = pygame.image.load(
@@ -744,9 +744,8 @@ class Game:
         return Path(self.ghost_filename).exists()
 
     def _compare_to_best(self, total_time: float) -> None:
-        """Compare the current time to the personal best, and if it was beaten, replace the personal best."""
-        personal_best_metadata_path: Path = Path(
-            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        #Compare the current time to the personal best, and if it was beaten, replace the personal best
+        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
 
         # Check for new fastest lap in this race
@@ -756,7 +755,7 @@ class Game:
         is_new_total_record = total_time < self.personal_best_time
         is_new_lap_record = current_fastest_lap_sec < self.fastest_lap_record
 
-        #New total time record
+        # Branch 1: New total time record
         if is_new_total_record:
             metadata = {
                 "time": total_time,
@@ -777,7 +776,7 @@ class Game:
             if self.lap_times:
                 self.fastest_lap_record = current_fastest_lap_sec
 
-        #Only a new fastest lap record
+        # Branch 2: ONLY a new fastest lap record
         elif is_new_lap_record:
             # Load existing data, update, and save
             metadata = {}
@@ -796,29 +795,36 @@ class Game:
             if current_race_file.exists():
                 current_race_file.unlink()
 
-
-    def _draw_ghost(self, next_ghost_index: int, ghost_car_sprite: pygame.Surface) -> bool:
-        """Retrieves the ghost's position at this frame and draws it on the screen, returning False if the ghost has finished the race."""
+    def _draw_ghost(self, next_ghost_index: int, ghost_car_sprite: pygame.Surface, camera_x: float,
+                    camera_y: float) -> bool:
+        #Retrieves the ghost's position at this frame and draws it on the screen, returning False if the ghost has finished the race
         found: bool = False
-        with open(self.ghost_filename, newline="") as ghost_file:
-            reader = csv.reader(ghost_file)
-            for i, row in enumerate(reader):
-                if i == next_ghost_index:
-                    self.ghost_car.x, self.ghost_car.y, self.ghost_car.angle = map(float, row)
-                    found = True
-                    break
-        self.ghost_car.draw(ghost_car_sprite)
-        return not found
-
+        try:
+            with open(self.ghost_filename, newline="") as ghost_file:
+                reader = csv.reader(ghost_file)
+                for i, row in enumerate(reader):
+                    if i == next_ghost_index:
+                        self.ghost_car.x, self.ghost_car.y, self.ghost_car.angle = map(float, row)
+                        found = True
+                        break
+            #Pass camera offset to the ghost's draw method
+            self.ghost_car.draw(ghost_car_sprite, camera_x, camera_y)
+            return not found
+        except FileNotFoundError:
+            # Ghost file doesn't exist, so we can't draw it.
+            return True  # Return True to indicate the ghost is "done"
+        except Exception as e:
+            # Handle other potential errors, e.g., empty file
+            print(f"Error reading ghost file: {e}")
+            return True  # Return True to stop trying to read the file
 
     def _log_car_properties(self) -> None:
-        """Write the car's position and angle to the .csv file."""
+        #Write the car's position and angle to the .csv file
         with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "a", newline="") as replay_file:
             csv_writer = csv.writer(replay_file)
             csv_writer.writerow([self.car.x, self.car.y, self.car.angle])
 
-
     def _quit(self) -> None:
-        """Quits the game."""
+        #Quits the game
         pygame.quit()
         sys.exit()

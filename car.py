@@ -5,7 +5,7 @@ import constants
 
 
 class Car:
-    """Represents the player's car, handling its state, movement, input, and drawing."""
+    #Represents the player's car, handling its state, movement, input, and drawing
 
     def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool) -> None:
         self.screen: pygame.Surface = screen
@@ -19,7 +19,7 @@ class Car:
         self.opacity: int = 128 if is_ghost else 255
 
     def get_car_corners(self, center: tuple[float, float], size: tuple[int, int], angle: float) -> list[tuple[float, float]]:
-        """Calculates the four corner coordinates of the rotated car body."""
+        #Calculates the four corner coordinates of the rotated car body
         w, h = size
         cx, cy = center
         hw, hh = w / 2, h / 2
@@ -36,7 +36,7 @@ class Car:
         return world_corners
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper, is_race_active: bool) -> None:
-        """Processes keyboard input to adjust speed and angle."""
+        #Processes keyboard input to adjust speed and angle
         if not is_race_active:
             self.speed = math.copysign(max(abs(self.speed) - constants.FRICTION, 0), self.speed)
             return
@@ -55,17 +55,23 @@ class Car:
             self.angle += turn_factor
 
     def update_position(self, max_speed: float) -> None:
-        """Clamps speed and updates car position based on current angle and speed."""
+        #Clamps speed and updates car position based on current angle and speed
         self.speed = max(-max_speed / 2.0, min(max_speed, self.speed))
 
         self.x += float(math.sin(math.radians(self.angle)) * self.speed)
         self.y -= float(math.cos(math.radians(self.angle)) * self.speed)
 
-    def draw(self, scaled_image: pygame.Surface = 1) -> None:
-        """Draws the car on the track."""
+    def draw(self, scaled_image: pygame.Surface, camera_x: float, camera_y: float) -> None:
+        #Draws the car on the track
         rotated_image = pygame.transform.rotate(scaled_image, -self.angle)
         rotated_image.set_alpha(self.opacity)
-        rect = rotated_image.get_rect(center=(self.x, self.y))
+
+        # Calculate the car's position *on the screen*
+        screen_x = self.x - camera_x
+        screen_y = self.y - camera_y
+
+        # Center the rect on its screen-space coordinates
+        rect = rotated_image.get_rect(center=(screen_x, screen_y))
         self.screen.blit(rotated_image, rect)
 
     def _draw_car2(self) -> None:
@@ -184,4 +190,3 @@ class Car:
         rotated_car: pygame.Surface = pygame.transform.rotate(car_surface, -self.angle)
         rect: pygame.Rect = rotated_car.get_rect(center=(self.x, self.y))
         self.screen.blit(rotated_car, rect.topleft)
-

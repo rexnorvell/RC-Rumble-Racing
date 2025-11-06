@@ -15,7 +15,8 @@ INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 # Track selection screen
 TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{image_name}.png"
 
-# Track Exit Button
+# Track Selection Exit button
+# We need to add a blank button UI element so it can be reusable and easier to implement new buttons.
 TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
 TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
 
@@ -91,6 +92,13 @@ TEXT_FONT_PATH: str = "assets/fonts/Aldrich-Regular.ttf"
 WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"
+
+# Temporary track fill colors for each map until they're updated with more info
+TRACK_FILL_COLORS: dict[str, tuple[int, int, int]] = {
+    TRACK_NAMES[0]: (0, 102, 0),    # Dark green for Magnificent Meadow
+    TRACK_NAMES[1]: (218, 165, 32), # Sandy brown for Dusty Dunes
+    TRACK_NAMES[2]: (173, 216, 230)  # Light blue for Glistening Glacier
+}
 
 # Race Over Menu
 RACE_OVER_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)

@@ -6,7 +6,7 @@ import constants
 
 
 class Track:
-    """Handles all track-related logic, images, and collision geometry."""
+    #Handles all track-related logic, images, and collision geometry
 
     def __init__(self, name) -> None:
         self.name = name
@@ -26,7 +26,7 @@ class Track:
         self.playlist = self._create_playlist()
 
     def _create_playlist(self) -> list[tuple[str, int]]:
-        """Creates the playlist for the track."""
+        #Creates the playlist for the track
         playlist: list[tuple[str, int]] = [
             (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[0]), 0),
             (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[1]), -1),
@@ -36,22 +36,23 @@ class Track:
         ]
         return playlist
 
-    def draw(self, screen: pygame.Surface) -> None:
-        """Draws the main track image onto the screen."""
-        screen.blit(self.track_image, (0, 0))
+    def draw(self, screen: pygame.Surface, camera_x: float, camera_y: float) -> None:
+        #Draws the main track image onto the screen
+
+        # Draw the track at the negative camera position to make it move
+        screen.blit(self.track_image, (-camera_x, -camera_y))
 
     def is_off_road(self, x: float, y: float) -> bool:
-        """Checks if the given coordinates are off-road using the BW mask."""
+        #Checks if the given coordinates are off-road using the BW mask
         ix, iy = int(x), int(y)
         if 0 <= ix < self.off_road_mask.shape[0] and 0 <= iy < self.off_road_mask.shape[1]:
             return self.off_road_mask[ix, iy]
         return True  # Treat outside map boundaries as off-road
 
     def check_checkpoint(self, x: float, y: float) -> bool:
-        """Checks if the given coordinates intersect the checkpoint area."""
+        #Checks if the given coordinates intersect the checkpoint area
         return self.checkpoint_1.collidepoint(int(x), int(y))
 
     def check_finish_line(self, x: float, y: float) -> bool:
-        """Checks if the given coordinates intersect the finish line area."""
+        #Checks if the given coordinates intersect the finish line area
         return self.finish_line.collidepoint(int(x), int(y))
-

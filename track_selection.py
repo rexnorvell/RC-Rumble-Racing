@@ -4,27 +4,19 @@ import constants
 
 
 class TrackSelection:
-    """Handles the track selection screen."""
+    #Handles the track selection screen
 
     def __init__(self, screen) -> None:
         self.screen: pygame.Surface = screen
 
-        self.track_selection_default_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
-        self.track_selection_default_image = pygame.transform.scale(self.track_selection_default_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_1_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="1")).convert()
-        self.track_selection_hover_1_image = pygame.transform.scale(self.track_selection_hover_1_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_2_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="2")).convert()
-        self.track_selection_hover_2_image = pygame.transform.scale(self.track_selection_hover_2_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_3_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="3")).convert()
-        self.track_selection_hover_3_image = pygame.transform.scale(self.track_selection_hover_3_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
+        self.track_selection_default_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
+        self.track_selection_default_image = pygame.transform.scale(self.track_selection_default_image,(constants.WIDTH, constants.HEIGHT))
+        self.track_selection_hover_1_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="1")).convert()
+        self.track_selection_hover_1_image = pygame.transform.scale(self.track_selection_hover_1_image,(constants.WIDTH, constants.HEIGHT))
+        self.track_selection_hover_2_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="2")).convert()
+        self.track_selection_hover_2_image = pygame.transform.scale(self.track_selection_hover_2_image,(constants.WIDTH, constants.HEIGHT))
+        self.track_selection_hover_3_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="3")).convert()
+        self.track_selection_hover_3_image = pygame.transform.scale(self.track_selection_hover_3_image,(constants.WIDTH, constants.HEIGHT))
         self.current_image: pygame.Surface = self.track_selection_default_image
 
         # Track button rects
@@ -34,7 +26,7 @@ class TrackSelection:
         self.button_rect_2: pygame.Rect = pygame.Rect(909, 137, button_width, button_height)
         self.button_rect_3: pygame.Rect = pygame.Rect(487, 408, button_width, button_height)
 
-        # New Exit Button
+        # Exit Button
         self.button_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 40)
         self.exit_button_rect: pygame.Rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)  # Bottom-left
 
@@ -45,8 +37,7 @@ class TrackSelection:
         self.hover_sound_played: bool = False
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
-        """Handles events like button presses."""
-        # Note: mouse_pos is already scaled
+        #Handles events like button presses
 
         hovered_index: int
 
@@ -57,7 +48,7 @@ class TrackSelection:
         elif self.button_rect_3.collidepoint(mouse_pos):
             hovered_index = 3
         elif self.exit_button_rect.collidepoint(mouse_pos):
-            hovered_index = 4  # New index for Exit
+            hovered_index = 4
         else:
             hovered_index = 0
 
@@ -73,9 +64,9 @@ class TrackSelection:
             elif hovered_index == 3:
                 self.hover_sound.play()
                 self.current_image = self.track_selection_hover_3_image
-            elif hovered_index == 4:  # Hovering Exit
+            elif hovered_index == 4:
                 self.hover_sound.play()
-                self.current_image = self.track_selection_default_image  # Keep default bg
+                self.current_image = self.track_selection_default_image
             else:
                 self.current_image = self.track_selection_default_image
 
@@ -90,12 +81,12 @@ class TrackSelection:
                 elif hovered_index == 3:
                     return constants.TRACK_NAMES[2]
                 elif hovered_index == 4:
-                    return "exit"  # Return "exit" action
+                    return "exit"
 
         return ""
 
     def draw(self) -> None:
-        """Draws the track selection screen."""
+        #Draws the track selection screen
         self.screen.blit(self.current_image, (0, 0))
 
         # Determine exit button color
