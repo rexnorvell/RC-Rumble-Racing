@@ -756,14 +756,12 @@ class Game:
         is_new_total_record = total_time < self.personal_best_time
         is_new_lap_record = current_fastest_lap_sec < self.fastest_lap_record
 
-        # Only save if we set a new *total time* record
+        #New total time record
         if is_new_total_record:
             metadata = {
                 "time": total_time,
                 "car_type_index": self.car_type_index
             }
-            # If it's a new total record, save the fastest lap from *this* race
-            # This also handles setting the first-ever fastest lap
             if self.lap_times:
                 metadata["fastest_lap"] = current_fastest_lap_sec
 
@@ -772,10 +770,14 @@ class Game:
 
             if current_race_file.exists():
                 new_personal_best: Path = current_race_file.with_name(constants.PERSONAL_BEST_FILE_NAME)
-                # Use .replace() to overwrite the destination file if it exists
                 current_race_file.replace(new_personal_best)
 
-        # If we *only* set a new lap record (but not total time), save it
+            # Update in-memory records
+            self.personal_best_time = total_time
+            if self.lap_times:
+                self.fastest_lap_record = current_fastest_lap_sec
+
+        #Only a new fastest lap record
         elif is_new_lap_record:
             # Load existing data, update, and save
             metadata = {}
@@ -787,9 +789,12 @@ class Game:
             with open(personal_best_metadata_path, "w") as personal_best:
                 json.dump(metadata, personal_best)
 
-        # If no records, delete the replay file
-        elif current_race_file.exists():
-            current_race_file.unlink()
+            # Update in-memory record
+            self.fastest_lap_record = current_fastest_lap_sec
+
+        if not is_new_total_record:
+            if current_race_file.exists():
+                current_race_file.unlink()
 
 
     def _draw_ghost(self, next_ghost_index: int, ghost_car_sprite: pygame.Surface) -> bool:
