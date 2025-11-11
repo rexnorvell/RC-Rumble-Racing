@@ -64,7 +64,7 @@ class Race:
         self.timer_font.set_bold(True)
 
         # Sound and Music
-        self.next_lap_sound: Sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
+        self.next_lap_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
         self.next_lap_sound.set_volume(0.5)
 
         # User Car
