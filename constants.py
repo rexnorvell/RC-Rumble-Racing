@@ -54,7 +54,8 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[2]: 0}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
-CAR_TYPES: list[str] = ["f1_car"]
+CAR_TYPES: list[str] = ["f1_car_red",
+                        "f1_car_blue"]
 
 # Pause Menu
 PAUSE_OVERLAY_COLOR: tuple[int, int, int, int] = (0, 0, 0, 180)
@@ -88,7 +89,8 @@ MUSIC_VOLUME: float = 0.5
 
 # Display
 TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
-TEXT_FONT_PATH: str = "assets/fonts/Aldrich-Regular.ttf"
+TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
+FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
 WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"

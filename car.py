@@ -5,9 +5,9 @@ import constants
 
 
 class Car:
-    #Represents the player's car, handling its state, movement, input, and drawing
+    # Represents the player's car, handling its state, movement, input, and drawing
 
-    def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool) -> None:
+    def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool, style_index: int) -> None:
         self.screen: pygame.Surface = screen
         self.x: float = constants.START_X[track_name]
         self.y: float = constants.START_Y[track_name]
@@ -18,22 +18,9 @@ class Car:
         self.color: tuple[int, int, int] = constants.CAR_COLOR
         self.opacity: int = 128 if is_ghost else 255
 
-    def get_car_corners(self, center: tuple[float, float], size: tuple[int, int], angle: float) -> list[tuple[float, float]]:
-        #Calculates the four corner coordinates of the rotated car body
-        w, h = size
-        cx, cy = center
-        hw, hh = w / 2, h / 2
-        local_corners: list[pygame.math.Vector2] = [
-            pygame.math.Vector2(-hw, -hh),
-            pygame.math.Vector2(hw, -hh),
-            pygame.math.Vector2(hw, hh),
-            pygame.math.Vector2(-hw, hh),
-        ]
-        world_corners: list[tuple[float, float]] = []
-        for v in local_corners:
-            rv: pygame.math.Vector2 = v.rotate(angle)
-            world_corners.append((cx + rv.x, cy + rv.y))
-        return world_corners
+        self.style_index: int = style_index
+        self.sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.style_index])).convert_alpha()
+        self.sprite = pygame.transform.scale(self.sprite, (self.width, self.height))
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper, is_race_active: bool) -> None:
         #Processes keyboard input to adjust speed and angle
@@ -55,15 +42,15 @@ class Car:
             self.angle += turn_factor
 
     def update_position(self, max_speed: float) -> None:
-        #Clamps speed and updates car position based on current angle and speed
+        # Clamps speed and updates car position based on current angle and speed
         self.speed = max(-max_speed / 2.0, min(max_speed, self.speed))
 
         self.x += float(math.sin(math.radians(self.angle)) * self.speed)
         self.y -= float(math.cos(math.radians(self.angle)) * self.speed)
 
-    def draw(self, scaled_image: pygame.Surface, camera_x: float, camera_y: float) -> None:
-        #Draws the car on the track
-        rotated_image = pygame.transform.rotate(scaled_image, -self.angle)
+    def draw(self, camera_x: float, camera_y: float) -> None:
+        """Draws the car on the track"""
+        rotated_image = pygame.transform.rotate(self.sprite, -self.angle)
         rotated_image.set_alpha(self.opacity)
 
         # Calculate the car's position *on the screen*

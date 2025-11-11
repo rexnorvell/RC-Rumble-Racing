@@ -4,7 +4,7 @@ import constants
 
 
 class TrackSelection:
-    #Handles the track selection screen
+    """Handles the track selection screen"""
 
     def __init__(self, screen) -> None:
         self.screen: pygame.Surface = screen
@@ -37,7 +37,7 @@ class TrackSelection:
         self.hover_sound_played: bool = False
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
-        #Handles events like button presses
+        """Handles events like button presses"""
 
         hovered_index: int
 
@@ -86,7 +86,7 @@ class TrackSelection:
         return ""
 
     def draw(self) -> None:
-        #Draws the track selection screen
+        """Draws the track selection screen"""
         self.screen.blit(self.current_image, (0, 0))
 
         # Determine exit button color
