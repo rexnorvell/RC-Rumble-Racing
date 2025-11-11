@@ -18,8 +18,7 @@ class Race:
         self.game = game
 
         # Track
-        self.track_name: str = track_name
-        self.track: Track = Track(self.track_name)
+        self.track: Track = Track(track_name)
 
         # Pause menu
         self.pause_hover_index: int
@@ -70,7 +69,7 @@ class Race:
 
         # User Car
         self.user_car_type_index: int = user_car_type_index
-        self.user_car: Car = Car(self.game.game_surface, self.track_name, False, self.user_car_type_index)
+        self.user_car: Car = Car(self.game.game_surface, self.track.name, False, self.user_car_type_index)
         self.max_speed: float = constants.MAX_SPEED
 
         # User Data
@@ -151,7 +150,7 @@ class Race:
                 self.user_car.update_position(self.max_speed)
                 self._check_lap_completion()
                 if self.elapsed_race_time_ms < self.personal_best_time:
-                    self.user_car.log_properties(self.track_name)
+                    self.user_car.log_properties(self.track.name)
             elif self.race_over:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self._get_max_speed()
