@@ -151,6 +151,8 @@ class Race:
                 self._check_lap_completion()
                 if self.elapsed_race_time_ms < self.personal_best_time:
                     self.user_car.log_properties(self.track.name)
+                if self.elapsed_race_time_s < self.personal_best_time:
+                    self._log_car_properties()
             elif self.race_over:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self._get_max_speed()
