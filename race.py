@@ -151,7 +151,7 @@ class Race:
                 self.user_car.update_position(self.max_speed)
                 self._check_lap_completion()
                 if self.elapsed_race_time_ms < self.personal_best_time:
-                    self._log_car_properties()
+                    self.user_car.log_properties(self.track_name)
             elif self.race_over:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self._get_max_speed()
@@ -476,12 +476,6 @@ class Race:
             self.ghost_found = False
         except Exception:
             self.ghost_found = False
-
-    def _log_car_properties(self) -> None:
-        """Write the car's position and angle to the .csv file"""
-        with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "a", newline="") as replay_file:
-            csv_writer = csv.writer(replay_file)
-            csv_writer.writerow([self.user_car.x, self.user_car.y, self.user_car.angle])
 
     def _format_time_simple(self) -> str:
         """Formats time in MM:SS:ms"""

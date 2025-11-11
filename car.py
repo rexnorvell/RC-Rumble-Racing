@@ -1,3 +1,4 @@
+import csv
 import math
 import pygame
 
@@ -177,3 +178,10 @@ class Car:
         rotated_car: pygame.Surface = pygame.transform.rotate(car_surface, -self.angle)
         rect: pygame.Rect = rotated_car.get_rect(center=(self.x, self.y))
         self.screen.blit(rotated_car, rect.topleft)
+
+
+    def log_properties(self, track_name: str) -> None:
+        """Write the car's position and angle to the .csv file"""
+        with open(constants.REPLAY_FILE_PATH.format(track_name=track_name), "a", newline="") as replay_file:
+            csv_writer = csv.writer(replay_file)
+            csv_writer.writerow([self.x, self.y, self.angle])
