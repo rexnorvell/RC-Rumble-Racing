@@ -18,7 +18,8 @@ class Race:
         self.game = game
 
         # Track
-        self.track: Track = Track(track_name)
+        self.track_name: str = track_name
+        self.track: Track = Track(self.track_name)
 
         # Pause menu
         self.pause_hover_index: int
@@ -149,10 +150,8 @@ class Race:
                 self._get_max_speed()
                 self.user_car.update_position(self.max_speed)
                 self._check_lap_completion()
-                if self.elapsed_race_time_ms < self.personal_best_time:
-                    self.user_car.log_properties(self.track.name)
-                if self.elapsed_race_time_s < self.personal_best_time:
-                    self._log_car_properties()
+                if self.elapsed_race_time_s < (self.personal_best_time + 1):
+                    self.user_car.log_properties(self.track_name)
             elif self.race_over:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self._get_max_speed()
@@ -207,10 +206,10 @@ class Race:
         self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
 
         # Draw ghost
-        if self.ghost_found and self.show_ghost and not self.ghost_done:
+        if self.ghost_found and self.show_ghost and not self.ghost_done and not self.race_over:
             self._draw_ghost(self.camera_x, self.camera_y)
-        if self.during_race and not self.is_paused:
-            self.next_ghost_index += 1
+            if self.during_race:
+                self.next_ghost_index += 1
 
         # Draw car
         self.user_car.draw(self.camera_x, self.camera_y)
