@@ -31,29 +31,6 @@ class Game:
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
         self.click_sound.set_volume(0.2)
 
-        # Pause state
-        self.is_paused: bool = False
-        self.pause_start_time: int = 0  # Used to refund time spent paused
-        self.pause_hover_index: int = 0  # 0=None, 1=Resume, 2=Replay, 3=Exit
-
-        # Pause menu fonts
-        self.pause_title_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 80)
-        self.pause_button_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 50)
-
-        # Pause menu overlay
-        self.pause_overlay: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
-        self.pause_overlay.fill(constants.PAUSE_OVERLAY_COLOR)
-        self.pause_overlay.set_alpha(10)
-
-        # Pause menu button rects
-        button_x: float = (constants.WIDTH - constants.PAUSE_BUTTON_WIDTH) / 2
-        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y,
-                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y,
-                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH,
-                                                         constants.PAUSE_BUTTON_HEIGHT)
-
         # Letterbox scaling
         self.scale_factor: float = 1.0
         self.offset_x: int = 0
