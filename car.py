@@ -12,7 +12,8 @@ class Car:
         self.screen: pygame.Surface = screen
         self.x: float = constants.START_X[track_name]
         self.y: float = constants.START_Y[track_name]
-        self.angle: float = constants.START_ROTATION[track_name]
+        self.car_angle: float = constants.START_ROTATION[track_name]
+        self.move_angle: float = self.car_angle
         self.speed: float = 0.0
         self.width: int = constants.CAR_WIDTH
         self.height: int = constants.CAR_HEIGHT
@@ -36,22 +37,37 @@ class Car:
         else:
             self.speed = math.copysign(max(abs(self.speed) - constants.FRICTION, 0), self.speed)
 
+        # Directly change the car angle (which direction the car is facing)
         turn_factor: float = constants.TURN_SPEED * (self.speed / constants.MAX_SPEED)
         if keys[pygame.K_a]:
-            self.angle -= turn_factor
+            self.car_angle -= turn_factor
         if keys[pygame.K_d]:
-            self.angle += turn_factor
+            self.car_angle += turn_factor
+
+        # The move angle (the direction the car is going) should lag behind the car angle.
+        error = self.car_angle - self.move_angle
+        # Don't allow the move angle to get too far behind.
+        if abs(error) > constants.MAX_DRIFT_ANGLE:
+            delta_angle = abs(error) - 80
+        else:
+            # When drifting (space), the move angle should lag more.
+            delta_angle = (
+                constants.DRIFT_RECOVERY_SPEED
+                if keys[pygame.K_SPACE]
+                else 2 * constants.DRIFT_RECOVERY_SPEED
+            )
+        self.move_angle += math.copysign(min(abs(error), delta_angle), error)
 
     def update_position(self, max_speed: float) -> None:
         # Clamps speed and updates car position based on current angle and speed
         self.speed = max(-max_speed / 2.0, min(max_speed, self.speed))
 
-        self.x += float(math.sin(math.radians(self.angle)) * self.speed)
-        self.y -= float(math.cos(math.radians(self.angle)) * self.speed)
+        self.x += float(math.sin(math.radians(self.move_angle)) * self.speed)
+        self.y -= float(math.cos(math.radians(self.move_angle)) * self.speed)
 
     def draw(self, camera_x: float, camera_y: float) -> None:
         """Draws the car on the track"""
-        rotated_image = pygame.transform.rotate(self.sprite, -self.angle)
+        rotated_image = pygame.transform.rotate(self.sprite, -self.car_angle)
         rotated_image.set_alpha(self.opacity)
 
         # Calculate the car's position *on the screen*
@@ -66,4 +82,4 @@ class Car:
         """Write the car's position and angle to the .csv file"""
         with open(constants.REPLAY_FILE_PATH.format(track_name=track_name), "a", newline="") as replay_file:
             csv_writer = csv.writer(replay_file)
-            csv_writer.writerow([self.x, self.y, self.angle])
+            csv_writer.writerow([self.x, self.y, self.move_angle, self.car_angle])

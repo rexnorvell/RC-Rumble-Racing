@@ -43,6 +43,8 @@ MAX_SPEED: float = 6.0
 ACCELERATION: float = 0.2
 FRICTION: float = 0.1
 TURN_SPEED: float = 2.5
+MAX_DRIFT_ANGLE: float = 50.0
+DRIFT_RECOVERY_SPEED: float = 1.5
 START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0,
                              TRACK_NAMES[1]: 780.0,
                              TRACK_NAMES[2]: 1310.0}

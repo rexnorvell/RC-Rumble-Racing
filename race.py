@@ -466,11 +466,17 @@ class Race:
             with open(self.ghost_filename, newline="") as file:
                 reader = csv.reader(file)
                 for i, row in enumerate(reader):
-                    if i == self.next_ghost_index:
-                        self.ghost_car.x, self.ghost_car.y, self.ghost_car.angle = map(float, row)
-                        self.ghost_car.draw(camera_x, camera_y)
-                        found = True
-                        break
+                    if i != self.next_ghost_index:
+                        continue
+                    (
+                        self.ghost_car.x,
+                        self.ghost_car.y,
+                        self.ghost_car.move_angle,
+                        self.ghost_car.car_angle,
+                    ) = map(float, row)
+                    self.ghost_car.draw(camera_x, camera_y)
+                    found = True
+                    break
             self.ghost_done = not found
         except FileNotFoundError:
             self.ghost_found = False
