@@ -10,11 +10,24 @@ class Car:
 
     def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool, style_index: int) -> None:
         self.screen: pygame.Surface = screen
-        self.x: float = constants.START_X[track_name]
-        self.y: float = constants.START_Y[track_name]
-        self.car_angle: float = constants.START_ROTATION[track_name]
+
+        # Store start values
+        self.start_x: float = constants.START_X[track_name]
+        self.start_y: float = constants.START_Y[track_name]
+        self.start_angle: float = constants.START_ROTATION[track_name]
+
+        # Set initial dynamic position
+        self.x: float = self.start_x
+        self.y: float = self.start_y
+        self.car_angle: float = self.start_angle
         self.move_angle: float = self.car_angle
         self.speed: float = 0.0
+
+        # Set initial respawn point (updated in Race class)
+        self.respawn_x: float = self.start_x
+        self.respawn_y: float = self.start_y
+        self.respawn_angle: float = self.start_angle
+
         self.width: int = constants.CAR_WIDTH
         self.height: int = constants.CAR_HEIGHT
         self.color: tuple[int, int, int] = constants.CAR_COLOR
@@ -25,7 +38,7 @@ class Car:
         self.sprite = pygame.transform.scale(self.sprite, (self.width, self.height))
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper, is_race_active: bool) -> None:
-        #Processes keyboard input to adjust speed and angle
+        # Processes keyboard input to adjust speed and angle
         if not is_race_active:
             self.speed = math.copysign(max(abs(self.speed) - constants.FRICTION, 0), self.speed)
             return
@@ -77,6 +90,21 @@ class Car:
         # Center the rect on its screen-space coordinates
         rect = rotated_image.get_rect(center=(screen_x, screen_y))
         self.screen.blit(rotated_image, rect)
+
+    def respawn(self) -> None:
+        """Resets the car to the last known respawn point."""
+        self.x = self.respawn_x
+        self.y = self.respawn_y
+        self.speed = 0.0
+        self.car_angle = self.respawn_angle
+        self.move_angle = self.respawn_angle
+
+    def set_respawn_point(self, x: float, y: float, angle: float) -> None:
+        """Updates the car's respawn location."""
+        self.respawn_x = x
+        self.respawn_y = y
+        self.respawn_angle = angle
+
 
     def log_properties(self, track_name: str) -> None:
         """Write the car's position and angle to the .csv file"""

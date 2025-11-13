@@ -13,7 +13,6 @@ from track import Track
 class Race:
 
     def __init__(self, game, track_name: str, user_car_type_index: int, ghost_car_type_index: int) -> None:
-        """"""
         # General
         self.game = game
 
@@ -149,6 +148,7 @@ class Race:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self._get_max_speed()
                 self.user_car.update_position(self.max_speed)
+                self._check_out_of_bounds()
                 self._check_lap_completion()
                 if self.elapsed_race_time_s < (self.personal_best_time + 1):
                     self.user_car.log_properties(self.track_name)
@@ -318,6 +318,9 @@ class Race:
         self.countdown_start_time = pygame.time.get_ticks()
         self._play_next_track()
 
+        # Set the initial respawn point to the start line
+        self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
+
     def _get_personal_best_time(self) -> None:
         """Get the user's personal best time for the current track"""
         personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
@@ -381,13 +384,42 @@ class Race:
         time_rect: pygame.Rect = time_surface.get_rect(center=(constants.WIDTH / 2, 325))
         self.game.game_surface.blit(time_surface, time_rect)
 
+    def _check_out_of_bounds(self) -> None:
+        """Checks if the car is outside the hard map limits and respawns it."""
+        car_x = self.user_car.x
+        car_y = self.user_car.y
+
+        if (car_x < constants.MAP_MIN_X or
+                car_x > constants.MAP_MAX_X or
+                car_y < constants.MAP_MIN_Y or
+                car_y > constants.MAP_MAX_Y):
+            self.user_car.respawn()
+
     def _check_lap_completion(self) -> None:
         """Checks for checkpoint and finish line crosses and updates lap count"""
+
+        # Check for checkpoint FIRST
         if self.track.check_checkpoint(self.user_car.x, self.user_car.y):
-            self.has_checkpoint = True
+            if not self.has_checkpoint:
+                self.has_checkpoint = True
+                # Update the car's respawn point to this checkpoint
+                cp_x = self.track.checkpoint_1.centerx
+                cp_y = self.track.checkpoint_1.centery
+                cp_angle = constants.CHECKPOINT_ANGLES[self.track.name]
+                self.user_car.set_respawn_point(cp_x, cp_y, cp_angle)
+
+        # Check for finish line
         if self.has_checkpoint and self.track.check_finish_line(self.user_car.x, self.user_car.y):
             self.has_checkpoint = False
             self.current_lap += 1
+
+            # Reset respawn point to the start line for the new lap
+            start_x = self.user_car.start_x
+            start_y = self.user_car.start_y
+            start_angle = self.user_car.start_angle
+            self.user_car.set_respawn_point(start_x, start_y, start_angle)
+
+            # Check if race is over
             if self.current_lap > constants.NUM_LAPS[self.track.name]:
                 self.during_race = False
                 self.race_over = True

@@ -30,6 +30,12 @@ NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
 CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200, 350, 200, 50),
                                                 TRACK_NAMES[1]: pygame.Rect(565, 50, 50, 300),
                                                 TRACK_NAMES[2]: pygame.Rect(0, 400, 200, 50)}
+
+# Angle to face when respawning at the checkpoint
+CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,  # Facing left
+                                     TRACK_NAMES[1]: 90,   # Facing right
+                                     TRACK_NAMES[2]: 90}   # Facing right
+
 FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12, 400, 180, 50),
                                                 TRACK_NAMES[1]: pygame.Rect(680, 590, 50, 180),
                                                 TRACK_NAMES[2]: pygame.Rect(1220, 330, 180, 50)}
@@ -96,6 +102,13 @@ FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
 WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"
+
+# Map Boundaries (for respawn)
+MAP_BOUNDS_BUFFER: int = 200
+MAP_MIN_X: int = -MAP_BOUNDS_BUFFER
+MAP_MIN_Y: int = -MAP_BOUNDS_BUFFER
+MAP_MAX_X: int = WIDTH + MAP_BOUNDS_BUFFER
+MAP_MAX_Y: int = HEIGHT + MAP_BOUNDS_BUFFER
 
 # Temporary track fill colors for each map until they're updated with more info
 TRACK_FILL_COLORS: dict[str, tuple[int, int, int]] = {
