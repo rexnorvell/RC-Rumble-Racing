@@ -1,5 +1,14 @@
 import pygame
 
+
+# Display
+TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
+TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
+FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
+WIDTH: int = 1408
+HEIGHT: int = 792
+GAME_TITLE: str = "RC Rumble Racing"
+
 # Cursor
 CURSOR_IMAGE_PATH: str = "assets/images/general/cursor.png"
 CURSOR_WIDTH: int = 40
@@ -18,7 +27,7 @@ TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{image_name}.pn
 # Track Selection Exit button
 # We need to add a blank button UI element so it can be reusable and easier to implement new buttons.
 TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
-TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
+TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 
 # Track parameters
 TRACK_NAMES: list[str] = ["magnificent_meadow",
@@ -27,20 +36,23 @@ TRACK_NAMES: list[str] = ["magnificent_meadow",
 NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
                             TRACK_NAMES[1]: 3,
                             TRACK_NAMES[2]: 3}
-CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200, 350, 200, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(565, 50, 50, 300),
+CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200 + (WIDTH * 0.75), 350 + (HEIGHT * 0.75), 200, 50),
+                                                TRACK_NAMES[1]: pygame.Rect(565 + (WIDTH * 0.75), 50 + (HEIGHT * 0.75), 50, 300),
                                                 TRACK_NAMES[2]: pygame.Rect(0, 400, 200, 50)}
 
 # Angle to face when respawning at the checkpoint
-CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,  # Facing left
-                                     TRACK_NAMES[1]: 90,   # Facing right
-                                     TRACK_NAMES[2]: 90}   # Facing right
+CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,
+                                     TRACK_NAMES[1]: 90,
+                                     TRACK_NAMES[2]: 90}
 
-FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12, 400, 180, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(680, 590, 50, 180),
+FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12 + (WIDTH * 0.75), 400 + (HEIGHT * 0.75), 180, 50),
+                                                TRACK_NAMES[1]: pygame.Rect(680 + (WIDTH * 0.75), 590 + (HEIGHT * 0.75), 50, 180),
                                                 TRACK_NAMES[2]: pygame.Rect(1220, 330, 180, 50)}
+TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[int, int]] = {TRACK_NAMES[0]: (2.5, 2.5),
+                                                        TRACK_NAMES[1]: (2.5, 2.5),
+                                                        TRACK_NAMES[2]: (1, 1)}
 TRACK_IMAGE_PATH: str = "assets/images/tracks/{track_name}/{image_type}.png"
-TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_bw"]
+TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 
 # Car parameters
 CAR_WIDTH: int = 30
@@ -50,13 +62,14 @@ ACCELERATION: float = 0.2
 FRICTION: float = 0.1
 TURN_SPEED: float = 2.5
 MAX_DRIFT_ANGLE: float = 50.0
+MIN_DRIFT_ANGLE: float = 15.0
 DRIFT_RECOVERY_SPEED: float = 1.5
-START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0,
-                             TRACK_NAMES[1]: 780.0,
+START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0 + (WIDTH * 0.75),
+                             TRACK_NAMES[1]: 780.0 + (WIDTH * 0.75),
                              TRACK_NAMES[2]: 1310.0}
-START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0,
-                             TRACK_NAMES[1]: 670.0,
-                             TRACK_NAMES[2]: 450.0,}
+START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0 + (HEIGHT * 0.75),
+                             TRACK_NAMES[1]: 670.0 + (HEIGHT * 0.75),
+                             TRACK_NAMES[2]: 450.0}
 START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[1]: 270,
                                   TRACK_NAMES[2]: 0}
@@ -69,7 +82,7 @@ CAR_TYPES: list[str] = ["f1_car_red",
 PAUSE_OVERLAY_COLOR: tuple[int, int, int, int] = (0, 0, 0, 180)
 PAUSE_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
 PAUSE_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
-PAUSE_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
+PAUSE_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 PAUSE_BUTTON_WIDTH: int = 350
 PAUSE_BUTTON_HEIGHT: int = 60
 PAUSE_TITLE_Y: int = 150
@@ -95,14 +108,6 @@ GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
 # Volume settings
 MUSIC_VOLUME: float = 0.5
 
-# Display
-TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
-TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
-FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
-WIDTH: int = 1408
-HEIGHT: int = 792
-GAME_TITLE: str = "RC Rumble Racing"
-
 # Map Boundaries (for respawn)
 MAP_BOUNDS_BUFFER: int = 200
 MAP_MIN_X: int = -MAP_BOUNDS_BUFFER
@@ -120,7 +125,7 @@ TRACK_FILL_COLORS: dict[str, tuple[int, int, int]] = {
 # Race Over Menu
 RACE_OVER_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
 RACE_OVER_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
-RACE_OVER_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0) # Yellow hover
+RACE_OVER_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 RACE_OVER_BUTTON_WIDTH: int = 350
 RACE_OVER_BUTTON_HEIGHT: int = 60
 RACE_OVER_TITLE_Y: int = 250
