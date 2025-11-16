@@ -70,7 +70,6 @@ class Race:
         # User Car
         self.user_car_type_index: int = user_car_type_index
         self.user_car: Car = Car(self.game.game_surface, self.track.name, False, self.user_car_type_index)
-        self.max_speed: float = constants.MAX_SPEED
 
         # User Data
         self.personal_best_time: float = float("inf")
@@ -117,11 +116,10 @@ class Race:
         """Establish a frame rate of 60 FPS"""
         self.clock.tick(60)
 
-    def _get_max_speed(self):
-        """Get the maximum speed of the car based on the constants and the car's off-road status"""
-        self.max_speed = constants.MAX_SPEED
-        if self.track.is_off_road(self.user_car.x, self.user_car.y):
-            self.max_speed *= 0.5
+    def _set_max_speed(self):
+        """Set the maximum speed of the car based on the constants and the car's off-road status"""
+        self.user_car.is_off_road = True if self.track.is_off_road(self.user_car.x, self.user_car.y) else False
+        self.user_car.set_max_speed()
 
     def start(self) -> bool:
         """The main game loop when the user is racing on a track"""
@@ -145,17 +143,17 @@ class Race:
                     case "resume":
                         self._unpause()
             elif self.during_race:
+                self._set_max_speed()
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
-                self._get_max_speed()
-                self.user_car.update_position(self.max_speed)
+                self.user_car.update_position()
                 self._check_out_of_bounds()
                 self._check_lap_completion()
                 if self.elapsed_race_time_s < (self.personal_best_time + 1):
                     self.user_car.log_properties(self.track_name)
             elif self.race_over:
+                self._set_max_speed()
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
-                self._get_max_speed()
-                self.user_car.update_position(self.max_speed)
+                self.user_car.update_position()
                 if not self.compared_to_best:
                     self._display_race_time()
                     self._compare_to_best()
@@ -189,7 +187,6 @@ class Race:
         elif self.during_race and self.is_paused:
             self.elapsed_race_time_ms = self.pause_start_time_ms - self.race_start_time_ms
         self.elapsed_race_time_s = self.elapsed_race_time_ms / 1000.0
-        
 
     def _draw_race(self) -> None:
         """Draws all the visual elements for the race"""
@@ -207,8 +204,8 @@ class Race:
 
         # Draw ghost
         if self.ghost_found and self.show_ghost and not self.ghost_done and not self.race_over:
-            self._draw_ghost(self.camera_x, self.camera_y)
-            if self.during_race:
+            self._draw_ghost()
+            if self.during_race and not self.is_paused:
                 self.next_ghost_index += 1
 
         # Draw car
@@ -232,12 +229,23 @@ class Race:
         if self.is_paused or self.race_over:
             self.game.draw_cursor()
 
+        # DEBUGGING
+        # Draw checkpoint and finish line
+        #pygame.draw.rect(self.game.game_surface, (100, 10, 10), pygame.Rect(self.track.checkpoint_1.x - self.camera_x,
+        #                                                                    self.track.checkpoint_1.y - self.camera_y,
+        #                                                                    self.track.checkpoint_1.width,
+        #                                                                    self.track.checkpoint_1.height))
+        #pygame.draw.rect(self.game.game_surface, (10, 100, 10), pygame.Rect(self.track.finish_line.x - self.camera_x,
+        #                                                                    self.track.finish_line.y - self.camera_y,
+        #                                                                    self.track.finish_line.width,
+        #                                                                    self.track.finish_line.height))
+
         # Draw the letterboxed game_surface to the screen
         self.game.draw_letterboxed_surface()
         pygame.display.flip()
 
     def _draw_pause_menu(self) -> None:
-        # Draws the pause menu overlay and buttons onto the game_surface
+        """Draws the pause menu overlay and buttons onto the game_surface"""
         # Draw the semi-transparent overlay
         self.game.game_surface.blit(self.pause_overlay, (0, 0))
 
@@ -386,13 +394,7 @@ class Race:
 
     def _check_out_of_bounds(self) -> None:
         """Checks if the car is outside the hard map limits and respawns it."""
-        car_x = self.user_car.x
-        car_y = self.user_car.y
-
-        if (car_x < constants.MAP_MIN_X or
-                car_x > constants.MAP_MAX_X or
-                car_y < constants.MAP_MIN_Y or
-                car_y > constants.MAP_MAX_Y):
+        if self.track.is_out_of_bounds(self.user_car.x, self.user_car.y):
             self.user_car.respawn()
 
     def _check_lap_completion(self) -> None:
@@ -491,7 +493,7 @@ class Race:
                     return "exit_to_menu"
         return ""
 
-    def _draw_ghost(self, camera_x: float, camera_y: float):
+    def _draw_ghost(self):
         """Retrieves the ghost's position at this frame and draws it on the screen, returning False if the ghost has finished the race"""
         try:
             found: bool = False
@@ -506,7 +508,7 @@ class Race:
                         self.ghost_car.move_angle,
                         self.ghost_car.car_angle,
                     ) = map(float, row)
-                    self.ghost_car.draw(camera_x, camera_y)
+                    self.ghost_car.draw(self.camera_x, self.camera_y)
                     found = True
                     break
             self.ghost_done = not found
@@ -524,6 +526,9 @@ class Race:
 
     def _draw_race_over_menu(self) -> None:
         """Draws the race over menu buttons onto the game_surface"""
+
+        # Overlay
+        self.game.game_surface.blit(self.pause_overlay, (0, 0))
 
         # Draw Title
         title_text = self.pause_title_font.render("Race Finished!", True, constants.RACE_OVER_TITLE_COLOR)
