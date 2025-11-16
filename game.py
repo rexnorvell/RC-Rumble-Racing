@@ -9,7 +9,8 @@ from race import Race
 
 
 class Game:
-    # Manages the overall game state, main loop, and coordination between Car and Track
+    """Manages the overall game state, main loop, and coordination between Car and Track"""
+
     def __init__(self) -> None:
         pygame.init()
         pygame.font.init()
@@ -180,6 +181,6 @@ class Game:
             track_select_clock.tick(60)
 
     def quit(self) -> None:
-        #Quits the game
+        """Quits the game"""
         pygame.quit()
         sys.exit()
