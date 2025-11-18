@@ -79,7 +79,7 @@ class Car:
 
         # Don't allow the move angle to get too far behind.
         if abs(error) > constants.MAX_DRIFT_ANGLE:
-            delta_angle = 2 * constants.DRIFT_RECOVERY_SPEED
+            delta_angle = abs(error) - constants.MAX_DRIFT_ANGLE
         # When drifting (space), the move angle should lag more.
         elif keys[pygame.K_SPACE]:
             delta_angle = constants.DRIFT_RECOVERY_SPEED
