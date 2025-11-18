@@ -272,15 +272,19 @@ class Race:
         """Draws the main race UI elements (lap, times) onto the game surface"""
 
         # Lap counter
-        lap_str = "Finish!" if self.race_over else f"Lap {self.current_lap}/{constants.NUM_LAPS[self.track.name]}"
-        lap_surf = self.timer_font.render(lap_str, True, constants.TEXT_COLOR)
+        lap_str: str = f"Lap {self.current_lap}/{constants.NUM_LAPS[self.track.name]}"
+        lap_surf: Surface = self.timer_font.render(lap_str, True, constants.TEXT_COLOR)
+        lap_shadow: Surface = self.timer_font.render(lap_str, True, constants.TEXT_SHADOW_COLOR)
 
         # Total Time
-        total_time_str = self._format_time_simple()
-        total_time_surf = self.timer_font.render(total_time_str, True, constants.TEXT_COLOR)
+        total_time_str: str = self._format_time_simple()
+        total_time_surf: Surface = self.timer_font.render(total_time_str, True, constants.TEXT_COLOR)
+        total_time_shadow: Surface = self.timer_font.render(total_time_str, True, constants.TEXT_SHADOW_COLOR)
 
         # Blit
+        self.game.game_surface.blit(lap_shadow, (22, 12))
         self.game.game_surface.blit(lap_surf, (20, 10))
+        self.game.game_surface.blit(total_time_shadow, (22, 52))
         self.game.game_surface.blit(total_time_surf, (20, 50))
 
     def _initialize_pause(self) -> None:
