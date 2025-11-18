@@ -66,6 +66,8 @@ class Race:
         # Sound and Music
         self.next_lap_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
         self.next_lap_sound.set_volume(0.5)
+        self.respawn_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="respawn"))
+        self.respawn_sound.set_volume(0.5)
 
         # User Car
         self.user_car_type_index: int = user_car_type_index
@@ -399,6 +401,7 @@ class Race:
     def _check_out_of_bounds(self) -> None:
         """Checks if the car is outside the hard map limits and respawns it."""
         if self.track.is_out_of_bounds(self.user_car.x, self.user_car.y):
+            self.respawn_sound.play()
             self.user_car.respawn()
 
     def _check_lap_completion(self) -> None:
