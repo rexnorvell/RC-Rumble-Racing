@@ -3,6 +3,7 @@ import pygame
 
 # Display
 TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
+TEXT_SHADOW_COLOR: tuple[int, int, int] = (0, 0, 0)
 TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
 FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
 WIDTH: int = 1408
@@ -38,7 +39,7 @@ NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
                             TRACK_NAMES[2]: 3}
 CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200 + (WIDTH * 0.75), 350 + (HEIGHT * 0.75), 200, 50),
                                                 TRACK_NAMES[1]: pygame.Rect(565 + (WIDTH * 0.75), 50 + (HEIGHT * 0.75), 50, 300),
-                                                TRACK_NAMES[2]: pygame.Rect(0, 400, 200, 50)}
+                                                TRACK_NAMES[2]: pygame.Rect(0 + (WIDTH * 0.75), 400 + (HEIGHT * 0.75), 200, 50)}
 
 # Angle to face when respawning at the checkpoint
 CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,
@@ -47,10 +48,10 @@ CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,
 
 FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12 + (WIDTH * 0.75), 400 + (HEIGHT * 0.75), 180, 50),
                                                 TRACK_NAMES[1]: pygame.Rect(680 + (WIDTH * 0.75), 590 + (HEIGHT * 0.75), 50, 180),
-                                                TRACK_NAMES[2]: pygame.Rect(1220, 330, 180, 50)}
-TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[int, int]] = {TRACK_NAMES[0]: (2.5, 2.5),
-                                                        TRACK_NAMES[1]: (2.5, 2.5),
-                                                        TRACK_NAMES[2]: (1, 1)}
+                                                TRACK_NAMES[2]: pygame.Rect(1220 + (WIDTH * 0.75), 330 + (HEIGHT * 0.75), 180, 50)}
+TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[float, float]] = {TRACK_NAMES[0]: (2.5, 2.5),
+                                                            TRACK_NAMES[1]: (2.5, 2.5),
+                                                            TRACK_NAMES[2]: (2.5, 2.5)}
 TRACK_IMAGE_PATH: str = "assets/images/tracks/{track_name}/{image_type}.png"
 TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 
@@ -66,10 +67,10 @@ MIN_DRIFT_ANGLE: float = 15.0
 DRIFT_RECOVERY_SPEED: float = 1.5
 START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0 + (WIDTH * 0.75),
                              TRACK_NAMES[1]: 780.0 + (WIDTH * 0.75),
-                             TRACK_NAMES[2]: 1310.0}
+                             TRACK_NAMES[2]: 1310.0 + (WIDTH * 0.75)}
 START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0 + (HEIGHT * 0.75),
                              TRACK_NAMES[1]: 670.0 + (HEIGHT * 0.75),
-                             TRACK_NAMES[2]: 450.0}
+                             TRACK_NAMES[2]: 450.0 + (HEIGHT * 0.75)}
 START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[1]: 270,
                                   TRACK_NAMES[2]: 0}
