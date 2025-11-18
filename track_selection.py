@@ -20,15 +20,15 @@ class TrackSelection:
         self.current_image: pygame.Surface = self.track_selection_default_image
 
         # Track button rects
-        button_width: int = 435
-        button_height: int = 250
-        self.button_rect_1: pygame.Rect = pygame.Rect(65, 137, button_width, button_height)
-        self.button_rect_2: pygame.Rect = pygame.Rect(909, 137, button_width, button_height)
-        self.button_rect_3: pygame.Rect = pygame.Rect(487, 408, button_width, button_height)
+        button_width: int = 380
+        button_height: int = 213
+        self.button_rect_1: pygame.Rect = pygame.Rect(302, 160, button_width, button_height)
+        self.button_rect_2: pygame.Rect = pygame.Rect(727, 160, button_width, button_height)
+        self.button_rect_3: pygame.Rect = pygame.Rect(302, 420, button_width, button_height)
 
         # Exit Button
         self.button_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 40)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)  # Bottom-left
+        self.exit_button_rect: pygame.Rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
 
         self.last_hovered: int = 0
 
