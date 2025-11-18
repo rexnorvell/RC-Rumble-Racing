@@ -1,6 +1,5 @@
 import pygame
 
-
 # Display
 TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
 TEXT_SHADOW_COLOR: tuple[int, int, int] = (0, 0, 0)
@@ -44,7 +43,7 @@ CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200
 # Angle to face when respawning at the checkpoint
 CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,
                                      TRACK_NAMES[1]: 90,
-                                     TRACK_NAMES[2]: 90}
+                                     TRACK_NAMES[2]: 180}
 
 FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12 + (WIDTH * 0.75), 400 + (HEIGHT * 0.75), 180, 50),
                                                 TRACK_NAMES[1]: pygame.Rect(680 + (WIDTH * 0.75), 590 + (HEIGHT * 0.75), 50, 180),
@@ -115,13 +114,6 @@ MAP_MIN_X: int = -MAP_BOUNDS_BUFFER
 MAP_MIN_Y: int = -MAP_BOUNDS_BUFFER
 MAP_MAX_X: int = WIDTH + MAP_BOUNDS_BUFFER
 MAP_MAX_Y: int = HEIGHT + MAP_BOUNDS_BUFFER
-
-# Temporary track fill colors for each map until they're updated with more info
-TRACK_FILL_COLORS: dict[str, tuple[int, int, int]] = {
-    TRACK_NAMES[0]: (0, 102, 0),    # Dark green for Magnificent Meadow
-    TRACK_NAMES[1]: (218, 165, 32), # Sandy brown for Dusty Dunes
-    TRACK_NAMES[2]: (173, 216, 230)  # Light blue for Glistening Glacier
-}
 
 # Race Over Menu
 RACE_OVER_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)

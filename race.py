@@ -197,10 +197,6 @@ class Race:
         self.camera_x = self.user_car.x - (constants.WIDTH / 2)
         self.camera_y = self.user_car.y - (constants.HEIGHT / 2)
 
-        # Fill the screen with the track's ground color
-        # Temporary until the maps are drawn bigger to have more detail past edges
-        self.game.game_surface.fill(constants.TRACK_FILL_COLORS[self.track.name])
-
         # Pass camera offset to track drawing
         self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
 
@@ -231,17 +227,6 @@ class Race:
         # Only draw the cursor if we are in a menu
         if self.is_paused or self.race_over:
             self.game.draw_cursor()
-
-        # DEBUGGING
-        # Draw checkpoint and finish line
-        #pygame.draw.rect(self.game.game_surface, (100, 10, 10), pygame.Rect(self.track.checkpoint_1.x - self.camera_x,
-        #                                                                    self.track.checkpoint_1.y - self.camera_y,
-        #                                                                    self.track.checkpoint_1.width,
-        #                                                                    self.track.checkpoint_1.height))
-        #pygame.draw.rect(self.game.game_surface, (10, 100, 10), pygame.Rect(self.track.finish_line.x - self.camera_x,
-        #                                                                    self.track.finish_line.y - self.camera_y,
-        #                                                                    self.track.finish_line.width,
-        #                                                                    self.track.finish_line.height))
 
         # Draw the letterboxed game_surface to the screen
         self.game.draw_letterboxed_surface()
