@@ -205,8 +205,9 @@ class Race:
         self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
 
         # Draw ghost
-        if self.ghost_found and self.show_ghost and not self.ghost_done and not self.race_over:
-            self._draw_ghost()
+        if self.ghost_found and not self.ghost_done and not self.race_over:
+            if self.show_ghost:
+                self._draw_ghost()
             if self.during_race and not self.is_paused:
                 self.next_ghost_index += 1
 
