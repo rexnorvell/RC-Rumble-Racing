@@ -1,5 +1,6 @@
 import pygame
 
+
 # Display
 TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
 TEXT_SHADOW_COLOR: tuple[int, int, int] = (0, 0, 0)
@@ -79,16 +80,23 @@ CAR_TYPES: list[str] = ["f1_car_red",
                         "f1_car_blue"]
 
 # Pause Menu
-PAUSE_OVERLAY_COLOR: tuple[int, int, int, int] = (0, 0, 0, 180)
+PAUSE_MENU_IMAGE_PATH: str = "assets/images/pause/{image_name}.png"
+PAUSE_OVERLAY_OPACITY: int = 100
 PAUSE_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
 PAUSE_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
 PAUSE_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
-PAUSE_BUTTON_WIDTH: int = 350
-PAUSE_BUTTON_HEIGHT: int = 60
-PAUSE_TITLE_Y: int = 150
-PAUSE_RESUME_Y: int = 300
-PAUSE_REPLAY_Y: int = 400
-PAUSE_EXIT_Y: int = 500
+PAUSE_BUTTON_WIDTH: int = 720
+PAUSE_BUTTON_HEIGHT: int = 85
+PAUSE_RESUME_Y: int = 288
+PAUSE_REPLAY_Y: int = 419
+PAUSE_EXIT_Y: int = 548
+
+# Race Over Menu
+RACE_OVER_IMAGE_PATH: str = "assets/images/race_over/{image_name}.png"
+RACE_OVER_BUTTON_WIDTH: int = 720
+RACE_OVER_BUTTON_HEIGHT: int = 85
+RACE_OVER_RETRY_Y: int = 419
+RACE_OVER_EXIT_Y: int = 548
 
 # Replay files
 REPLAY_FILE_PATH: str = "assets/replays/{track_name}/current_race.csv"
@@ -114,13 +122,3 @@ MAP_MIN_X: int = -MAP_BOUNDS_BUFFER
 MAP_MIN_Y: int = -MAP_BOUNDS_BUFFER
 MAP_MAX_X: int = WIDTH + MAP_BOUNDS_BUFFER
 MAP_MAX_Y: int = HEIGHT + MAP_BOUNDS_BUFFER
-
-# Race Over Menu
-RACE_OVER_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
-RACE_OVER_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
-RACE_OVER_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
-RACE_OVER_BUTTON_WIDTH: int = 350
-RACE_OVER_BUTTON_HEIGHT: int = 60
-RACE_OVER_TITLE_Y: int = 250
-RACE_OVER_RETRY_Y: int = 400
-RACE_OVER_EXIT_Y: int = 500

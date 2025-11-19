@@ -34,7 +34,6 @@ class TrackSelection:
 
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(0.1)
-        self.hover_sound_played: bool = False
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles events like button presses"""

@@ -31,6 +31,8 @@ class Game:
                                                           (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
         self.click_sound.set_volume(0.2)
+        self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
+        self.hover_sound.set_volume(0.1)
 
         # Letterbox scaling
         self.scale_factor: float = 1.0
@@ -47,32 +49,29 @@ class Game:
         if window_width == 0 or window_height == 0:
             return  # Avoid division by zero if window is minimized
 
-        game_width = constants.WIDTH
-        game_height = constants.HEIGHT
-
         # Calculate aspect ratios
-        window_aspect = window_width / window_height
-        game_aspect = game_width / game_height
+        window_aspect: float = window_width / window_height
+        game_aspect: float = constants.WIDTH / constants.HEIGHT
 
         # Determine scaling factor
+        new_width: int = window_width
+        new_height: int = window_height
         if window_aspect > game_aspect:
             # Window is wider than game
-            self.scale_factor = window_height / game_height
-            new_height = window_height
-            new_width = int(game_width * self.scale_factor)
+            self.scale_factor = window_height / constants.HEIGHT
+            new_width = int(constants.WIDTH * self.scale_factor)
         else:
             # Window is taller than game
-            self.scale_factor = window_width / game_width
-            new_width = window_width
-            new_height = int(game_height * self.scale_factor)
+            self.scale_factor = window_width / constants.WIDTH
+            new_height = int(constants.HEIGHT * self.scale_factor)
 
         # Calculate offsets for centering
-        self.offset_x = (window_width - new_width) // 2
-        self.offset_y = (window_height - new_height) // 2
+        self.offset_x: int = (window_width - new_width) // 2
+        self.offset_y: int = (window_height - new_height) // 2
 
         # Scale and blit
-        scaled_surface = pygame.transform.scale(self.game_surface, (new_width, new_height))
-        self.screen.fill((0, 0, 0))  # Fill with black bars
+        scaled_surface: pygame.Surface = pygame.transform.scale(self.game_surface, (new_width, new_height))
+        self.screen.fill((0, 0, 0))
         self.screen.blit(scaled_surface, (self.offset_x, self.offset_y))
 
     def _set_title_screen(self):
