@@ -69,13 +69,24 @@ TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 # Car parameters
 CAR_WIDTH: int = 30
 CAR_HEIGHT: int = 60
-MAX_SPEED: float = 6.0
-ACCELERATION: float = 0.2
+
+# Physics Base Values (Used to calculate actual stats from the 1-10 ratings)
+# Formula: Actual = Base + (Stat * Multiplier)
+BASE_MAX_SPEED: float = 4.5
+SPEED_STAT_MULTIPLIER: float = 0.25
+
+BASE_ACCELERATION: float = 0.1
+ACCEL_STAT_MULTIPLIER: float = 0.015
+
+BASE_TURN_SPEED: float = 1.5
+HANDLING_STAT_MULTIPLIER: float = 0.15
+
+# Global constants (Fallback or Common)
 FRICTION: float = 0.1
-TURN_SPEED: float = 2.5
 MAX_DRIFT_ANGLE: float = 50.0
 MIN_DRIFT_ANGLE: float = 15.0
 DRIFT_RECOVERY_SPEED: float = 1.5
+
 START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0 + (WIDTH * 0.75),
                              TRACK_NAMES[1]: 780.0 + (WIDTH * 0.75),
                              TRACK_NAMES[2]: 1310.0 + (WIDTH * 0.75)}
@@ -88,37 +99,46 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
-# The index here MUST match the index in the `styles` list below.
-CAR_TYPES: list[str] = ["f1_car_red",
-                        "f1_car_blue",
-                        "f1_car_green",
-                        "f1_car_orange"]
-
-# This structure defines the car properties for the selection screen
+# Car Definitions
 CAR_DEFINITIONS = [
     {
-        "name": "F1 Racer",
+        "name": "1968 F1",
         "stats": {
-            "Speed": 9,
-            "Acceleration": 8,
-            "Handling": 7,
+            "Speed": 7,
+            "Acceleration": 7,
+            "Handling": 9,
         },
-        # These styles map to the *file names* in CAR_TYPES
-        # The index (0, 1, 2, 3) will be passed to the Race class
         "styles": [
             {"name": "f1_car_red", "color": (200, 0, 0)},
-            {"name": "f1_car_blue", "color": (0, 0, 200)},
+            {"name": "f1_car_blue", "color": (0, 0, 200)}
+        ],
+    },
+    {
+        "name": "2003 F1",
+        "stats": {
+            "Speed": 9,
+            "Acceleration": 9,
+            "Handling": 6,
+        },
+        "styles": [
             {"name": "f1_car_green", "color": (0, 200, 0)},
             {"name": "f1_car_orange", "color": (255, 165, 0)}
         ],
-    },
-    # When we add more cars, just add another dictionary here
-    # {
-    #     "name": "Rally Car",
-    #     "stats": { ... },
-    #     "styles": [ ... ],
-    # }
+    }
 ]
+
+# Ghost Definition (Unavailable to player)
+GHOST_CAR_DEFINITION = {
+    "name": "Ghost",
+    "stats": {
+        "Speed": 8,
+        "Acceleration": 8,
+        "Handling": 8,
+    },
+    "styles": [
+        {"name": "f1_car_red", "color": (128, 128, 128)} # Placeholder, color tinting handles transparency
+    ]
+}
 
 
 # Pause Menu

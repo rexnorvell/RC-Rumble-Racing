@@ -12,7 +12,7 @@ from track import Track
 
 class Race:
 
-    def __init__(self, game, track_name: str, user_car_type_index: int, ghost_car_type_index: int) -> None:
+    def __init__(self, game, track_name: str, car_index: int, style_index: int) -> None:
         # General
         self.game = game
 
@@ -35,15 +35,21 @@ class Race:
                                                            constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
         self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH,
                                                          constants.PAUSE_BUTTON_HEIGHT)
-        self.pause_image_left: pygame.Surface = pygame.image.load(constants.PAUSE_MENU_IMAGE_PATH.format(image_name="left")).convert_alpha()
-        self.pause_image_left = pygame.transform.scale(self.pause_image_left,(constants.WIDTH, constants.HEIGHT))
-        self.pause_default_image_right: pygame.Surface = pygame.image.load(constants.PAUSE_MENU_IMAGE_PATH.format(image_name="right")).convert_alpha()
-        self.pause_default_image_right = pygame.transform.scale(self.pause_default_image_right, (constants.WIDTH, constants.HEIGHT))
-        self.pause_image_hover_1: pygame.Surface = pygame.image.load(constants.PAUSE_MENU_IMAGE_PATH.format(image_name="1")).convert_alpha()
+        self.pause_image_left: pygame.Surface = pygame.image.load(
+            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="left")).convert_alpha()
+        self.pause_image_left = pygame.transform.scale(self.pause_image_left, (constants.WIDTH, constants.HEIGHT))
+        self.pause_default_image_right: pygame.Surface = pygame.image.load(
+            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="right")).convert_alpha()
+        self.pause_default_image_right = pygame.transform.scale(self.pause_default_image_right,
+                                                                (constants.WIDTH, constants.HEIGHT))
+        self.pause_image_hover_1: pygame.Surface = pygame.image.load(
+            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="1")).convert_alpha()
         self.pause_image_hover_1 = pygame.transform.scale(self.pause_image_hover_1, (constants.WIDTH, constants.HEIGHT))
-        self.pause_image_hover_2: pygame.Surface = pygame.image.load(constants.PAUSE_MENU_IMAGE_PATH.format(image_name="2")).convert_alpha()
+        self.pause_image_hover_2: pygame.Surface = pygame.image.load(
+            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="2")).convert_alpha()
         self.pause_image_hover_2 = pygame.transform.scale(self.pause_image_hover_2, (constants.WIDTH, constants.HEIGHT))
-        self.pause_image_hover_3: pygame.Surface = pygame.image.load(constants.PAUSE_MENU_IMAGE_PATH.format(image_name="3")).convert_alpha()
+        self.pause_image_hover_3: pygame.Surface = pygame.image.load(
+            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="3")).convert_alpha()
         self.pause_image_hover_3 = pygame.transform.scale(self.pause_image_hover_3, (constants.WIDTH, constants.HEIGHT))
         self.pause_image_right: pygame.Surface = self.pause_default_image_right
 
@@ -59,14 +65,22 @@ class Race:
         self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(race_over_button_x, constants.RACE_OVER_EXIT_Y,
                                                                    constants.RACE_OVER_BUTTON_WIDTH,
                                                                    constants.RACE_OVER_BUTTON_HEIGHT)
-        self.race_over_image_left: pygame.Surface = pygame.image.load(constants.RACE_OVER_IMAGE_PATH.format(image_name="left")).convert_alpha()
-        self.race_over_image_left = pygame.transform.scale(self.race_over_image_left, (constants.WIDTH, constants.HEIGHT))
-        self.race_over_default_image_right: pygame.Surface = pygame.image.load(constants.RACE_OVER_IMAGE_PATH.format(image_name="right")).convert_alpha()
-        self.race_over_default_image_right = pygame.transform.scale(self.race_over_default_image_right,(constants.WIDTH, constants.HEIGHT))
-        self.race_over_image_hover_1: pygame.Surface = pygame.image.load(constants.RACE_OVER_IMAGE_PATH.format(image_name="1")).convert_alpha()
-        self.race_over_image_hover_1 = pygame.transform.scale(self.race_over_image_hover_1,(constants.WIDTH, constants.HEIGHT))
-        self.race_over_image_hover_2: pygame.Surface = pygame.image.load(constants.RACE_OVER_IMAGE_PATH.format(image_name="2")).convert_alpha()
-        self.race_over_image_hover_2 = pygame.transform.scale(self.race_over_image_hover_2,(constants.WIDTH, constants.HEIGHT))
+        self.race_over_image_left: pygame.Surface = pygame.image.load(
+            constants.RACE_OVER_IMAGE_PATH.format(image_name="left")).convert_alpha()
+        self.race_over_image_left = pygame.transform.scale(self.race_over_image_left,
+                                                           (constants.WIDTH, constants.HEIGHT))
+        self.race_over_default_image_right: pygame.Surface = pygame.image.load(
+            constants.RACE_OVER_IMAGE_PATH.format(image_name="right")).convert_alpha()
+        self.race_over_default_image_right = pygame.transform.scale(self.race_over_default_image_right,
+                                                                    (constants.WIDTH, constants.HEIGHT))
+        self.race_over_image_hover_1: pygame.Surface = pygame.image.load(
+            constants.RACE_OVER_IMAGE_PATH.format(image_name="1")).convert_alpha()
+        self.race_over_image_hover_1 = pygame.transform.scale(self.race_over_image_hover_1,
+                                                              (constants.WIDTH, constants.HEIGHT))
+        self.race_over_image_hover_2: pygame.Surface = pygame.image.load(
+            constants.RACE_OVER_IMAGE_PATH.format(image_name="2")).convert_alpha()
+        self.race_over_image_hover_2 = pygame.transform.scale(self.race_over_image_hover_2,
+                                                              (constants.WIDTH, constants.HEIGHT))
         self.race_over_image_right: pygame.Surface = self.race_over_default_image_right
         self.formatted_time: str
         self.time_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 60)
@@ -80,21 +94,29 @@ class Race:
         self.timer_font.set_bold(True)
 
         # Sound and Music
-        self.next_lap_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
+        self.next_lap_sound: pygame.mixer.Sound = pygame.mixer.Sound(
+            constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
         self.next_lap_sound.set_volume(0.5)
-        self.respawn_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="respawn"))
+        self.respawn_sound: pygame.mixer.Sound = pygame.mixer.Sound(
+            constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="respawn"))
         self.respawn_sound.set_volume(0.5)
 
         # User Car
-        self.user_car_type_index: int = user_car_type_index
-        self.user_car: Car = Car(self.game.game_surface, self.track.name, False, self.user_car_type_index)
+        self.user_car_index = car_index
+        self.user_style_index = style_index
+        self.user_car_config = constants.CAR_DEFINITIONS[self.user_car_index]
+
+        self.user_car: Car = Car(self.game.game_surface, self.track.name, False, self.user_car_config,
+                                 self.user_style_index)
 
         # User Data
         self.personal_best_time: float = float("inf")
 
         # Ghost Car
-        self.ghost_car_type_index: int = ghost_car_type_index
-        self.ghost_car = Car(self.game.game_surface, self.track.name, True, self.ghost_car_type_index)
+        # Use the separate ghost definition from constants
+        self.ghost_car_config = constants.GHOST_CAR_DEFINITION
+        self.ghost_car = Car(self.game.game_surface, self.track.name, True, self.ghost_car_config, 0)
+
         self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
         self.next_ghost_index: int = 1
         self.show_ghost: bool = True
@@ -277,8 +299,8 @@ class Race:
 
         # Total Time
         total_time_str: str = self._format_time_simple()
-        total_time_surf: Surface = self.timer_font.render(total_time_str, True, constants.TEXT_COLOR)
-        total_time_shadow: Surface = self.timer_font.render(total_time_str, True, constants.TEXT_SHADOW_COLOR)
+        total_time_surf: pygame.Surface = self.timer_font.render(total_time_str, True, constants.TEXT_COLOR)
+        total_time_shadow: pygame.Surface = self.timer_font.render(total_time_str, True, constants.TEXT_SHADOW_COLOR)
 
         # Blit
         self.game.game_surface.blit(self.lap_shadow, (22, 12))
@@ -288,7 +310,7 @@ class Race:
 
     def _initialize_pause(self) -> None:
         """Perform one-time operations upon pausing the race"""
-        pygame.mixer_music.pause()
+        pygame.mixer.music.pause()
         self.game.click_sound.play()
         self.pause_start_time_ms = pygame.time.get_ticks()
         self.pause_start_time_s = self.pause_start_time_ms / 1000.0
@@ -334,7 +356,8 @@ class Race:
 
     def _get_personal_best_time(self) -> None:
         """Get the user's personal best time for the current track"""
-        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        personal_best_metadata_path: Path = Path(
+            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         self.personal_best_time = float("inf")
         if personal_best_metadata_path.exists():
             with open(personal_best_metadata_path, "r") as file:
@@ -460,25 +483,29 @@ class Race:
     def _render_lap_text(self):
         """Renders the lap text whenever the user reaches a new lap"""
         self.lap_str: str = f"Lap {self.current_lap}/{constants.NUM_LAPS[self.track.name]}"
-        self.lap_surf: Surface = self.timer_font.render(self.lap_str, True, constants.TEXT_COLOR)
-        self.lap_shadow: Surface = self.timer_font.render(self.lap_str, True, constants.TEXT_SHADOW_COLOR)
+        self.lap_surf: pygame.Surface = self.timer_font.render(self.lap_str, True, constants.TEXT_COLOR)
+        self.lap_shadow: pygame.Surface = self.timer_font.render(self.lap_str, True, constants.TEXT_SHADOW_COLOR)
 
     def _render_final_time(self):
         """Renders the final time when the user reaches finishes the race"""
         self.formatted_time = f"{self.elapsed_race_time_s:.2f} s"
         self.time_surface: pygame.Surface = self.time_font.render(self.formatted_time, True, constants.TEXT_COLOR)
         self.time_rect: pygame.Rect = self.time_surface.get_rect(center=(constants.WIDTH / 2, 325))
-        self.time_shadow_surface: pygame.Surface = self.time_font.render(self.formatted_time, True, constants.TEXT_SHADOW_COLOR)
-        self.time_shadow_rect: pygame.Rect = self.time_shadow_surface.get_rect(center=(constants.WIDTH / 2 + 4, 325 + 4))
+        self.time_shadow_surface: pygame.Surface = self.time_font.render(self.formatted_time, True,
+                                                                         constants.TEXT_SHADOW_COLOR)
+        self.time_shadow_rect: pygame.Rect = self.time_shadow_surface.get_rect(
+            center=(constants.WIDTH / 2 + 4, 325 + 4))
 
     def _compare_to_best(self) -> None:
         """Compare the current time to the personal best, and if it was beaten, replace the personal best"""
         self.compared_to_best = True
-        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+        personal_best_metadata_path: Path = Path(
+            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         if self.elapsed_race_time_s < self.personal_best_time:
             metadata = {
                 "time": self.elapsed_race_time_s,
-                "car_type_index": self.user_car_type_index
+                "car_type_index": self.user_car_index,
+                "style_index": self.user_style_index
             }
             with open(personal_best_metadata_path, "w") as file:
                 json.dump(metadata, file)

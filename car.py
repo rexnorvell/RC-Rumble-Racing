@@ -8,14 +8,28 @@ import constants
 class Car:
     """Represents the player's car, handling its state, movement, input, and drawing"""
 
-    def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool, style_index: int) -> None:
+    def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool, car_config: dict,
+                 style_index: int) -> None:
         self.screen: pygame.Surface = screen
+
+        # Load properties from config
+        stats = car_config["stats"]
+        self.base_max_speed: float = constants.BASE_MAX_SPEED + (stats["Speed"] * constants.SPEED_STAT_MULTIPLIER)
+        self.acceleration: float = constants.BASE_ACCELERATION + (
+                    stats["Acceleration"] * constants.ACCEL_STAT_MULTIPLIER)
+        self.turn_speed: float = constants.BASE_TURN_SPEED + (stats["Handling"] * constants.HANDLING_STAT_MULTIPLIER)
+
+        # Get style info
+        style = car_config["styles"][style_index]
+        self.style_name = style["name"]
+        self.color = style["color"]
 
         # Store start values
         self.start_x: float = constants.START_X[track_name]
         self.start_y: float = constants.START_Y[track_name]
         self.start_angle: float = constants.START_ROTATION[track_name]
-        self.max_speed: float = constants.MAX_SPEED
+
+        self.max_speed: float = self.base_max_speed
 
         # Set initial dynamic position
         self.x: float = self.start_x
@@ -35,20 +49,18 @@ class Car:
 
         self.width: int = constants.CAR_WIDTH
         self.height: int = constants.CAR_HEIGHT
-        self.color: tuple[int, int, int] = constants.CAR_COLOR
         self.opacity: int = 128 if is_ghost else 255
 
-        self.style_index: int = style_index
-        self.sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=constants.CAR_TYPES[self.style_index])).convert_alpha()
+        self.sprite = pygame.image.load(constants.CAR_IMAGE_PATH.format(car_type=self.style_name)).convert_alpha()
         self.sprite = pygame.transform.scale(self.sprite, (self.width, self.height))
 
     def set_max_speed(self) -> None:
         """Sets the maximum speed of the car based on if it is drifting and if it is off-road"""
-        self.max_speed = constants.MAX_SPEED
+        self.max_speed = self.base_max_speed
         if self.is_off_road:
-            self.max_speed = max(self.speed - constants.ACCELERATION, self.max_speed * 0.5)
+            self.max_speed = max(self.speed - self.acceleration, self.max_speed * 0.5)
         elif self.is_drifting:
-            self.max_speed = min(constants.MAX_SPEED * 2, self.max_speed * 1.1)
+            self.max_speed = min(self.base_max_speed * 2, self.max_speed * 1.1)
 
     def handle_input(self, keys: pygame.key.ScancodeWrapper, is_race_active: bool) -> None:
         """Processes keyboard input to adjust speed and angle"""
@@ -60,14 +72,15 @@ class Car:
             return
 
         if keys[pygame.K_w]:
-            self.speed += constants.ACCELERATION
+            self.speed += self.acceleration
         elif keys[pygame.K_s]:
-            self.speed -= constants.ACCELERATION
+            self.speed -= self.acceleration
         else:
             self.speed = math.copysign(max(abs(self.speed) - constants.FRICTION, 0), self.speed)
 
         # Directly change the car angle (which direction the car is facing)
-        turn_factor: float = constants.TURN_SPEED * (self.speed / constants.MAX_SPEED)
+        # Use calculated turn_speed instead of global constant
+        turn_factor: float = self.turn_speed * (self.speed / self.base_max_speed)
         if keys[pygame.K_a]:
             self.car_angle -= turn_factor
         if keys[pygame.K_d]:

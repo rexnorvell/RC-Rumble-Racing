@@ -137,7 +137,8 @@ class Game:
 
     def draw_cursor(self) -> None:
         """Draws the custom cursor on the game surface"""
-        if self.scaled_mouse_pos[0] not in [0, constants.WIDTH - 1] and self.scaled_mouse_pos[1] not in [0, constants.HEIGHT - 1]:
+        if self.scaled_mouse_pos[0] not in [0, constants.WIDTH - 1] and self.scaled_mouse_pos[1] not in [0,
+                                                                                                         constants.HEIGHT - 1]:
             self.game_surface.blit(self.custom_cursor_image, self.scaled_mouse_pos)
 
     def _track_select(self) -> None:
@@ -198,7 +199,7 @@ class Game:
             self.get_scaled_mouse_pos()
             self.draw_cursor()
 
-            # next_action will be 0 (red), 1 (blue), 'back', 'exit', or ''
+            # next_action can be "exit", "back", "", or dict with selection info
             next_action = self.car_selection.handle_events(events, self.scaled_mouse_pos)
 
             if next_action == "exit":
@@ -206,21 +207,21 @@ class Game:
             elif next_action == "back":
                 self.click_sound.play()
                 running = False  # Exit loop to go back to track selection
-            elif isinstance(next_action, int):
+            elif isinstance(next_action, dict):
                 # Car was selected
                 self.click_sound.play()
-                user_car_index = next_action
-                # We can hardcode the ghost car index for now, or make it selectable later
-                # Let's make the ghost the *other* car
-                ghost_car_index = 1 if user_car_index == 0 else 0
+                car_index = next_action["car_index"]
+                style_index = next_action["style_index"]
+
+                # For now, ghost uses a default or placeholder.
+                # We can pass None or handle it in Race.
 
                 racing: bool = True
                 while racing:
-                    self.race = Race(self, track_name, user_car_index, ghost_car_index)
+                    self.race = Race(self, track_name, car_index, style_index)
                     racing = self.race.start()
 
-                # After race loop finishes (e.g., user exits race), we want to break
-                # from the car selection loop to go back to track selection.
+                # After race finishes, break to return to track selection
                 running = False
 
             self.car_selection.draw()
