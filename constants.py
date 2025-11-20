@@ -9,6 +9,7 @@ FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
 WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"
+SAVE_FILE_PATH: str = "save_data.json"
 
 # Cursor
 CURSOR_IMAGE_PATH: str = "assets/images/general/cursor.png"
@@ -168,6 +169,7 @@ PERSONAL_BEST_METADATA_FILE_PATH: str = "assets/replays/{track_name}/personal_be
 
 # Ghost files
 GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/{difficulty}.csv"
+GHOST_DIFFICULTY_PERSONAL_BEST: str = "personal_best"
 GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
 
 # Music and audio paths

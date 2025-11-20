@@ -1,11 +1,11 @@
 import sys
-
 import pygame
-
 import constants
 from title_screen import TitleScreen
 from track_selection import TrackSelection
 from car_selection import CarSelection
+from difficulty_selection import DifficultySelection
+from save_manager import SaveManager
 from race import Race
 
 
@@ -24,9 +24,15 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
 
+        # Data Manager
+        self.save_manager = SaveManager()
+
         # Menu screens
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
+        self.car_selection: CarSelection
+        self.difficulty_selection: DifficultySelection
+
         self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
         self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
                                                           (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
@@ -143,7 +149,8 @@ class Game:
 
     def _track_select(self) -> None:
         """Displays the track selection screen and starts the game once a track is selected"""
-        self.track_selection = TrackSelection(self.game_surface)
+        # Pass save_manager to track selection so it knows what is unlocked
+        self.track_selection = TrackSelection(self.game_surface, self.save_manager)
         track_select_clock: pygame.time.Clock = pygame.time.Clock()
 
         running = True
@@ -169,7 +176,8 @@ class Game:
                 self.click_sound.play()
                 track_name = next_action
                 self._car_select(track_name)
-                self.track_selection = TrackSelection(self.game_surface)
+                # Re-initialize track selection to update locks in case a new track was unlocked
+                self.track_selection = TrackSelection(self.game_surface, self.save_manager)
 
             self.track_selection.draw()
             self.draw_cursor()
@@ -180,7 +188,7 @@ class Game:
             track_select_clock.tick(60)
 
     def _car_select(self, track_name: str) -> None:
-        """Displays the car selection screen and starts the race once a car is selected"""
+        """Displays the car selection screen"""
         self.car_selection = CarSelection(self.game_surface)
         car_select_clock: pygame.time.Clock = pygame.time.Clock()
 
@@ -213,16 +221,17 @@ class Game:
                 car_index = next_action["car_index"]
                 style_index = next_action["style_index"]
 
-                # For now, ghost uses a default or placeholder.
-                # We can pass None or handle it in Race.
+                # Go to Difficulty Selection
+                difficulty = self._difficulty_select()
 
-                racing: bool = True
-                while racing:
-                    self.race = Race(self, track_name, car_index, style_index)
-                    racing = self.race.start()
-
-                # After race finishes, break to return to track selection
-                running = False
+                if difficulty == "back":
+                    pass # Loop continues, user is back at car select
+                elif difficulty == "exit":
+                    self.quit()
+                else:
+                    # Start the race with the chosen difficulty
+                    self._start_race(track_name, car_index, style_index, difficulty)
+                    running = False
 
             self.car_selection.draw()
             self.draw_cursor()
@@ -231,6 +240,45 @@ class Game:
             self.draw_letterboxed_surface()
             pygame.display.flip()
             car_select_clock.tick(60)
+
+    def _difficulty_select(self) -> str:
+        """Displays the difficulty selection screen. Returns difficulty key, 'back', or 'exit'."""
+        self.difficulty_selection = DifficultySelection(self.game_surface)
+        difficulty_clock = pygame.time.Clock()
+
+        running = True
+        while running:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    return "exit"
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            self.get_scaled_mouse_pos()
+            self.draw_cursor()
+
+            action = self.difficulty_selection.handle_events(events, self.scaled_mouse_pos)
+
+            if action:
+                if action != "back":
+                    self.click_sound.play()
+                return action
+
+            self.difficulty_selection.draw()
+            self.draw_cursor()
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            difficulty_clock.tick(60)
+
+        return "back"
+
+    def _start_race(self, track_name: str, car_index: int, style_index: int, difficulty: str) -> None:
+        """Starts the race loop"""
+        racing: bool = True
+        while racing:
+            self.race = Race(self, track_name, car_index, style_index, difficulty, self.save_manager)
+            racing = self.race.start()
 
     def quit(self) -> None:
         """Quits the game"""

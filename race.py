@@ -12,9 +12,11 @@ from track import Track
 
 class Race:
 
-    def __init__(self, game, track_name: str, car_index: int, style_index: int) -> None:
+    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: str, save_manager) -> None:
         # General
         self.game = game
+        self.save_manager = save_manager
+        self.difficulty = difficulty
 
         # Track
         self.track_name: str = track_name
@@ -117,11 +119,18 @@ class Race:
         self.ghost_car_config = constants.GHOST_CAR_DEFINITION
         self.ghost_car = Car(self.game.game_surface, self.track.name, True, self.ghost_car_config, 0)
 
-        self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
+        # Determine Ghost File based on difficulty
+        if self.difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
+            self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
+        else:
+            self.ghost_filename = constants.GHOST_FILE_PATH.format(track_name=self.track.name,
+                                                                   difficulty=self.difficulty)
+
         self.next_ghost_index: int = 1
         self.show_ghost: bool = True
         self.ghost_found: bool = False
         self.ghost_done: bool = False
+        self.ghost_total_time: float = float("inf")
 
         # Time
         self.countdown_start_time: int
@@ -200,6 +209,7 @@ class Race:
                 self.user_car.update_position()
                 if not self.compared_to_best:
                     self._compare_to_best()
+                    self._check_unlocks()  # Check for progression
                 if not self.applause_played:
                     self.applause_played = True
                     self._play_next_track()
@@ -349,6 +359,8 @@ class Race:
         self._create_replay_file()
         if self.show_ghost:
             self.ghost_found = self._get_ghost_info()
+            if self.ghost_found:
+                self._calculate_ghost_time()
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
         self.countdown_start_time = pygame.time.get_ticks()
@@ -360,9 +372,12 @@ class Race:
             constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         self.personal_best_time = float("inf")
         if personal_best_metadata_path.exists():
-            with open(personal_best_metadata_path, "r") as file:
-                personal_best_data = json.load(file)
-            self.personal_best_time = personal_best_data.get("time", float("inf"))
+            try:
+                with open(personal_best_metadata_path, "r") as file:
+                    personal_best_data = json.load(file)
+                self.personal_best_time = personal_best_data.get("time", float("inf"))
+            except (json.JSONDecodeError, IOError):
+                print("Error loading personal best metadata")
 
     def _create_replay_file(self) -> None:
         """Creates a new .csv file when the race begins to log the user's car position"""
@@ -372,6 +387,26 @@ class Race:
     def _get_ghost_info(self) -> bool:
         """Returns True if the info for the ghost exists and False otherwise"""
         return Path(self.ghost_filename).exists()
+
+    def _calculate_ghost_time(self):
+        """Estimates ghost finish time based on line count in CSV for comparison"""
+        try:
+            with open(self.ghost_filename, "r") as f:
+                row_count = sum(1 for _ in f)
+            # 60 FPS recording rate
+            self.ghost_total_time = row_count / 60.0
+        except Exception:
+            self.ghost_total_time = float("inf")
+
+    def _check_unlocks(self):
+        """Unlocks next track if Medium Ghost is beaten"""
+        if self.difficulty == "medium":
+            # If player time is less than ghost time, player won
+            if self.elapsed_race_time_s < self.ghost_total_time:
+                next_track = self.save_manager.get_next_track_name(self.track_name)
+                if next_track:
+                    print(f"Beat Medium Ghost! Unlocking {next_track}")
+                    self.save_manager.unlock_track(next_track)
 
     def _play_next_track(self) -> None:
         """Loads and plays the next audio track in the playlist"""
@@ -499,9 +534,9 @@ class Race:
     def _compare_to_best(self) -> None:
         """Compare the current time to the personal best, and if it was beaten, replace the personal best"""
         self.compared_to_best = True
-        personal_best_metadata_path: Path = Path(
-            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
         if self.elapsed_race_time_s < self.personal_best_time:
+            personal_best_metadata_path: Path = Path(
+                constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
             metadata = {
                 "time": self.elapsed_race_time_s,
                 "car_type_index": self.user_car_index,
@@ -561,7 +596,7 @@ class Race:
                     found = True
                     break
             self.ghost_done = not found
-        except FileNotFoundError:
+        except (FileNotFoundError, IndexError, ValueError):
             self.ghost_found = False
         except Exception:
             self.ghost_found = False
