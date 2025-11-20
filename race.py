@@ -1,5 +1,7 @@
 import csv
 import json
+import os
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -122,9 +124,12 @@ class Race:
         # Determine Ghost File based on difficulty
         if self.difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
             self.ghost_filename = constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name)
+            self.ghost_metadata_path = constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name)
         else:
             self.ghost_filename = constants.GHOST_FILE_PATH.format(track_name=self.track.name,
                                                                    difficulty=self.difficulty)
+            self.ghost_metadata_path = constants.GHOST_METADATA_FILE_PATH.format(track_name=self.track.name,
+                                                                                 difficulty=self.difficulty)
 
         self.next_ghost_index: int = 1
         self.show_ghost: bool = True
@@ -389,7 +394,19 @@ class Race:
         return Path(self.ghost_filename).exists()
 
     def _calculate_ghost_time(self):
-        """Estimates ghost finish time based on line count in CSV for comparison"""
+        """Estimates ghost finish time, preferring JSON metadata if available"""
+        # Try loading JSON first
+        meta_path = Path(self.ghost_metadata_path)
+        if meta_path.exists():
+            try:
+                with open(meta_path, 'r') as f:
+                    data = json.load(f)
+                    self.ghost_total_time = data.get("time", float("inf"))
+                    return  # Success
+            except Exception:
+                pass  # Fallback to CSV method
+
+        # Fallback: Count CSV lines
         try:
             with open(self.ghost_filename, "r") as f:
                 row_count = sum(1 for _ in f)
