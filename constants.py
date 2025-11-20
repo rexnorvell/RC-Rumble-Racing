@@ -88,14 +88,13 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
-# This list defines all available image files.
 # The index here MUST match the index in the `styles` list below.
 CAR_TYPES: list[str] = ["f1_car_red",
                         "f1_car_blue",
                         "f1_car_green",
                         "f1_car_orange"]
 
-# This new structure defines the car properties for the selection screen
+# This structure defines the car properties for the selection screen
 CAR_DEFINITIONS = [
     {
         "name": "F1 Racer",
@@ -113,7 +112,7 @@ CAR_DEFINITIONS = [
             {"name": "f1_car_orange", "color": (255, 165, 0)}
         ],
     },
-    # When you add more cars, just add another dictionary here
+    # When we add more cars, just add another dictionary here
     # {
     #     "name": "Rally Car",
     #     "stats": { ... },

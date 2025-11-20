@@ -209,13 +209,13 @@ class CarSelection:
 
     def draw(self) -> None:
         """Draws the car selection screen"""
-        # 1. Draw the background
+        # Draw the background
         self.screen.blit(self.background_image, (0, 0))
 
-        # 2. Get current car data
+        # Get current car data
         car_data = constants.CAR_DEFINITIONS[self.current_car_index]
 
-        # 3. Get current style and sprite
+        # Get current style and sprite
         # Ensure style index is valid for the current car
         if self.current_style_index >= len(car_data["styles"]):
             self.current_style_index = 0
@@ -226,25 +226,25 @@ class CarSelection:
         # Get the pre-loaded sprite
         sprite_to_draw = self.car_sprites.get(style_name)
 
-        # 4. Draw Car Name (Left)
+        # Draw Car Name (Left)
         name_surf = self.name_font.render(car_data["name"], True, constants.TEXT_COLOR)
         name_rect = name_surf.get_rect(topleft=(70, 250))
         self.screen.blit(name_surf, name_rect)
 
-        # 5. Draw Car Sprite (Center)
+        # Draw Car Sprite (Center)
         if sprite_to_draw:
             # Center the sprite in the display area
             car_draw_rect = sprite_to_draw.get_rect(center=self.car_display_rect.center)
             self.screen.blit(sprite_to_draw, car_draw_rect)
 
-        # 6. Draw Stats (Right)
+        # Draw Stats (Right)
         self._draw_stats(car_data)
 
-        # 7. Draw Arrow Buttons
+        # Draw Arrow Buttons
         self.screen.blit(self.arrow_left_img, self.arrow_left_rect)
         self.screen.blit(self.arrow_right_img, self.arrow_right_rect)
 
-        # 8. Draw Color Buttons (Bottom)
+        # Draw Color Buttons (Bottom)
         # Get the style definitions for the current car
         styles = car_data["styles"]
 
@@ -267,7 +267,7 @@ class CarSelection:
         elif self.last_hovered == "color_orange":
             pygame.draw.rect(self.screen, (255, 255, 255), self.color_orange_rect, width=4, border_radius=8)
 
-        # 9. Draw Navigation Buttons
+        # Draw Navigation Buttons
         # Back Button
         back_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == "back" else constants.TRACK_SELECTION_EXIT_COLOR
         back_text_surf = self.button_font.render("Back", True, back_color)
