@@ -25,8 +25,19 @@ INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 # Track selection screen
 TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{image_name}.png"
 
-# Track Selection Exit button
-# We need to add a blank button UI element so it can be reusable and easier to implement new buttons.
+# Car selection screen
+CAR_SELECTION_IMAGE_PATH: str = "assets/images/car_selection/{image_name}.png"
+CAR_SELECTION_ARROW_LEFT_PATH: str = "assets/images/car_selection/arrow_left.png"
+CAR_SELECTION_ARROW_RIGHT_PATH: str = "assets/images/car_selection/arrow_right.png"
+
+# Car selection UI
+CAR_STAT_BAR_COLOR: tuple[int, int, int] = (185, 5, 5) # Use main text color
+CAR_STAT_BAR_BG_COLOR: tuple[int, int, int] = (50, 50, 50)
+CAR_STAT_BAR_WIDTH: int = 300
+CAR_STAT_BAR_HEIGHT: int = 25
+CAR_STAT_MAX_VALUE: int = 10 # Stats are out of 10
+
+# Track Selection Exit/Back button
 TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
 TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 
@@ -76,8 +87,40 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[2]: 0}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
+
+# This list defines all available image files.
+# The index here MUST match the index in the `styles` list below.
 CAR_TYPES: list[str] = ["f1_car_red",
-                        "f1_car_blue"]
+                        "f1_car_blue",
+                        "f1_car_green",
+                        "f1_car_orange"]
+
+# This new structure defines the car properties for the selection screen
+CAR_DEFINITIONS = [
+    {
+        "name": "F1 Racer",
+        "stats": {
+            "Speed": 9,
+            "Acceleration": 8,
+            "Handling": 7,
+        },
+        # These styles map to the *file names* in CAR_TYPES
+        # The index (0, 1, 2, 3) will be passed to the Race class
+        "styles": [
+            {"name": "f1_car_red", "color": (200, 0, 0)},
+            {"name": "f1_car_blue", "color": (0, 0, 200)},
+            {"name": "f1_car_green", "color": (0, 200, 0)},
+            {"name": "f1_car_orange", "color": (255, 165, 0)}
+        ],
+    },
+    # When you add more cars, just add another dictionary here
+    # {
+    #     "name": "Rally Car",
+    #     "stats": { ... },
+    #     "styles": [ ... ],
+    # }
+]
+
 
 # Pause Menu
 PAUSE_MENU_IMAGE_PATH: str = "assets/images/pause/{image_name}.png"

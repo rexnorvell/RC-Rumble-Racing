@@ -5,6 +5,7 @@ import pygame
 import constants
 from title_screen import TitleScreen
 from track_selection import TrackSelection
+from car_selection import CarSelection
 from race import Race
 
 
@@ -166,10 +167,8 @@ class Game:
             elif next_action != "":
                 self.click_sound.play()
                 track_name = next_action
-                racing: bool = True
-                while racing:
-                    self.race = Race(self, track_name, 0, 1)
-                    racing = self.race.start()
+                self._car_select(track_name)
+                self.track_selection = TrackSelection(self.game_surface)
 
             self.track_selection.draw()
             self.draw_cursor()
@@ -178,6 +177,59 @@ class Game:
             self.draw_letterboxed_surface()
             pygame.display.flip()
             track_select_clock.tick(60)
+
+    def _car_select(self, track_name: str) -> None:
+        """Displays the car selection screen and starts the race once a car is selected"""
+        self.car_selection = CarSelection(self.game_surface)
+        car_select_clock: pygame.time.Clock = pygame.time.Clock()
+
+        running = True
+        while running:
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
+                pygame.mixer.music.play(-1)
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            self.get_scaled_mouse_pos()
+            self.draw_cursor()
+
+            # next_action will be 0 (red), 1 (blue), 'back', 'exit', or ''
+            next_action = self.car_selection.handle_events(events, self.scaled_mouse_pos)
+
+            if next_action == "exit":
+                self.quit()
+            elif next_action == "back":
+                self.click_sound.play()
+                running = False  # Exit loop to go back to track selection
+            elif isinstance(next_action, int):
+                # Car was selected
+                self.click_sound.play()
+                user_car_index = next_action
+                # We can hardcode the ghost car index for now, or make it selectable later
+                # Let's make the ghost the *other* car
+                ghost_car_index = 1 if user_car_index == 0 else 0
+
+                racing: bool = True
+                while racing:
+                    self.race = Race(self, track_name, user_car_index, ghost_car_index)
+                    racing = self.race.start()
+
+                # After race loop finishes (e.g., user exits race), we want to break
+                # from the car selection loop to go back to track selection.
+                running = False
+
+            self.car_selection.draw()
+            self.draw_cursor()
+
+            # Draw the letterboxed game_surface to the screen
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            car_select_clock.tick(60)
 
     def quit(self) -> None:
         """Quits the game"""
