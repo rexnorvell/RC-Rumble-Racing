@@ -10,15 +10,19 @@ class TitleScreen:
     def __init__(self, screen) -> None:
         self.screen: pygame.Surface = screen
 
-        # Background images
+        # Background image
+        self.title_background_image: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
+        self.title_background_image = pygame.transform.scale(self.title_background_image, (constants.WIDTH, constants.HEIGHT))
+
+        # Foreground images
         self.title_default_image: pygame.Surface = pygame.image.load(
-            constants.TITLE_IMAGE_PATH.format(image_type="default")).convert()
+            constants.TITLE_IMAGE_PATH.format(image_type="default")).convert_alpha()
         self.title_default_image = pygame.transform.scale(self.title_default_image, (constants.WIDTH, constants.HEIGHT))
         self.title_hover_image: pygame.Surface = pygame.image.load(
-            constants.TITLE_IMAGE_PATH.format(image_type="hover")).convert()
+            constants.TITLE_IMAGE_PATH.format(image_type="hover")).convert_alpha()
         self.title_hover_image = pygame.transform.scale(self.title_hover_image, (constants.WIDTH, constants.HEIGHT))
         self.title_click_image: pygame.Surface = pygame.image.load(
-            constants.TITLE_IMAGE_PATH.format(image_type="click")).convert()
+            constants.TITLE_IMAGE_PATH.format(image_type="click")).convert_alpha()
         self.title_click_image = pygame.transform.scale(self.title_click_image, (constants.WIDTH, constants.HEIGHT))
         self.current_image: pygame.Surface = self.title_default_image
 
@@ -37,6 +41,14 @@ class TitleScreen:
         self.hover_sound.set_volume(0.1)
         self.hover_sound_played: bool = False
         self.last_hovered: int = 0
+
+        # Transitions
+        self.transitioning: bool = False
+        self.transitioning_to_next: bool = False
+        self.transitioning_from_next: bool = False
+        self.transition_start_time_ms: int = 0
+        self.transition_next_duration_ms: int = 400
+        self.transition_next_pause_time: int = 0
 
     def play_intro(self, screen: pygame.Surface) -> bool:
         """Plays the intro video before displaying the title screen."""
@@ -89,6 +101,9 @@ class TitleScreen:
         """Handles events like button presses."""
         # Note: mouse_pos is already scaled
 
+        if self.transitioning:
+            return ""
+
         hovered_index: int
 
         if self.button_rect.collidepoint(mouse_pos):
@@ -117,6 +132,45 @@ class TitleScreen:
                     return "track_selection"
         return ""
 
+    def handle_transitions(self):
+        foreground_image_x: int = 0
+        if self.transitioning_to_next:
+            current_time: int = pygame.time.get_ticks()
+            time_elapsed_ms: int = current_time - self.transition_start_time_ms
+            if time_elapsed_ms >= self.transition_next_duration_ms + self.transition_next_pause_time:
+                foreground_image_x = -constants.WIDTH
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
+                foreground_image_x = int(-percent_progress * constants.WIDTH)
+                self.screen.blit(self.current_image, (foreground_image_x, 0))
+        elif self.transitioning_from_next:
+            current_time: int = pygame.time.get_ticks()
+            time_elapsed_ms: int = current_time - self.transition_start_time_ms
+            if time_elapsed_ms >= self.transition_next_duration_ms:
+                foreground_image_x = 0
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
+                foreground_image_x = int(percent_progress * constants.WIDTH) - constants.WIDTH
+        self.screen.blit(self.current_image, (foreground_image_x, 0))
+
     def draw(self) -> None:
         """Draws the title screen."""
-        self.screen.blit(self.current_image, (0, 0))
+        self.screen.blit(self.title_background_image, (0, 0))
+        self.handle_transitions()
+
+    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
+        """Set flags and store the starting time of the transition"""
+        self.transition_start_time_ms: int = pygame.time.get_ticks()
+        self.transitioning = True
+        self.transitioning_to_next = start_transition and not backwards
+        self.transitioning_from_next = not start_transition and backwards
+
+    def end_transition(self) -> None:
+        """Reset flags after the transition is complete"""
+        self.transitioning = False
+        self.transitioning_to_next = False
+        self.transitioning_from_next = False

@@ -10,9 +10,13 @@ class TrackSelection:
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
+        # Background image
+        self.background_image: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
+        self.background_image = pygame.transform.scale(self.background_image,(constants.WIDTH, constants.HEIGHT))
+
         # Load Images
         self.track_selection_default_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
+            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert_alpha()
         self.track_selection_default_image = pygame.transform.scale(self.track_selection_default_image,
                                                                     (constants.WIDTH, constants.HEIGHT))
         self.track_selection_hover_1_image: pygame.Surface = pygame.image.load(
@@ -28,6 +32,8 @@ class TrackSelection:
         self.track_selection_hover_3_image = pygame.transform.scale(self.track_selection_hover_3_image,
                                                                     (constants.WIDTH, constants.HEIGHT))
         self.current_image: pygame.Surface = self.track_selection_default_image
+        self.garage_door: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="garage")).convert()
+        self.garage_door = pygame.transform.scale(self.garage_door,(constants.WIDTH, constants.HEIGHT))
 
         # Track button rects
         button_width: int = 380
@@ -60,8 +66,23 @@ class TrackSelection:
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(0.1)
 
+        # Transitions
+        self.transitioning: bool = False
+        self.transitioning_from_prev: bool = False
+        self.transitioning_to_prev: bool = False
+        self.transitioning_to_next: bool = False
+        self.transitioning_from_next: bool = False
+        self.transition_start_time_ms: int = 0
+        self.transition_prev_duration_ms: int = 400
+        self.transition_prev_pause_time: int = 400
+        self.transition_next_duration_ms: int = 400
+        self.transition_next_pause_time: int = 400
+
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles events like button presses"""
+
+        if self.transitioning:
+            return ""
 
         hovered_index: int = 0
 
@@ -103,20 +124,13 @@ class TrackSelection:
 
     def draw(self) -> None:
         """Draws the track selection screen"""
-        self.screen.blit(self.current_image, (0, 0))
+        self.screen.blit(self.background_image, (0, 0))
 
-        # Draw locks on locked tracks
-        for btn in self.buttons:
-            if not self.save_manager.is_track_unlocked(btn["track"]):
-                # Draw a semi-transparent overlay
-                overlay = pygame.Surface((btn["rect"].width, btn["rect"].height), pygame.SRCALPHA)
-                overlay.fill((0, 0, 0, 180))  # Dark overlay
-                self.screen.blit(overlay, btn["rect"])
-
-                # Draw Locked Text
-                lock_surf = self.button_font.render("LOCKED", True, (200, 0, 0))
-                lock_rect = lock_surf.get_rect(center=btn["rect"].center)
-                self.screen.blit(lock_surf, lock_rect)
+        # Handle transitions
+        if self.transitioning:
+            self.handle_transitions()
+        else:
+            self.screen.blit(self.current_image, (0, 0))
 
         # Determine exit button color
         if self.last_hovered == 4:
@@ -128,3 +142,60 @@ class TrackSelection:
         exit_text_surf = self.button_font.render("Exit", True, exit_color)
         exit_text_rect = exit_text_surf.get_rect(center=self.exit_button_rect.center)
         self.screen.blit(exit_text_surf, exit_text_rect)
+
+    def handle_transitions(self):
+        """Handles the four kinds of transitions:
+            - Transitioning from the previous screen to the current screen (self.transitioning_from_prev)
+            - Transitioning from the current screen to the next screen (self.transitioning_to_next)
+            - Transitioning from the current screen to the previous screen (self.transitioning_to_prev)
+            - Transitioning from the next screen to the current screen (self.transitioning_from_next)
+        """
+        foreground_x: int = 0
+        garage_door_y: int = 0
+        draw_garage_door: bool = False
+        current_time: int = pygame.time.get_ticks()
+        time_elapsed_ms: int = current_time - self.transition_start_time_ms
+        if self.transitioning_to_next:
+            draw_garage_door = True
+            if time_elapsed_ms >= self.transition_next_duration_ms + self.transition_next_pause_time:
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
+                garage_door_y = int(percent_progress * constants.HEIGHT) - constants.HEIGHT
+        elif self.transitioning_from_next:
+            draw_garage_door = True
+            if time_elapsed_ms >= self.transition_next_duration_ms:
+                garage_door_y = -constants.HEIGHT
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
+                garage_door_y = int(-percent_progress * constants.HEIGHT)
+        elif self.transitioning_from_prev:
+            if time_elapsed_ms >= self.transition_prev_duration_ms:
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
+                foreground_x = constants.WIDTH - int(percent_progress * constants.WIDTH)
+        self.screen.blit(self.current_image, (foreground_x, 0))
+        if draw_garage_door:
+            self.screen.blit(self.garage_door, (0, garage_door_y))
+
+    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
+        """Set flags and store the starting time of the transition"""
+        self.transition_start_time_ms: int = pygame.time.get_ticks()
+        self.transitioning = True
+        self.transitioning_to_prev = start_transition and backwards
+        self.transitioning_from_prev = not start_transition and not backwards
+        self.transitioning_to_next = start_transition and not backwards
+        self.transitioning_from_next = not start_transition and backwards
+
+    def end_transition(self) -> None:
+        """Reset flags after the transition is complete"""
+        self.transitioning = False
+        self.transitioning_to_prev = False
+        self.transitioning_from_prev = False
+        self.transitioning_to_next = False
+        self.transitioning_from_next = False

@@ -13,8 +13,10 @@ GAME_TITLE: str = "RC Rumble Racing"
 # Save System
 SAVE_FILE_PATH: str = "save_data.json"
 
+# General
+GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
+
 # Cursor
-CURSOR_IMAGE_PATH: str = "assets/images/general/cursor.png"
 CURSOR_WIDTH: int = 40
 CURSOR_HEIGHT: int = 40
 

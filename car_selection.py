@@ -10,18 +10,8 @@ class CarSelection:
         self.screen: pygame.Surface = screen
 
         # --- Load Background ---
-        try:
-            self.background_image: pygame.Surface = pygame.image.load(
-                constants.CAR_SELECTION_IMAGE_PATH.format(image_name="default")
-            ).convert()
-        except pygame.error as e:
-            print(f"Error loading car selection background: {e}")
-            self.background_image = pygame.Surface((constants.WIDTH, constants.HEIGHT))
-            self.background_image.fill((20, 20, 20))  # Dark fallback
-
-        self.background_image = pygame.transform.scale(
-            self.background_image, (constants.WIDTH, constants.HEIGHT)
-        )
+        self.background_image: pygame.Surface = pygame.image.load(constants.CAR_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
+        self.background_image = pygame.transform.scale(self.background_image, (constants.WIDTH, constants.HEIGHT))
 
         # --- Load Car Sprites ---
         self.car_sprites: dict[str, pygame.Surface] = {}
@@ -43,16 +33,12 @@ class CarSelection:
                         self.car_sprites[style_name] = fallback
 
         # --- Load UI Elements ---
-        try:
-            self.arrow_left_img = pygame.image.load(constants.CAR_SELECTION_ARROW_LEFT_PATH).convert_alpha()
-            self.arrow_right_img = pygame.image.load(constants.CAR_SELECTION_ARROW_RIGHT_PATH).convert_alpha()
-            self.arrow_left_img = pygame.transform.scale(self.arrow_left_img, (64, 64))
-            self.arrow_right_img = pygame.transform.scale(self.arrow_right_img, (64, 64))
-        except pygame.error as e:
-            self.arrow_left_img = pygame.Surface((64, 64))
-            self.arrow_right_img = pygame.Surface((64, 64))
-            self.arrow_left_img.fill((255, 255, 255))
-            self.arrow_right_img.fill((255, 255, 255))
+        self.arrow_left_img = pygame.image.load(constants.CAR_SELECTION_ARROW_LEFT_PATH).convert_alpha()
+        self.arrow_right_img = pygame.image.load(constants.CAR_SELECTION_ARROW_RIGHT_PATH).convert_alpha()
+        self.arrow_left_img = pygame.transform.scale(self.arrow_left_img, (64, 64))
+        self.arrow_right_img = pygame.transform.scale(self.arrow_right_img, (64, 64))
+        self.garage_door: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="garage")).convert()
+        self.garage_door = pygame.transform.scale(self.garage_door, (constants.WIDTH, constants.HEIGHT))
 
         # --- State ---
         self.current_car_index: int = 0
@@ -87,6 +73,15 @@ class CarSelection:
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(0.1)
 
+        # Transitions
+        self.transitioning: bool = False
+        self.transitioning_in: bool = False
+        self.transitioning_out: bool = False
+        self.transition_start: int
+        self.transition_start_time_ms: int = 0
+        self.transition_duration_ms: int = 400
+        self.transition_pause_time: int = 400
+
     def _update_color_buttons(self):
         """Recalculates color button positions based on the current car"""
         styles = constants.CAR_DEFINITIONS[self.current_car_index]["styles"]
@@ -107,6 +102,10 @@ class CarSelection:
         """
         Returns 'exit', 'back', '', or a dict {'car_index': int, 'style_index': int} on select.
         """
+
+        if self.transitioning:
+            return ""
+
         self._update_color_buttons()  # Ensure buttons are up to date
 
         hovered_key: str = "none"
@@ -228,3 +227,68 @@ class CarSelection:
         select_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == "select" else constants.TRACK_SELECTION_EXIT_COLOR
         select_surf = self.button_font.render("Select", True, select_color)
         self.screen.blit(select_surf, select_surf.get_rect(center=self.select_button_rect.center))
+
+        # Handle transitions
+        if self.transitioning_in:
+            current_time: int = pygame.time.get_ticks()
+            time_elapsed_ms: int = current_time - self.transition_start_time_ms
+            if time_elapsed_ms >= self.transition_duration_ms:
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_duration_ms
+                garage_door_y: int = int(-percent_progress * constants.HEIGHT)
+                self.screen.blit(self.garage_door, (0, garage_door_y))
+        elif self.transitioning_out:
+            current_time: int = pygame.time.get_ticks()
+            time_elapsed_ms: int = current_time - self.transition_start_time_ms
+            if time_elapsed_ms >= self.transition_duration_ms + self.transition_pause_time:
+                self.screen.blit(self.garage_door, (0, 0))
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_duration_ms
+                garage_door_y: int = int(percent_progress * constants.HEIGHT) - constants.HEIGHT
+                self.screen.blit(self.garage_door, (0, garage_door_y))
+
+    def handle_transitions(self):
+        """Handles the four kinds of transitions:
+            - Transitioning from the previous screen to the current screen (self.transitioning_from_prev)
+            - Transitioning from the current screen to the next screen (self.transitioning_to_next)
+            - Transitioning from the current screen to the previous screen (self.transitioning_to_prev)
+            - Transitioning from the next screen to the current screen (self.transitioning_from_next)
+        """
+        if self.transitioning_in:
+            current_time: int = pygame.time.get_ticks()
+            time_elapsed_ms: int = current_time - self.transition_start_time_ms
+            if time_elapsed_ms >= self.transition_duration_ms:
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_duration_ms
+                garage_door_y: int = int(-percent_progress * constants.HEIGHT)
+                self.screen.blit(self.garage_door, (0, garage_door_y))
+        elif self.transitioning_out:
+            current_time: int = pygame.time.get_ticks()
+            time_elapsed_ms: int = current_time - self.transition_start_time_ms
+            if time_elapsed_ms >= self.transition_duration_ms + self.transition_pause_time:
+                self.screen.blit(self.garage_door, (0, 0))
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_duration_ms
+                garage_door_y: int = int(percent_progress * constants.HEIGHT) - constants.HEIGHT
+                self.screen.blit(self.garage_door, (0, garage_door_y))
+
+    def initialize_transition(self, transitioning_in: bool) -> None:
+        """Set flags and store the starting time of the transition"""
+        self.transition_start_time_ms: int = pygame.time.get_ticks()
+        self.transitioning = True
+        self.transitioning_in = transitioning_in
+        self.transitioning_out = not self.transitioning_in
+
+    def end_transition(self) -> None:
+        """Reset flags after the transition is complete"""
+        self.transitioning = False
+        self.transitioning_in = False
+        self.transitioning_out = False

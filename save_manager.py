@@ -4,8 +4,9 @@ from typing import List
 
 import constants
 
+
 class SaveManager:
-    """Handles saving and loading of game progress."""
+    """Handles saving and loading of game progress"""
 
     def __init__(self):
         self.file_path = constants.SAVE_FILE_PATH
@@ -13,7 +14,7 @@ class SaveManager:
         self.load_data()
 
     def load_data(self):
-        """Loads save data from the JSON file."""
+        """Loads save data from the JSON file"""
         if not os.path.exists(self.file_path):
             return
 
@@ -25,7 +26,7 @@ class SaveManager:
             print(f"Error loading save data: {e}")
 
     def save_data(self):
-        """Saves current progress to the JSON file."""
+        """Saves current progress to the JSON file"""
         data = {
             "unlocked_tracks": self.unlocked_tracks
         }
@@ -36,18 +37,18 @@ class SaveManager:
             print(f"Error saving data: {e}")
 
     def unlock_track(self, track_name: str):
-        """Unlocks a specific track if it's not already unlocked."""
+        """Unlocks a specific track if it's not already unlocked"""
         if track_name in constants.TRACK_NAMES and track_name not in self.unlocked_tracks:
             self.unlocked_tracks.append(track_name)
             self.save_data()
             print(f"Unlocked track: {track_name}")
 
     def is_track_unlocked(self, track_name: str) -> bool:
-        """Checks if a track is currently unlocked."""
+        """Checks if a track is currently unlocked"""
         return track_name in self.unlocked_tracks
 
     def get_next_track_name(self, current_track_name: str) -> str | None:
-        """Returns the name of the next track in the list, or None if last."""
+        """Returns the name of the next track in the list, or None if last"""
         try:
             idx = constants.TRACK_NAMES.index(current_track_name)
             if idx + 1 < len(constants.TRACK_NAMES):

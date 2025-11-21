@@ -1,7 +1,5 @@
 import csv
 import json
-import os
-import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -9,15 +7,17 @@ import pygame
 
 from car import Car
 import constants
+from save_manager import SaveManager
 from track import Track
 
 
 class Race:
 
-    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: str, save_manager) -> None:
+    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: str, save_manager: SaveManager) -> None:
+
         # General
         self.game = game
-        self.save_manager = save_manager
+        self.save_manager: SaveManager = save_manager
         self.difficulty = difficulty
 
         # --- NEW: Add fade surface ---
