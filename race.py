@@ -20,6 +20,11 @@ class Race:
         self.save_manager = save_manager
         self.difficulty = difficulty
 
+        # --- NEW: Add fade surface ---
+        self.fade_surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
+        self.fade_surface.fill((0, 0, 0))
+        # --- End New ---
+
         # Track
         self.track_name: str = track_name
         self.track: Track = Track(self.track_name)
@@ -182,6 +187,15 @@ class Race:
     def start(self) -> bool:
         """The main game loop when the user is racing on a track"""
         self._initialize_race()
+
+        # --- NEW: Run Fade-In ---
+        self._run_fade_in()
+
+        # Move these to *after* the fade-in
+        self.countdown_start_time = pygame.time.get_ticks()
+        self._play_next_track()
+        # --- End New ---
+
         while self.running:
             self._next_frame()
             self._get_current_time()
@@ -232,6 +246,51 @@ class Race:
         pygame.mixer.music.play(-1)
         return False
 
+    # --- NEW: Add _run_fade_in method ---
+    def _run_fade_in(self) -> None:
+        """Draws the first frame of the race and fades in from black."""
+
+        # Update ghost to its real start position *before* fading in
+        if self.ghost_found and self.show_ghost:
+            self._draw_ghost()  # This will read frame 1 and update pos
+
+        start_time = pygame.time.get_ticks()
+        elapsed_time = 0
+        duration = constants.FADE_TRANSITION_SPEED_MS
+
+        transitioning = True
+        while transitioning:
+            elapsed_time = pygame.time.get_ticks() - start_time
+
+            # Stop animation from handling events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game.quit()  # Use game's quit
+                if event.type == pygame.VIDEORESIZE:
+                    self.game.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            # Calculate alpha
+            progress = min(elapsed_time / duration, 1.0)
+            alpha = int(255 * (1.0 - progress))  # Fade from 255 to 0
+
+            # Draw the static race frame underneath
+            # This will now draw the ghost at its correct starting pos
+            self._draw_race_frame()
+
+            # Draw the fade surface on top
+            self.fade_surface.set_alpha(alpha)
+            self.game.game_surface.blit(self.fade_surface, (0, 0))
+
+            # Update display
+            self.game.draw_letterboxed_surface()
+            pygame.display.flip()
+            self.clock.tick(60)
+
+            if progress >= 1.0:
+                transitioning = False
+
+    # --- End New ---
+
     def _clean_up(self):
         """Performs clean up actions before exiting the race"""
         if self.current_race_file.exists():
@@ -246,9 +305,9 @@ class Race:
             self.elapsed_race_time_ms = self.pause_start_time_ms - self.race_start_time_ms
         self.elapsed_race_time_s = self.elapsed_race_time_ms / 1000.0
 
-    def _draw_race(self) -> None:
-        """Draws all the visual elements for the race"""
-
+    # --- NEW: Add _draw_race_frame method ---
+    def _draw_race_frame(self) -> None:
+        """Draws just the track and cars, with no UI."""
         # Calculate camera offset to center car
         self.camera_x = self.user_car.x - (constants.WIDTH / 2)
         self.camera_y = self.user_car.y - (constants.HEIGHT / 2)
@@ -259,12 +318,42 @@ class Race:
         # Draw ghost
         if self.ghost_found and not self.ghost_done and not self.race_over:
             if self.show_ghost:
-                self._draw_ghost()
-            if self.during_race and not self.is_paused:
-                self.next_ghost_index += 1
+                # We need to draw the ghost at its current x/y
+                # The _draw_ghost method handles reading the CSV
+                # But we only want to *draw* here, not advance the frame
+                self.ghost_car.draw(self.camera_x, self.camera_y)
 
         # Draw car
         self.user_car.draw(self.camera_x, self.camera_y)
+
+    # --- End New ---
+
+    def _draw_race(self) -> None:
+        """Draws all the visual elements for the race"""
+
+        # --- MODIFIED: Update ghost position first, if race is active ---
+        if self.ghost_found and not self.ghost_done and not self.race_over:
+            if self.during_race and not self.is_paused:
+                self._draw_ghost()  # This reads CSV, updates pos, and draws
+                self.next_ghost_index += 1
+            else:
+                # Draw the ghost, but don't advance the frame
+                self._draw_ghost_static()
+
+                # Calculate camera offset to center car
+        self.camera_x = self.user_car.x - (constants.WIDTH / 2)
+        self.camera_y = self.user_car.y - (constants.HEIGHT / 2)
+
+        # Pass camera offset to track drawing
+        self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
+
+        # Draw ghost car (it's position was updated above)
+        if self.ghost_found and self.show_ghost:
+            self.ghost_car.draw(self.camera_x, self.camera_y)
+
+        # Draw user car
+        self.user_car.draw(self.camera_x, self.camera_y)
+        # --- End Modify ---
 
         # Overlays
         if not self.race_over:
@@ -326,7 +415,7 @@ class Race:
 
     def _initialize_pause(self) -> None:
         """Perform one-time operations upon pausing the race"""
-        pygame.mixer.music.pause()
+        pygame.mixer_music.pause()
         self.game.click_sound.play()
         self.pause_start_time_ms = pygame.time.get_ticks()
         self.pause_start_time_s = self.pause_start_time_ms / 1000.0
@@ -369,8 +458,11 @@ class Race:
                 self._calculate_ghost_time()
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
-        self.countdown_start_time = pygame.time.get_ticks()
-        self._play_next_track()
+
+        # --- MODIFIED: Moved to start() ---
+        # self.countdown_start_time = pygame.time.get_ticks()
+        # self._play_next_track()
+        # --- End Modify ---
 
     def _get_personal_best_time(self) -> None:
         """Get the user's personal best time for the current track"""
@@ -610,7 +702,8 @@ class Race:
                         self.ghost_car.move_angle,
                         self.ghost_car.car_angle,
                     ) = map(float, row)
-                    self.ghost_car.draw(self.camera_x, self.camera_y)
+                    # --- MODIFIED: Removed draw call ---
+                    # self.ghost_car.draw(self.camera_x, self.camera_y)
                     found = True
                     break
             self.ghost_done = not found
@@ -618,6 +711,14 @@ class Race:
             self.ghost_found = False
         except Exception:
             self.ghost_found = False
+
+    # --- NEW: Method to draw ghost without advancing frame ---
+    def _draw_ghost_static(self):
+        """Draws the ghost at its current position without reading the CSV"""
+        if self.ghost_found and self.show_ghost:
+            self.ghost_car.draw(self.camera_x, self.camera_y)
+
+    # --- End New ---
 
     def _format_time_simple(self) -> str:
         """Formats time in MM:SS:ms"""

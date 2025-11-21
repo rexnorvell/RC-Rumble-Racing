@@ -218,7 +218,7 @@ class CarSelection:
             color = styles[idx]["color"]
             pygame.draw.rect(self.screen, color, rect, border_radius=8)
             if idx == self.current_style_index:
-                pygame.draw.rect(self.screen, (255, 255, 255), rect, width=4, border_radius=8)
+                pygame.draw.rect(self.screen, (0, 0, 0), rect, width=4, border_radius=8)
 
         # Draw Nav Buttons
         back_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == "back" else constants.TRACK_SELECTION_EXIT_COLOR

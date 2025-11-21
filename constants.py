@@ -18,6 +18,13 @@ CURSOR_IMAGE_PATH: str = "assets/images/general/cursor.png"
 CURSOR_WIDTH: int = 40
 CURSOR_HEIGHT: int = 40
 
+# --- NEW: Transitions ---
+GARAGE_DOOR_IMAGE_PATH: str = "assets/images/car_selection/metal_door.jpg"
+GARAGE_DOOR_SOUND_PATH: str = "assets/audio/car_selection/garage_door_open.mp3"
+GARAGE_DOOR_LIFT_SPEED_MS: int = 3500  # 3.5 seconds
+FADE_TRANSITION_SPEED_MS: int = 500  # 0.5 seconds
+# --- End New ---
+
 # Title screen
 TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
 CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
@@ -102,33 +109,29 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
-# Car Definitions
+# --- MODIFIED: Car Definitions ---
+# Replaced with the single F1 car with 7 styles
 CAR_DEFINITIONS = [
     {
-        "name": "1968 F1",
-        "stats": {
-            "Speed": 7,
-            "Acceleration": 7,
-            "Handling": 9,
-        },
-        "styles": [
-            {"name": "f1_car_red", "color": (200, 0, 0)},
-            {"name": "f1_car_blue", "color": (0, 0, 200)}
-        ],
-    },
-    {
-        "name": "2003 F1",
+        "name": "F1 Racer",
         "stats": {
             "Speed": 9,
-            "Acceleration": 9,
-            "Handling": 6,
+            "Acceleration": 8,
+            "Handling": 7,
         },
+        # These styles map to the .png file names
         "styles": [
-            {"name": "f1_car_green", "color": (0, 200, 0)},
-            {"name": "f1_car_orange", "color": (255, 165, 0)}
+            {"name": "f1_car_red", "color": (200, 0, 0)},         # Index 0
+            {"name": "f1_car_blue", "color": (0, 0, 200)},        # Index 1
+            {"name": "f1_car_yellow", "color": (200, 200, 0)},    # Index 2
+            {"name": "f1_car_green", "color": (0, 200, 0)},        # Index 3
+            {"name": "f1_car_orange", "color": (255, 128, 0)},    # Index 4
+            {"name": "f1_car_black", "color": (0, 0, 0)},          # Index 5
+            {"name": "f1_car_white", "color": (255, 255, 255)}   # Index 6
         ],
     }
 ]
+# --- End Modify ---
 
 # Ghost Definition (Unavailable to player)
 GHOST_CAR_DEFINITION = {

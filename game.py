@@ -1,4 +1,7 @@
 import sys
+# --- NEW: Import typing ---
+from typing import Callable, Any
+# --- End New ---
 import pygame
 import constants
 from title_screen import TitleScreen
@@ -32,6 +35,26 @@ class Game:
         self.track_selection: TrackSelection
         self.car_selection: CarSelection
         self.difficulty_selection: DifficultySelection
+
+        # --- NEW: Transition Assets ---
+        try:
+            self.garage_door_image = pygame.image.load(constants.GARAGE_DOOR_IMAGE_PATH).convert()
+            self.garage_door_image = pygame.transform.scale(self.garage_door_image, (self.width, self.height))
+        except pygame.error as e:
+            print(f"Error loading garage door image: {e}")
+            self.garage_door_image = pygame.Surface((self.width, self.height))
+            self.garage_door_image.fill((50, 50, 50))
+
+        try:
+            self.garage_door_sound = pygame.mixer.Sound(constants.GARAGE_DOOR_SOUND_PATH)
+            self.garage_door_sound.set_volume(0.5)
+        except pygame.error as e:
+            print(f"Error loading garage door sound: {e}")
+            self.garage_door_sound = None  # Game will run without sound
+
+        self.fade_surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.fade_surface.fill((0, 0, 0))
+        # --- End New ---
 
         self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.CURSOR_IMAGE_PATH).convert_alpha()
         self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
@@ -192,6 +215,10 @@ class Game:
         self.car_selection = CarSelection(self.game_surface)
         car_select_clock: pygame.time.Clock = pygame.time.Clock()
 
+        # --- NEW: Run garage door transition HERE ---
+        self.run_garage_door_transition(self.car_selection.draw)
+        # --- End New ---
+
         running = True
         while running:
             if not pygame.mixer.music.get_busy():
@@ -225,14 +252,17 @@ class Game:
                 difficulty = self._difficulty_select()
 
                 if difficulty == "back":
-                    pass # Loop continues, user is back at car select
+                    pass  # Loop continues, user is back at car select
                 elif difficulty == "exit":
                     self.quit()
                 else:
+                    # --- MODIFIED: Run fade transition before starting race ---
                     # Start the race with the chosen difficulty
-                    self._start_race(track_name, car_index, style_index, difficulty)
+                    self.run_fade_transition(self.difficulty_selection.draw, self._start_race, track_name, car_index,
+                                             style_index, difficulty)
+                    # --- End Modify ---
                     running = False
-                    break # Stop the loop immediately so we don't draw car selection one last time
+                    break  # Stop the loop immediately so we don't draw car selection one last time
 
             self.car_selection.draw()
             self.draw_cursor()
@@ -279,7 +309,101 @@ class Game:
         racing: bool = True
         while racing:
             self.race = Race(self, track_name, car_index, style_index, difficulty, self.save_manager)
+            # --- MODIFIED: race.start() handles its own fade-in ---
             racing = self.race.start()
+            # --- End Modify ---
+
+    # --- NEW: Add transition methods ---
+    def run_garage_door_transition(self, draw_background_func: Callable, callback_func: Callable = None,
+                                   *args: Any) -> None:
+        """
+        Draws the garage door, plays the sound, and animates it rolling up.
+        Then calls the optional callback_func.
+        """
+        if self.garage_door_sound:
+            self.garage_door_sound.play()
+
+        start_time = pygame.time.get_ticks()
+        elapsed_time = 0
+        duration = constants.GARAGE_DOOR_LIFT_SPEED_MS  # This will be 3500ms
+
+        transitioning = True
+        while transitioning:
+            elapsed_time = pygame.time.get_ticks() - start_time
+
+            # Stop animation from handling events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            # Calculate door position
+            progress = min(elapsed_time / duration, 1.0)
+            door_y = 0 - (constants.HEIGHT * progress)
+
+            # Draw the new screen (car selection) underneath
+            draw_background_func()
+
+            # Draw the door on top
+            self.game_surface.blit(self.garage_door_image, (0, door_y))
+
+            # Update display
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            self.clock.tick(60)
+
+            if progress >= 1.0:
+                transitioning = False
+
+        # Call the next function (if provided)
+        if callback_func:
+            callback_func(*args)
+
+    def run_fade_transition(self, draw_background_func: Callable, callback_func: Callable, *args: Any) -> None:
+        """
+        Fades the screen to black, then calls the callback_func.
+        The callback_func (e.g., race.start) is responsible for the fade-in.
+        """
+        start_time = pygame.time.get_ticks()
+        elapsed_time = 0
+        duration = constants.FADE_TRANSITION_SPEED_MS
+
+        # --- Fade Out ---
+        transitioning = True
+        while transitioning:
+            elapsed_time = pygame.time.get_ticks() - start_time
+
+            # Stop animation from handling events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            # Calculate alpha
+            progress = min(elapsed_time / duration, 1.0)
+            alpha = int(255 * progress)
+
+            # Draw the screen underneath (difficulty screen)
+            draw_background_func()
+
+            # Draw the fade surface on top
+            self.fade_surface.set_alpha(alpha)
+            self.game_surface.blit(self.fade_surface, (0, 0))
+
+            # Update display
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            self.clock.tick(60)
+
+            if progress >= 1.0:
+                transitioning = False
+
+        # Call the next function (e.g., _start_race)
+        callback_func(*args)
+
+    # --- End New ---
 
     def quit(self) -> None:
         """Quits the game"""
