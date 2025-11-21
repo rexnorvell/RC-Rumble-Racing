@@ -232,6 +232,7 @@ class Game:
                     # Start the race with the chosen difficulty
                     self._start_race(track_name, car_index, style_index, difficulty)
                     running = False
+                    break # Stop the loop immediately so we don't draw car selection one last time
 
             self.car_selection.draw()
             self.draw_cursor()

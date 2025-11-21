@@ -112,9 +112,12 @@ class CarSelection:
         hovered_key: str = "none"
         hovered_style_index = -1
 
-        if self.arrow_left_rect.collidepoint(mouse_pos):
+        # Only interact with left arrow if we are NOT at the first car
+        if self.current_car_index > 0 and self.arrow_left_rect.collidepoint(mouse_pos):
             hovered_key = "arrow_left"
-        elif self.arrow_right_rect.collidepoint(mouse_pos):
+        # Only interact with right arrow if we are NOT at the last car
+        elif self.current_car_index < len(constants.CAR_DEFINITIONS) - 1 and self.arrow_right_rect.collidepoint(
+                mouse_pos):
             hovered_key = "arrow_right"
         elif self.back_button_rect.collidepoint(mouse_pos):
             hovered_key = "back"
@@ -137,10 +140,10 @@ class CarSelection:
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_key == "arrow_left":
-                    self.current_car_index = (self.current_car_index - 1) % len(constants.CAR_DEFINITIONS)
+                    self.current_car_index -= 1
                     self.current_style_index = 0
                 elif hovered_key == "arrow_right":
-                    self.current_car_index = (self.current_car_index + 1) % len(constants.CAR_DEFINITIONS)
+                    self.current_car_index += 1
                     self.current_style_index = 0
                 elif hovered_key == "color_button":
                     self.current_style_index = hovered_style_index
@@ -203,9 +206,12 @@ class CarSelection:
         # Draw Stats
         self._draw_stats(car_data)
 
-        # Draw Arrows
-        self.screen.blit(self.arrow_left_img, self.arrow_left_rect)
-        self.screen.blit(self.arrow_right_img, self.arrow_right_rect)
+        # Draw Arrows (Only if not at ends of list)
+        if self.current_car_index > 0:
+            self.screen.blit(self.arrow_left_img, self.arrow_left_rect)
+
+        if self.current_car_index < len(constants.CAR_DEFINITIONS) - 1:
+            self.screen.blit(self.arrow_right_img, self.arrow_right_rect)
 
         # Draw Color Buttons
         for rect, idx in self.color_buttons:

@@ -213,6 +213,7 @@ class Race:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self.user_car.update_position()
                 if not self.compared_to_best:
+                    # This logic runs even if racing against AI, ensuring PB is updated if beaten
                     self._compare_to_best()
                     self._check_unlocks()  # Check for progression
                 if not self.applause_played:
