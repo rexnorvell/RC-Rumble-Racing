@@ -13,6 +13,34 @@ GAME_TITLE: str = "RC Rumble Racing"
 # Save System
 SAVE_FILE_PATH: str = "save_data.json"
 
+# --- NEW: Settings ---
+# Default Volumes
+DEFAULT_MUSIC_VOLUME: float = 0.5
+DEFAULT_SFX_VOLUME: float = 0.2 # Standardizing all SFX
+
+# Key Bindings
+# Action names used internally
+KEY_ACTION_FORWARD: str = "FORWARD"
+KEY_ACTION_BACKWARD: str = "BACKWARD"
+KEY_ACTION_LEFT: str = "LEFT"
+KEY_ACTION_RIGHT: str = "RIGHT"
+KEY_ACTION_DRIFT: str = "DRIFT"
+KEY_ACTION_TOGGLE_GHOST: str = "TOGGLE_GHOST"
+
+# Default keys
+DEFAULT_KEY_BINDINGS: dict[str, int] = {
+    KEY_ACTION_FORWARD: pygame.K_w,
+    KEY_ACTION_BACKWARD: pygame.K_s,
+    KEY_ACTION_LEFT: pygame.K_a,
+    KEY_ACTION_RIGHT: pygame.K_d,
+    KEY_ACTION_DRIFT: pygame.K_SPACE,
+    KEY_ACTION_TOGGLE_GHOST: pygame.K_g,
+}
+
+# Settings Menu
+SETTINGS_ICON_PATH: str = "assets/images/general/setting_icon.png"
+# --- End New ---
+
 # General
 GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
 
@@ -102,9 +130,9 @@ DRIFT_RECOVERY_SPEED: float = 1.5
 START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0 + (WIDTH * 0.75),
                              TRACK_NAMES[1]: 780.0 + (WIDTH * 0.75),
                              TRACK_NAMES[2]: 1310.0 + (WIDTH * 0.75)}
-START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0 + (HEIGHT * 0.75),
-                             TRACK_NAMES[1]: 670.0 + (HEIGHT * 0.75),
-                             TRACK_NAMES[2]: 450.0 + (HEIGHT * 0.75)}
+START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0 + (WIDTH * 0.75),
+                             TRACK_NAMES[1]: 670.0 + (WIDTH * 0.75),
+                             TRACK_NAMES[2]: 450.0 + (WIDTH * 0.75)}
 START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[1]: 270,
                                   TRACK_NAMES[2]: 0}
@@ -186,7 +214,7 @@ TRACK_SONG_TYPES: list[str] = ["track_start", "loop", "final_lap", "fast", "trac
 GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
 
 # Volume settings
-MUSIC_VOLUME: float = 0.5
+# MUSIC_VOLUME: float = 0.5  <- This is now removed and handled by save_manager
 
 # Map Boundaries (for respawn)
 MAP_BOUNDS_BUFFER: int = 200

@@ -64,7 +64,7 @@ class TrackSelection:
         self.last_hovered: int = 0
 
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(0.1)
+        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
         # Transitions
         self.transitioning: bool = False

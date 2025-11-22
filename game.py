@@ -9,6 +9,14 @@ from difficulty_selection import DifficultySelection
 from save_manager import SaveManager
 from race import Race
 
+# --- NEW: Import settings screens ---
+from settings_menu import SettingsMenu
+from controls_menu import ControlsMenu
+from sound_menu import SoundMenu
+
+
+# --- End New ---
+
 
 class Game:
     """Manages the overall game state, main loop, and coordination between Car and Track"""
@@ -26,21 +34,28 @@ class Game:
         pygame.display.set_caption(constants.GAME_TITLE)
 
         # Data Manager
-        self.save_manager = SaveManager()
+        self.save_manager = SaveManager(self)
 
         # Menu screens
         self.title_screen: TitleScreen
         self.track_selection: TrackSelection
         self.car_selection: CarSelection
         self.difficulty_selection: DifficultySelection
+        # --- NEW ---
+        self.settings_menu: SettingsMenu
+        self.controls_menu: ControlsMenu
+        self.sound_menu: SoundMenu
+        # --- End New ---
 
-        self.custom_cursor_image: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
+        self.custom_cursor_image: pygame.Surface = pygame.image.load(
+            constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
         self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
                                                           (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
-        self.click_sound.set_volume(0.2)
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(0.1)
+
+        # Apply volumes from save file
+        self.save_manager.apply_all_settings()
 
         # Letterbox scaling
         self.scale_factor: float = 1.0
@@ -83,22 +98,16 @@ class Game:
         self.screen.blit(scaled_surface, (self.offset_x, self.offset_y))
 
     def _set_title_screen(self):
-        self.title_screen = TitleScreen(self.game_surface)
+        self.title_screen = TitleScreen(self.game_surface, self.save_manager)
 
-    def welcome(self) -> None:
-        """Displays the title screen and displays the track selection screen when the button is clicked"""
+        # --- NEW: Settings Menu Methods ---
 
-        pygame.mouse.set_visible(False)
-        pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
-        pygame.mixer.music.play(-1)
-        self._set_title_screen()
-        title_clock: pygame.time.Clock = pygame.time.Clock()
-        if not self.title_screen.play_intro(self.screen):
-            self.quit()
-        pygame.mouse.set_visible(False)
+    def _settings_menu(self) -> str:
+        """Displays the main settings menu. Returns next screen."""
+        self.settings_menu = SettingsMenu(self.game_surface, self.save_manager)
+        settings_clock = pygame.time.Clock()
 
-        running: bool = True
-        queued_action: str = ""
+        running = True
         while running:
             events = pygame.event.get()
             for event in events:
@@ -107,32 +116,154 @@ class Game:
                 if event.type == pygame.VIDEORESIZE:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
-            # Get scaled mouse position *once* per frame
+            self.get_scaled_mouse_pos()
+            action = self.settings_menu.handle_events(events, self.scaled_mouse_pos)
+
+            if action == "exit":
+                self.quit()
+            elif action == "back":
+                self.click_sound.play()
+                return "title"  # Go back to title
+            elif action == "controls":
+                self.click_sound.play()
+                self._controls_menu()  # Run controls sub-loop
+                # After returning, re-init main settings
+                self.settings_menu = SettingsMenu(self.game_surface, self.save_manager)
+            elif action == "sound":
+                self.click_sound.play()
+                self._sound_menu()  # Run sound sub-loop
+                # After returning, re-init main settings
+                self.settings_menu = SettingsMenu(self.game_surface, self.save_manager)
+
+            self.settings_menu.draw()
+            self.draw_cursor()
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            settings_clock.tick(60)
+        return "title"
+
+    def _controls_menu(self) -> None:
+        """Displays the controls settings menu."""
+        self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
+        controls_clock = pygame.time.Clock()
+
+        running = True
+        while running:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            self.get_scaled_mouse_pos()
+            action = self.controls_menu.handle_events(events, self.scaled_mouse_pos)
+
+            if action == "exit":
+                self.quit()
+            elif action == "back":
+                self.click_sound.play()
+                running = False  # Exit loop, return to _settings_menu
+
+            self.controls_menu.draw()
+            self.draw_cursor()
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            controls_clock.tick(60)
+
+    def _sound_menu(self) -> None:
+        """Displays the sound settings menu."""
+        self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
+        sound_clock = pygame.time.Clock()
+
+        running = True
+        while running:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
+            self.get_scaled_mouse_pos()
+            action = self.sound_menu.handle_events(events, self.scaled_mouse_pos)
+
+            if action == "exit":
+                self.quit()
+            elif action == "back":
+                self.click_sound.play()
+                running = False  # Exit loop, return to _settings_menu
+
+            self.sound_menu.draw()
+            self.draw_cursor()
+            self.draw_letterboxed_surface()
+            pygame.display.flip()
+            sound_clock.tick(60)
+
+    # --- End New ---
+
+    def welcome(self) -> None:
+        """Displays the title screen and manages main screen transitions"""
+
+        pygame.mouse.set_visible(False)
+        pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
+        pygame.mixer.music.set_volume(self.save_manager.get_volumes()["music"])
+        pygame.mixer.music.play(-1)
+        self._set_title_screen()
+        title_clock: pygame.time.Clock = pygame.time.Clock()
+        if not self.title_screen.play_intro(self.screen):
+            self.quit()
+        pygame.mouse.set_visible(False)
+
+        current_screen = "title"
+
+        running: bool = True
+        queued_action: str = ""
+        while running:
+            # --- Music Loop ---
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
+                pygame.mixer.music.set_volume(self.save_manager.get_volumes()["music"])
+                pygame.mixer.music.play(-1)
+
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
             self.get_scaled_mouse_pos()
 
-            next_action = self.title_screen.handle_events(events, self.scaled_mouse_pos)
+            # --- NEW: State Machine ---
+            if current_screen == "title":
+                next_action = self.title_screen.handle_events(events, self.scaled_mouse_pos)
 
-            if next_action == "exit":
-                self.quit()
-            elif next_action == "track_selection":
-                self.click_sound.play()
-                queued_action = next_action
-                self.title_screen.initialize_transition(start_transition=True, backwards=False)
+                if next_action == "exit":
+                    self.quit()
+                elif next_action == "track_selection":
+                    self.click_sound.play()
+                    queued_action = "track_selection"
+                    self.title_screen.initialize_transition(start_transition=True, backwards=False)
+                elif next_action == "settings":
+                    self.click_sound.play()
+                    current_screen = self._settings_menu()  # This loop will run until it returns
+                    self._set_title_screen()  # Re-init title screen when returning
 
-            if queued_action != "" and not self.title_screen.transitioning:
-                self._track_select()
-                queued_action = ""
+                if queued_action == "track_selection" and not self.title_screen.transitioning:
+                    self._track_select()  # This runs its own loop
+                    # After _track_select returns, we are back on the title screen
+                    current_screen = "title"
+                    self._set_title_screen()  # Re-init title screen
+                    queued_action = ""
 
-            self.title_screen.draw()
+                self.title_screen.draw()
+            # --- End State Machine ---
+
             self.draw_cursor()
-
-            # Draw the letterboxed game_surface to the screen
             self.draw_letterboxed_surface()
             pygame.display.flip()
             title_clock.tick(60)
-
-        # After the loop, go to track selection
-        self._track_select()
 
     def get_scaled_mouse_pos(self) -> None:
         """Scales mouse position from window coordinates to game_surface coordinates"""
@@ -164,10 +295,8 @@ class Game:
         running: bool = True
         track_name: str = ""
         while running:
-            if not pygame.mixer.music.get_busy():
-                pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
-                pygame.mixer.music.play(-1)
-            events: list[Event] = pygame.event.get()
+            # Music is handled by welcome()
+            events: list[pygame.event.Event] = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
                     self.quit()
@@ -175,7 +304,6 @@ class Game:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
             self.get_scaled_mouse_pos()
-            self.draw_cursor()
 
             next_action: str = self.track_selection.handle_events(events, self.scaled_mouse_pos)
 
@@ -193,28 +321,27 @@ class Game:
                 self.track_selection = TrackSelection(self.game_surface, self.save_manager)
                 if should_transition:
                     self.track_selection.initialize_transition(start_transition=False, backwards=True)
+                else:
+                    # A race was started, break this loop and return to welcome()
+                    running = False
 
             self.track_selection.draw()
             self.draw_cursor()
-
-            # Draw the letterboxed game_surface to the screen
             self.draw_letterboxed_surface()
             pygame.display.flip()
             track_select_clock.tick(60)
 
     def _car_select(self, track_name: str) -> bool:
         """Displays the car selection screen"""
-        self.car_selection = CarSelection(self.game_surface)
+        self.car_selection = CarSelection(self.game_surface, self.save_manager)
         self.car_selection.initialize_transition(True)
         car_select_clock: pygame.time.Clock = pygame.time.Clock()
 
         running: bool = True
         exiting: bool = False
-        should_transition: bool = False
+        should_transition: bool = True
         while running:
-            if not pygame.mixer.music.get_busy():
-                pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
-                pygame.mixer.music.play(-1)
+            # Music handled by welcome()
             events = pygame.event.get()
             for event in events:
                 if event.type == pygame.QUIT:
@@ -223,7 +350,6 @@ class Game:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
             self.get_scaled_mouse_pos()
-            self.draw_cursor()
 
             # next_action can be "exit", "back", "", or dict with selection info
             next_action = self.car_selection.handle_events(events, self.scaled_mouse_pos)
@@ -244,13 +370,14 @@ class Game:
                 difficulty = self._difficulty_select()
 
                 if difficulty == "back":
-                    pass # Loop continues, user is back at car select
+                    pass  # Loop continues, user is back at car select
                 elif difficulty == "exit":
                     self.quit()
                 else:
                     # Start the race with the chosen difficulty
                     self._start_race(track_name, car_index, style_index, difficulty)
-                    break # Stop the loop immediately so we don't draw car selection one last time
+                    should_transition = False
+                    break  # Stop the loop immediately so we don't draw car selection one last time
 
             if exiting and not self.car_selection.transitioning:
                 should_transition = True
@@ -258,8 +385,6 @@ class Game:
 
             self.car_selection.draw()
             self.draw_cursor()
-
-            # Draw the letterboxed game_surface to the screen
             self.draw_letterboxed_surface()
             pygame.display.flip()
             car_select_clock.tick(60)
@@ -267,7 +392,7 @@ class Game:
 
     def _difficulty_select(self) -> str:
         """Displays the difficulty selection screen. Returns difficulty key, 'back', or 'exit'."""
-        self.difficulty_selection = DifficultySelection(self.game_surface)
+        self.difficulty_selection = DifficultySelection(self.game_surface, self.save_manager)
         difficulty_clock = pygame.time.Clock()
 
         running = True
@@ -280,7 +405,6 @@ class Game:
                     self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
             self.get_scaled_mouse_pos()
-            self.draw_cursor()
 
             action = self.difficulty_selection.handle_events(events, self.scaled_mouse_pos)
 

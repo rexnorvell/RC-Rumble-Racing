@@ -1,5 +1,17 @@
 {
     "unlocked_tracks": [
         "magnificent_meadow"
-    ]
+    ],
+    "key_bindings": {
+        "FORWARD": 119,
+        "BACKWARD": 115,
+        "LEFT": 97,
+        "RIGHT": 100,
+        "DRIFT": 1073742049,
+        "TOGGLE_GHOST": 103
+    },
+    "volume_settings": {
+        "music": 0.506,
+        "sfx": 0.156
+    }
 }

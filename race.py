@@ -13,12 +13,18 @@ from track import Track
 
 class Race:
 
-    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: str, save_manager: SaveManager) -> None:
+    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: str,
+                 save_manager: SaveManager) -> None:
 
         # General
         self.game = game
         self.save_manager: SaveManager = save_manager
         self.difficulty = difficulty
+
+        # --- NEW: Get settings from save_manager ---
+        self.key_bindings = self.save_manager.get_key_bindings()
+        self.sfx_volume = self.save_manager.get_volumes()["sfx"]
+        # --- End New ---
 
         # --- NEW: Add fade surface ---
         self.fade_surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
@@ -105,10 +111,10 @@ class Race:
         # Sound and Music
         self.next_lap_sound: pygame.mixer.Sound = pygame.mixer.Sound(
             constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="next_lap"))
-        self.next_lap_sound.set_volume(0.5)
+        self.next_lap_sound.set_volume(self.sfx_volume)
         self.respawn_sound: pygame.mixer.Sound = pygame.mixer.Sound(
             constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="respawn"))
-        self.respawn_sound.set_volume(0.5)
+        self.respawn_sound.set_volume(self.sfx_volume)
 
         # User Car
         self.user_car_index = car_index
@@ -116,7 +122,7 @@ class Race:
         self.user_car_config = constants.CAR_DEFINITIONS[self.user_car_index]
 
         self.user_car: Car = Car(self.game.game_surface, self.track.name, False, self.user_car_config,
-                                 self.user_style_index)
+                                 self.user_style_index, self.key_bindings)
 
         # User Data
         self.personal_best_time: float = float("inf")
@@ -124,7 +130,8 @@ class Race:
         # Ghost Car
         # Use the separate ghost definition from constants
         self.ghost_car_config = constants.GHOST_CAR_DEFINITION
-        self.ghost_car = Car(self.game.game_surface, self.track.name, True, self.ghost_car_config, 0)
+        self.ghost_car = Car(self.game.game_surface, self.track.name, True, self.ghost_car_config, 0,
+                             {})  # Ghost needs no keys
 
         # Determine Ghost File based on difficulty
         if self.difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
@@ -443,7 +450,7 @@ class Race:
                             self._initialize_pause()
                         else:
                             self._unpause()
-                if event.key == pygame.K_g:
+                if event.key == self.key_bindings[constants.KEY_ACTION_TOGGLE_GHOST]:
                     self.show_ghost = not self.show_ghost
             if event.type == pygame.VIDEORESIZE:
                 self.game.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)

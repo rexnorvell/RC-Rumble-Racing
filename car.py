@@ -9,8 +9,9 @@ class Car:
     """Represents the player's car, handling its state, movement, input, and drawing"""
 
     def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool, car_config: dict,
-                 style_index: int) -> None:
+                 style_index: int, key_bindings: dict) -> None:
         self.screen: pygame.Surface = screen
+        self.key_bindings = key_bindings
 
         # Load properties from config
         stats = car_config["stats"]
@@ -71,9 +72,9 @@ class Car:
             self.move_angle += math.copysign(delta_angle, error)
             return
 
-        if keys[pygame.K_w]:
+        if keys[self.key_bindings[constants.KEY_ACTION_FORWARD]]:
             self.speed += self.acceleration
-        elif keys[pygame.K_s]:
+        elif keys[self.key_bindings[constants.KEY_ACTION_BACKWARD]]:
             self.speed -= self.acceleration
         else:
             self.speed = math.copysign(max(abs(self.speed) - constants.FRICTION, 0), self.speed)
@@ -81,9 +82,9 @@ class Car:
         # Directly change the car angle (which direction the car is facing)
         # Use calculated turn_speed instead of global constant
         turn_factor: float = self.turn_speed * (self.speed / self.base_max_speed)
-        if keys[pygame.K_a]:
+        if keys[self.key_bindings[constants.KEY_ACTION_LEFT]]:
             self.car_angle -= turn_factor
-        if keys[pygame.K_d]:
+        if keys[self.key_bindings[constants.KEY_ACTION_RIGHT]]:
             self.car_angle += turn_factor
 
         # The move angle (the direction the car is going) should lag behind the car angle.
@@ -94,7 +95,7 @@ class Car:
         if abs(error) > constants.MAX_DRIFT_ANGLE:
             delta_angle = abs(error) - constants.MAX_DRIFT_ANGLE
         # When drifting (space), the move angle should lag more.
-        elif keys[pygame.K_SPACE]:
+        elif keys[self.key_bindings[constants.KEY_ACTION_DRIFT]]:
             delta_angle = constants.DRIFT_RECOVERY_SPEED
         else:
             delta_angle = 2 * constants.DRIFT_RECOVERY_SPEED

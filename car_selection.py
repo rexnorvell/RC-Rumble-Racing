@@ -6,8 +6,9 @@ import constants
 class CarSelection:
     """Handles the car selection screen"""
 
-    def __init__(self, screen) -> None:
+    def __init__(self, screen, save_manager) -> None:
         self.screen: pygame.Surface = screen
+        self.save_manager = save_manager
 
         # --- Load Background ---
         self.background_image: pygame.Surface = pygame.image.load(constants.CAR_SELECTION_IMAGE_PATH.format(image_name="default")).convert()
@@ -71,7 +72,7 @@ class CarSelection:
 
         # --- Sound ---
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(0.1)
+        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
         # Transitions
         self.transitioning: bool = False

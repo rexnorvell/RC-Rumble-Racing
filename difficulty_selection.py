@@ -5,8 +5,9 @@ import constants
 class DifficultySelection:
     """Handles the difficulty selection screen (Ghost opponent selection)."""
 
-    def __init__(self, screen: pygame.Surface) -> None:
+    def __init__(self, screen: pygame.Surface, save_manager) -> None:
         self.screen = screen
+        self.save_manager = save_manager
 
         # Use a generic background or one of the existing ones as fallback
         self.background = pygame.Surface((constants.WIDTH, constants.HEIGHT))
@@ -39,7 +40,7 @@ class DifficultySelection:
 
         self.last_hovered = None
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(0.1)
+        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """

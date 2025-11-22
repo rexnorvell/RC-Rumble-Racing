@@ -7,12 +7,15 @@ import constants
 class TitleScreen:
     """Handles the title screen."""
 
-    def __init__(self, screen) -> None:
+    def __init__(self, screen, save_manager) -> None:
         self.screen: pygame.Surface = screen
+        self.save_manager = save_manager
 
         # Background image
-        self.title_background_image: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
-        self.title_background_image = pygame.transform.scale(self.title_background_image, (constants.WIDTH, constants.HEIGHT))
+        self.title_background_image: pygame.Surface = pygame.image.load(
+            constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
+        self.title_background_image = pygame.transform.scale(self.title_background_image,
+                                                             (constants.WIDTH, constants.HEIGHT))
 
         # Foreground images
         self.title_default_image: pygame.Surface = pygame.image.load(
@@ -33,14 +36,38 @@ class TitleScreen:
         button_y: int = constants.HEIGHT - 405
         self.button_rect: pygame.Rect = pygame.Rect(button_x, button_y, button_width, button_height)
 
+        # --- MODIFIED: Settings Button ---
+        try:
+            self.settings_icon_default = pygame.image.load(constants.SETTINGS_ICON_PATH).convert_alpha()
+            self.settings_icon_default = pygame.transform.scale(self.settings_icon_default, (50, 50))
+
+            # Load the hover icon, but do NOT apply the tint
+            self.settings_icon_hover = pygame.image.load(constants.SETTINGS_ICON_PATH).convert_alpha()
+            self.settings_icon_hover = pygame.transform.scale(self.settings_icon_hover, (50, 50))
+
+            # REMOVED this line:
+            # self.settings_icon_hover.fill((50, 50, 50), special_flags=pygame.BLEND_RGB_ADD)
+
+            # Position at the BOTTOM RIGHT
+            self.settings_icon_rect = self.settings_icon_default.get_rect(
+                bottomright=(constants.WIDTH - 20, constants.HEIGHT - 20)
+            )
+
+        except pygame.error as e:
+            print(f"Error loading settings icon: {e}")
+            self.settings_icon_default = None
+            self.settings_icon_hover = None
+            self.settings_icon_rect = pygame.Rect(0, 0, 0, 0)  # dummy rect
+        # --- End Modify ---
+
         # Intro video
         self.intro_clip: VideoFileClip = VideoFileClip(constants.INTRO_VIDEO_PATH)
 
         # Button hovering
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(0.1)
+        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
         self.hover_sound_played: bool = False
-        self.last_hovered: int = 0
+        self.last_hovered: int = 0  # 0=None, 1=Start, 2=Settings
 
         # Transitions
         self.transitioning: bool = False
@@ -108,6 +135,8 @@ class TitleScreen:
 
         if self.button_rect.collidepoint(mouse_pos):
             hovered_index = 1
+        elif self.settings_icon_default and self.settings_icon_rect.collidepoint(mouse_pos):
+            hovered_index = 2
         else:
             hovered_index = 0
 
@@ -117,6 +146,9 @@ class TitleScreen:
             if hovered_index == 1:
                 self.hover_sound.play()
                 self.current_image = self.title_hover_image
+            elif hovered_index == 2:
+                self.hover_sound.play()
+                self.current_image = self.title_default_image  # Keep default bg
             else:
                 self.current_image = self.title_default_image
 
@@ -130,6 +162,8 @@ class TitleScreen:
                 if hovered_index == 1:
                     self.current_image = self.title_default_image
                     return "track_selection"
+                elif hovered_index == 2:
+                    return "settings"
         return ""
 
     def handle_transitions(self):
@@ -161,6 +195,16 @@ class TitleScreen:
         """Draws the title screen."""
         self.screen.blit(self.title_background_image, (0, 0))
         self.handle_transitions()
+
+        # --- MODIFIED: Draw Settings Icon ---
+        if self.settings_icon_default and not self.transitioning:
+            if self.last_hovered == 2:
+                # Draw the hover icon (which is now just the plain cog)
+                self.screen.blit(self.settings_icon_hover, self.settings_icon_rect)
+            else:
+                # Draw the default icon
+                self.screen.blit(self.settings_icon_default, self.settings_icon_rect)
+        # --- End Modify ---
 
     def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
         """Set flags and store the starting time of the transition"""
