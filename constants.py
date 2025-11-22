@@ -49,11 +49,7 @@ CURSOR_WIDTH: int = 40
 CURSOR_HEIGHT: int = 40
 
 # --- NEW: Transitions ---
-GARAGE_DOOR_IMAGE_PATH: str = "assets/images/car_selection/metal_door.jpg"
-GARAGE_DOOR_SOUND_PATH: str = "assets/audio/car_selection/garage_door_open.mp3"
-GARAGE_DOOR_LIFT_SPEED_MS: int = 3500  # 3.5 seconds
 FADE_TRANSITION_SPEED_MS: int = 500  # 0.5 seconds
-# --- End New ---
 
 # Title screen
 TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
@@ -63,7 +59,7 @@ INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
 INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 
 # Track selection screen
-TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{image_name}.png"
+TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{number}_{type}.png"
 
 # Car selection screen
 CAR_SELECTION_IMAGE_PATH: str = "assets/images/car_selection/{image_name}.png"
@@ -84,25 +80,31 @@ TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 # Track parameters
 TRACK_NAMES: list[str] = ["magnificent_meadow",
                           "dusty_dunes",
-                          "glistening_glacier"]
+                          "glistening_glacier",
+                          "fiery_furnace"]
 NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
                             TRACK_NAMES[1]: 3,
-                            TRACK_NAMES[2]: 3}
-CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1200 + (WIDTH * 0.75), 350 + (HEIGHT * 0.75), 200, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(565 + (WIDTH * 0.75), 50 + (HEIGHT * 0.75), 50, 300),
-                                                TRACK_NAMES[2]: pygame.Rect(0 + (WIDTH * 0.75), 400 + (HEIGHT * 0.75), 200, 50)}
+                            TRACK_NAMES[2]: 3,
+                            TRACK_NAMES[3]: 3}
+CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(2256, 944, 200, 50),
+                                                TRACK_NAMES[1]: pygame.Rect(1621, 644, 50, 300),
+                                                TRACK_NAMES[2]: pygame.Rect(1056, 994, 200, 50),
+                                                TRACK_NAMES[3]: pygame.Rect(3950, 1350, 250, 50)}
 
 # Angle to face when respawning at the checkpoint
 CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,
                                      TRACK_NAMES[1]: 90,
-                                     TRACK_NAMES[2]: 180}
+                                     TRACK_NAMES[2]: 180,
+                                     TRACK_NAMES[3]: 180}
 
-FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(12 + (WIDTH * 0.75), 400 + (HEIGHT * 0.75), 180, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(680 + (WIDTH * 0.75), 590 + (HEIGHT * 0.75), 50, 180),
-                                                TRACK_NAMES[2]: pygame.Rect(1220 + (WIDTH * 0.75), 330 + (HEIGHT * 0.75), 180, 50)}
+FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1068, 994, 180, 50),
+                                                TRACK_NAMES[1]: pygame.Rect(1736, 1184, 50, 180),
+                                                TRACK_NAMES[2]: pygame.Rect(2276, 924, 180, 50),
+                                                TRACK_NAMES[3]: pygame.Rect(675, 1176, 400, 50)}
 TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[float, float]] = {TRACK_NAMES[0]: (2.5, 2.5),
                                                             TRACK_NAMES[1]: (2.5, 2.5),
-                                                            TRACK_NAMES[2]: (2.5, 2.5)}
+                                                            TRACK_NAMES[2]: (2.5, 2.5),
+                                                            TRACK_NAMES[3]: (3.5, 3.5)}
 TRACK_IMAGE_PATH: str = "assets/images/tracks/{track_name}/{image_type}.png"
 TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 
@@ -127,19 +129,21 @@ MAX_DRIFT_ANGLE: float = 50.0
 MIN_DRIFT_ANGLE: float = 15.0
 DRIFT_RECOVERY_SPEED: float = 1.5
 
-START_X: dict[str, float] = {TRACK_NAMES[0]: 100.0 + (WIDTH * 0.75),
-                             TRACK_NAMES[1]: 780.0 + (WIDTH * 0.75),
-                             TRACK_NAMES[2]: 1310.0 + (WIDTH * 0.75)}
-START_Y: dict[str, float] = {TRACK_NAMES[0]: 500.0 + (WIDTH * 0.75),
-                             TRACK_NAMES[1]: 670.0 + (WIDTH * 0.75),
-                             TRACK_NAMES[2]: 450.0 + (WIDTH * 0.75)}
+START_X: dict[str, float] = {TRACK_NAMES[0]: 1156.0,
+                             TRACK_NAMES[1]: 1836.0,
+                             TRACK_NAMES[2]: 2366.0,
+                             TRACK_NAMES[3]: 875.0}
+START_Y: dict[str, float] = {TRACK_NAMES[0]: 1094.0,
+                             TRACK_NAMES[1]: 1264.0,
+                             TRACK_NAMES[2]: 1044.0,
+                             TRACK_NAMES[3]: 1275.0}
 START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
                                   TRACK_NAMES[1]: 270,
-                                  TRACK_NAMES[2]: 0}
+                                  TRACK_NAMES[2]: 0,
+                                  TRACK_NAMES[3]: 0}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
-# --- MODIFIED: Car Definitions ---
 # Replaced with the single F1 car with 7 styles
 CAR_DEFINITIONS = [
     {
@@ -161,7 +165,6 @@ CAR_DEFINITIONS = [
         ],
     }
 ]
-# --- End Modify ---
 
 # Ghost Definition (Unavailable to player)
 GHOST_CAR_DEFINITION = {
@@ -171,9 +174,10 @@ GHOST_CAR_DEFINITION = {
         "Acceleration": 8,
         "Handling": 8,
     },
-    "styles": [
-        {"name": "f1_car_red", "color": (128, 128, 128)} # Placeholder, color tinting handles transparency
-    ]
+    "styles": [{
+        "name": "f1_car_red",
+        "color": (128, 128, 128) # Placeholder, color tinting handles transparency
+    }]
 }
 
 
@@ -214,11 +218,4 @@ TRACK_SONG_TYPES: list[str] = ["track_start", "loop", "final_lap", "fast", "trac
 GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
 
 # Volume settings
-# MUSIC_VOLUME: float = 0.5  <- This is now removed and handled by save_manager
-
-# Map Boundaries (for respawn)
-MAP_BOUNDS_BUFFER: int = 200
-MAP_MIN_X: int = -MAP_BOUNDS_BUFFER
-MAP_MIN_Y: int = -MAP_BOUNDS_BUFFER
-MAP_MAX_X: int = WIDTH + MAP_BOUNDS_BUFFER
-MAP_MAX_Y: int = HEIGHT + MAP_BOUNDS_BUFFER
+MUSIC_VOLUME: float = 0.5

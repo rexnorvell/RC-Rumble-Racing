@@ -7,59 +7,108 @@ class TrackSelection:
     """Handles the track selection screen"""
 
     def __init__(self, screen, save_manager) -> None:
+
+        # General
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
+        self.num_unlocked = self.save_manager.num_unlocked
 
         # Background image
         self.background_image: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
         self.background_image = pygame.transform.scale(self.background_image,(constants.WIDTH, constants.HEIGHT))
 
-        # Load Images
-        self.track_selection_default_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="default")).convert_alpha()
-        self.track_selection_default_image = pygame.transform.scale(self.track_selection_default_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_1_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="1")).convert()
-        self.track_selection_hover_1_image = pygame.transform.scale(self.track_selection_hover_1_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_2_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="2")).convert()
-        self.track_selection_hover_2_image = pygame.transform.scale(self.track_selection_hover_2_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.track_selection_hover_3_image: pygame.Surface = pygame.image.load(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(image_name="3")).convert()
-        self.track_selection_hover_3_image = pygame.transform.scale(self.track_selection_hover_3_image,
-                                                                    (constants.WIDTH, constants.HEIGHT))
-        self.current_image: pygame.Surface = self.track_selection_default_image
-        self.garage_door: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="garage")).convert()
-        self.garage_door = pygame.transform.scale(self.garage_door,(constants.WIDTH, constants.HEIGHT))
-
         # Track button rects
         button_width: int = 380
         button_height: int = 213
-        # Store buttons with their associated track names and images
+        
+        # First track
+        self.first_default_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="default"))
+        self.first_default_image = pygame.transform.scale(self.first_default_image,(button_width, button_height))
+        self.first_hover_image: pygame.Surface = pygame.image.load(constants.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="hover"))
+        self.first_hover_image = pygame.transform.scale(self.first_hover_image, (button_width, button_height))
+
+        # Second track
+        self.second_default_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="default"))
+        self.second_default_image = pygame.transform.scale(self.second_default_image, (button_width, button_height))
+        self.second_hover_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="hover"))
+        self.second_hover_image = pygame.transform.scale(self.second_hover_image, (button_width, button_height))
+        self.second_locked_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="locked"))
+        self.second_locked_image = pygame.transform.scale(self.second_locked_image, (button_width, button_height))
+
+        # Third track
+        self.third_default_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="default"))
+        self.third_default_image = pygame.transform.scale(self.third_default_image,
+                                                           (button_width, button_height))
+        self.third_hover_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="hover"))
+        self.third_hover_image = pygame.transform.scale(self.third_hover_image, (button_width, button_height))
+        self.third_locked_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="locked"))
+        self.third_locked_image = pygame.transform.scale(self.third_locked_image, (button_width, button_height))
+
+        # Fourth track
+        self.fourth_default_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="default"))
+        self.fourth_default_image = pygame.transform.scale(self.fourth_default_image,
+                                                          (button_width, button_height))
+        self.fourth_hover_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="hover"))
+        self.fourth_hover_image = pygame.transform.scale(self.fourth_hover_image, (button_width, button_height))
+        self.fourth_locked_image: pygame.Surface = pygame.image.load(
+            constants.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="locked"))
+        self.fourth_locked_image = pygame.transform.scale(self.fourth_locked_image, (button_width, button_height))
+
+        # Back Button
+        self.back_button_x: int = 10
+        self.back_button_width: int = 100
+        self.back_button_height: int = self.back_button_width
+        self.back_button_y: int = constants.HEIGHT - self.back_button_height - self.back_button_x
+        self.back_default_image: pygame.Surface = pygame.image.load(
+            constants.GENERAL_IMAGE_PATH.format(name="arrow_left_default"))
+        self.back_default_image = pygame.transform.scale(self.back_default_image,
+                                                         (self.back_button_width, self.back_button_height))
+        self.back_hover_image: pygame.Surface = pygame.image.load(
+            constants.GENERAL_IMAGE_PATH.format(name="arrow_left_hover"))
+        self.back_hover_image = pygame.transform.scale(self.back_hover_image,
+                                                       (self.back_button_width, self.back_button_height))
+        self.back_button_rect: pygame.Rect = pygame.Rect(self.back_button_x, self.back_button_y, self.back_button_width,
+                                                         self.back_button_height)
+        self.back_current_image: pygame.Surface = self.back_default_image
+
+        # Initialize images
+        self.first_image: pygame.Surface = self.first_default_image
+        self.second_image: pygame.Surface = self.second_default_image
+        self.third_image: pygame.Surface = self.third_default_image
+        self.fourth_image: pygame.Surface = self.fourth_default_image
+        self.set_track_images(0)
+
+        # Transition
+        self.garage_door: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="garage")).convert()
+        self.garage_door = pygame.transform.scale(self.garage_door,(constants.WIDTH, constants.HEIGHT))
+
+        # Store buttons with their associated track names
         self.buttons = [
             {
                 "rect": pygame.Rect(302, 160, button_width, button_height),
-                "track": constants.TRACK_NAMES[0],
-                "img": self.track_selection_hover_1_image
+                "track": constants.TRACK_NAMES[0]
             },
             {
                 "rect": pygame.Rect(727, 160, button_width, button_height),
-                "track": constants.TRACK_NAMES[1],
-                "img": self.track_selection_hover_2_image
+                "track": constants.TRACK_NAMES[1]
             },
             {
                 "rect": pygame.Rect(302, 420, button_width, button_height),
-                "track": constants.TRACK_NAMES[2],
-                "img": self.track_selection_hover_3_image
+                "track": constants.TRACK_NAMES[2]
+            },
+            {
+                "rect": pygame.Rect(727, 420, button_width, button_height),
+                "track": constants.TRACK_NAMES[3]
             }
         ]
-
-        # Exit Button
-        self.button_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 40)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
 
         self.last_hovered: int = 0
 
@@ -95,32 +144,56 @@ class TrackSelection:
                 break
 
         # Check exit button
-        if hovered_index == 0 and self.exit_button_rect.collidepoint(mouse_pos):
-            hovered_index = 4
+        if hovered_index == 0 and self.back_button_rect.collidepoint(mouse_pos):
+            hovered_index = 5
 
         if hovered_index != self.last_hovered:
             self.last_hovered = hovered_index
-            if hovered_index == 4:
+            if hovered_index == 5:
                 self.hover_sound.play()
-                self.current_image = self.track_selection_default_image
+                self.set_track_images(hovered_index)
             elif hovered_index > 0:
                 self.hover_sound.play()
-                # -1 because list is 0-indexed but hovered_index is 1-based here
-                self.current_image = self.buttons[hovered_index - 1]["img"]
+                self.set_track_images(hovered_index)
             else:
-                self.current_image = self.track_selection_default_image
+                self.set_track_images(0)
 
         for event in events:
             if event.type == pygame.QUIT:
                 return "exit"
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if hovered_index == 4:
-                    return "exit"
+                if hovered_index == 5:
+                    return "back"
                 elif hovered_index > 0:
                     # Return the selected track name
                     return self.buttons[hovered_index - 1]["track"]
 
         return ""
+
+    def set_track_images(self, hovered_index: int) -> None:
+        self.first_image = self.first_default_image if hovered_index != 1 else self.first_hover_image
+        if self.num_unlocked <= 1:
+            self.second_image = self.second_locked_image
+        elif hovered_index == 2:
+            self.second_image = self.second_hover_image
+        else:
+            self.second_image = self.second_default_image
+        
+        if self.num_unlocked <= 2:
+            self.third_image = self.third_locked_image
+        elif hovered_index == 3:
+            self.third_image = self.third_hover_image
+        else:
+            self.third_image = self.third_default_image
+        
+        if self.num_unlocked <= 3:
+            self.fourth_image = self.fourth_locked_image
+        elif hovered_index == 4:
+            self.fourth_image = self.fourth_hover_image
+        else:
+            self.fourth_image = self.fourth_default_image
+
+        self.back_current_image = self.back_default_image if hovered_index != 5 else self.back_hover_image
 
     def draw(self) -> None:
         """Draws the track selection screen"""
@@ -130,18 +203,7 @@ class TrackSelection:
         if self.transitioning:
             self.handle_transitions()
         else:
-            self.screen.blit(self.current_image, (0, 0))
-
-        # Determine exit button color
-        if self.last_hovered == 4:
-            exit_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR
-        else:
-            exit_color = constants.TRACK_SELECTION_EXIT_COLOR
-
-        # Draw the exit button text
-        exit_text_surf = self.button_font.render("Exit", True, exit_color)
-        exit_text_rect = exit_text_surf.get_rect(center=self.exit_button_rect.center)
-        self.screen.blit(exit_text_surf, exit_text_rect)
+            self.blit_current_images(0)
 
     def handle_transitions(self):
         """Handles the four kinds of transitions:
@@ -179,9 +241,24 @@ class TrackSelection:
                 transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
                 percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
                 foreground_x = constants.WIDTH - int(percent_progress * constants.WIDTH)
-        self.screen.blit(self.current_image, (foreground_x, 0))
+        elif self.transitioning_to_prev:
+            if time_elapsed_ms >= self.transition_prev_duration_ms:
+                foreground_x = constants.WIDTH
+                self.end_transition()
+            else:
+                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
+                percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
+                foreground_x = int(percent_progress * constants.WIDTH)
+        self.blit_current_images(foreground_x)
         if draw_garage_door:
             self.screen.blit(self.garage_door, (0, garage_door_y))
+
+    def blit_current_images(self, x: int) -> None:
+        self.screen.blit(self.first_image, (x + 302, 160))
+        self.screen.blit(self.second_image, (x + 727, 160))
+        self.screen.blit(self.third_image, (x + 302, 420))
+        self.screen.blit(self.fourth_image, (x + 727, 420))
+        self.screen.blit(self.back_current_image, (x + self.back_button_x, self.back_button_y))
 
     def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
         """Set flags and store the starting time of the transition"""

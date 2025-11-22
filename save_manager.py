@@ -13,6 +13,7 @@ class SaveManager:
         self.game = game
         self.file_path = constants.SAVE_FILE_PATH
         self.unlocked_tracks: List[str] = [constants.TRACK_NAMES[0]]  # Default first track unlocked
+        self.num_unlocked: int = 1
 
         # --- NEW: Settings ---
         self.key_bindings: Dict[str, int] = constants.DEFAULT_KEY_BINDINGS.copy()
@@ -34,19 +35,20 @@ class SaveManager:
             with open(self.file_path, 'r') as f:
                 data = json.load(f)
                 self.unlocked_tracks = data.get("unlocked_tracks", [constants.TRACK_NAMES[0]])
+            self.num_unlocked = len(self.unlocked_tracks)
 
-                # --- NEW: Load Settings ---
-                self.key_bindings = data.get("key_bindings", constants.DEFAULT_KEY_BINDINGS.copy())
-                # Ensure all keys are present
-                for key, value in constants.DEFAULT_KEY_BINDINGS.items():
-                    if key not in self.key_bindings:
-                        self.key_bindings[key] = value
+            # --- NEW: Load Settings ---
+            self.key_bindings = data.get("key_bindings", constants.DEFAULT_KEY_BINDINGS.copy())
+            # Ensure all keys are present
+            for key, value in constants.DEFAULT_KEY_BINDINGS.items():
+                if key not in self.key_bindings:
+                    self.key_bindings[key] = value
 
-                self.volume_settings = data.get("volume_settings", {
-                    "music": constants.DEFAULT_MUSIC_VOLUME,
-                    "sfx": constants.DEFAULT_SFX_VOLUME
-                })
-                # --- End New ---
+            self.volume_settings = data.get("volume_settings", {
+                "music": constants.DEFAULT_MUSIC_VOLUME,
+                "sfx": constants.DEFAULT_SFX_VOLUME
+            })
+            # --- End New ---
 
         except (json.JSONDecodeError, IOError) as e:
             print(f"Error loading save data: {e}")

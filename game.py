@@ -250,16 +250,12 @@ class Game:
                     current_screen = self._settings_menu()  # This loop will run until it returns
                     self._set_title_screen()  # Re-init title screen when returning
 
-                if queued_action == "track_selection" and not self.title_screen.transitioning:
-                    self._track_select()  # This runs its own loop
-                    # After _track_select returns, we are back on the title screen
-                    current_screen = "title"
-                    self._set_title_screen()  # Re-init title screen
-                    queued_action = ""
-
-                self.title_screen.draw()
-            # --- End State Machine ---
-
+            if queued_action != "" and not self.title_screen.transitioning:
+                should_transition: bool = self._track_select()
+                queued_action = ""
+                if should_transition:
+                    self.title_screen.initialize_transition(start_transition=False, backwards=True)
+            self.title_screen.draw()
             self.draw_cursor()
             self.draw_letterboxed_surface()
             pygame.display.flip()
@@ -285,7 +281,7 @@ class Game:
                                                                                                          constants.HEIGHT - 1]:
             self.game_surface.blit(self.custom_cursor_image, self.scaled_mouse_pos)
 
-    def _track_select(self) -> None:
+    def _track_select(self) -> bool:
         """Displays the track selection screen and starts the game once a track is selected"""
         # Pass save_manager to track selection so it knows what is unlocked
         self.track_selection: TrackSelection = TrackSelection(self.game_surface, self.save_manager)
@@ -293,7 +289,8 @@ class Game:
         track_select_clock: pygame.time.Clock = pygame.time.Clock()
 
         running: bool = True
-        track_name: str = ""
+        queued_action: str = ""
+        should_transition_1: bool = False
         while running:
             # Music is handled by welcome()
             events: list[pygame.event.Event] = pygame.event.get()
@@ -307,29 +304,32 @@ class Game:
 
             next_action: str = self.track_selection.handle_events(events, self.scaled_mouse_pos)
 
-            if next_action == "exit":
-                self.quit()
+            if next_action == "back":
+                self.click_sound.play()
+                self.track_selection.initialize_transition(start_transition=True, backwards=True)
+                queued_action = next_action
             elif next_action != "":
                 self.click_sound.play()
-                track_name = next_action
+                queued_action = next_action
                 self.track_selection.initialize_transition(start_transition=True, backwards=False)
 
-            if track_name != "" and not self.track_selection.transitioning:
-                should_transition: bool = self._car_select(track_name)
-                track_name = ""
+            if queued_action != "" and queued_action != "back" and not self.track_selection.transitioning:
+                should_transition_2: bool = self._car_select(queued_action)
+                queued_action = ""
                 # Re-initialize track selection to update locks in case a new track was unlocked
                 self.track_selection = TrackSelection(self.game_surface, self.save_manager)
-                if should_transition:
+                if should_transition_2:
                     self.track_selection.initialize_transition(start_transition=False, backwards=True)
-                else:
-                    # A race was started, break this loop and return to welcome()
-                    running = False
+            elif queued_action == "back" and not self.track_selection.transitioning:
+                should_transition_1 = True
+                break
 
             self.track_selection.draw()
             self.draw_cursor()
             self.draw_letterboxed_surface()
             pygame.display.flip()
             track_select_clock.tick(60)
+        return should_transition_1
 
     def _car_select(self, track_name: str) -> bool:
         """Displays the car selection screen"""

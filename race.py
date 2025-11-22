@@ -193,15 +193,11 @@ class Race:
 
     def start(self) -> bool:
         """The main game loop when the user is racing on a track"""
+
         self._initialize_race()
-
-        # --- NEW: Run Fade-In ---
         self._run_fade_in()
-
-        # Move these to *after* the fade-in
         self.countdown_start_time = pygame.time.get_ticks()
         self._play_next_track()
-        # --- End New ---
 
         while self.running:
             self._next_frame()
@@ -253,13 +249,8 @@ class Race:
         pygame.mixer.music.play(-1)
         return False
 
-    # --- NEW: Add _run_fade_in method ---
     def _run_fade_in(self) -> None:
         """Draws the first frame of the race and fades in from black."""
-
-        # Update ghost to its real start position *before* fading in
-        if self.ghost_found and self.show_ghost:
-            self._draw_ghost()  # This will read frame 1 and update pos
 
         start_time = pygame.time.get_ticks()
         elapsed_time = 0
@@ -296,8 +287,6 @@ class Race:
             if progress >= 1.0:
                 transitioning = False
 
-    # --- End New ---
-
     def _clean_up(self):
         """Performs clean up actions before exiting the race"""
         if self.current_race_file.exists():
@@ -312,7 +301,6 @@ class Race:
             self.elapsed_race_time_ms = self.pause_start_time_ms - self.race_start_time_ms
         self.elapsed_race_time_s = self.elapsed_race_time_ms / 1000.0
 
-    # --- NEW: Add _draw_race_frame method ---
     def _draw_race_frame(self) -> None:
         """Draws just the track and cars, with no UI."""
         # Calculate camera offset to center car
@@ -333,34 +321,25 @@ class Race:
         # Draw car
         self.user_car.draw(self.camera_x, self.camera_y)
 
-    # --- End New ---
-
     def _draw_race(self) -> None:
         """Draws all the visual elements for the race"""
 
-        # --- MODIFIED: Update ghost position first, if race is active ---
-        if self.ghost_found and not self.ghost_done and not self.race_over:
-            if self.during_race and not self.is_paused:
-                self._draw_ghost()  # This reads CSV, updates pos, and draws
-                self.next_ghost_index += 1
-            else:
-                # Draw the ghost, but don't advance the frame
-                self._draw_ghost_static()
-
-                # Calculate camera offset to center car
+        # Calculate camera offset to center car
         self.camera_x = self.user_car.x - (constants.WIDTH / 2)
         self.camera_y = self.user_car.y - (constants.HEIGHT / 2)
 
         # Pass camera offset to track drawing
         self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
 
-        # Draw ghost car (it's position was updated above)
-        if self.ghost_found and self.show_ghost:
-            self.ghost_car.draw(self.camera_x, self.camera_y)
+        # Draw the ghost
+        if self.ghost_found and not self.ghost_done and not self.race_over:
+            if self.during_race:
+                self._draw_ghost()
+                if not self.is_paused:
+                    self.next_ghost_index += 1
 
         # Draw user car
         self.user_car.draw(self.camera_x, self.camera_y)
-        # --- End Modify ---
 
         # Overlays
         if not self.race_over:
@@ -382,6 +361,17 @@ class Race:
         # Draw the letterboxed game_surface to the screen
         self.game.draw_letterboxed_surface()
         pygame.display.flip()
+
+    def _draw_checkpoints(self):
+        """For debugging the location of checkpoints"""
+        pygame.draw.rect(self.game.game_surface, (100, 10, 10), pygame.Rect(self.track.checkpoint_1.x - self.camera_x,
+                                                                            self.track.checkpoint_1.y - self.camera_y,
+                                                                            self.track.checkpoint_1.width,
+                                                                            self.track.checkpoint_1.height))
+        pygame.draw.rect(self.game.game_surface, (10, 100, 10), pygame.Rect(self.track.finish_line.x - self.camera_x,
+                                                                            self.track.finish_line.y - self.camera_y,
+                                                                            self.track.finish_line.width,
+                                                                            self.track.finish_line.height))
 
     def _draw_pause_menu(self) -> None:
         """Draws the pause menu overlay and buttons onto the game_surface"""
@@ -465,11 +455,6 @@ class Race:
                 self._calculate_ghost_time()
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
-
-        # --- MODIFIED: Moved to start() ---
-        # self.countdown_start_time = pygame.time.get_ticks()
-        # self._play_next_track()
-        # --- End Modify ---
 
     def _get_personal_best_time(self) -> None:
         """Get the user's personal best time for the current track"""
@@ -709,8 +694,7 @@ class Race:
                         self.ghost_car.move_angle,
                         self.ghost_car.car_angle,
                     ) = map(float, row)
-                    # --- MODIFIED: Removed draw call ---
-                    # self.ghost_car.draw(self.camera_x, self.camera_y)
+                    self.ghost_car.draw(self.camera_x, self.camera_y)
                     found = True
                     break
             self.ghost_done = not found
@@ -718,14 +702,6 @@ class Race:
             self.ghost_found = False
         except Exception:
             self.ghost_found = False
-
-    # --- NEW: Method to draw ghost without advancing frame ---
-    def _draw_ghost_static(self):
-        """Draws the ghost at its current position without reading the CSV"""
-        if self.ghost_found and self.show_ghost:
-            self.ghost_car.draw(self.camera_x, self.camera_y)
-
-    # --- End New ---
 
     def _format_time_simple(self) -> str:
         """Formats time in MM:SS:ms"""
