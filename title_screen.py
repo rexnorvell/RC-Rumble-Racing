@@ -2,12 +2,16 @@ from moviepy import VideoFileClip
 import pygame
 
 import constants
-
+import utilities
 
 class TitleScreen:
     """Handles the title screen."""
 
-    def __init__(self, screen, save_manager) -> None:
+    def __init__(self, game, screen, save_manager) -> None:
+
+        # General
+        self.name: str = "title_screen"
+        self.game = game
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
@@ -36,7 +40,7 @@ class TitleScreen:
         button_y: int = constants.HEIGHT - 405
         self.button_rect: pygame.Rect = pygame.Rect(button_x, button_y, button_width, button_height)
 
-        # --- MODIFIED: Settings Button ---
+        # Settings Button
         try:
             self.settings_icon_default = pygame.image.load(constants.SETTINGS_ICON_PATH).convert_alpha()
             self.settings_icon_default = pygame.transform.scale(self.settings_icon_default, (50, 50))
@@ -44,9 +48,6 @@ class TitleScreen:
             # Load the hover icon, but do NOT apply the tint
             self.settings_icon_hover = pygame.image.load(constants.SETTINGS_ICON_PATH).convert_alpha()
             self.settings_icon_hover = pygame.transform.scale(self.settings_icon_hover, (50, 50))
-
-            # REMOVED this line:
-            # self.settings_icon_hover.fill((50, 50, 50), special_flags=pygame.BLEND_RGB_ADD)
 
             # Position at the BOTTOM RIGHT
             self.settings_icon_rect = self.settings_icon_default.get_rect(
@@ -58,7 +59,6 @@ class TitleScreen:
             self.settings_icon_default = None
             self.settings_icon_hover = None
             self.settings_icon_rect = pygame.Rect(0, 0, 0, 0)  # dummy rect
-        # --- End Modify ---
 
         # Intro video
         self.intro_clip: VideoFileClip = VideoFileClip(constants.INTRO_VIDEO_PATH)
@@ -71,9 +71,13 @@ class TitleScreen:
 
         # Transitions
         self.transitioning: bool = False
+        self.transitioning_from_prev: bool = False
+        self.transitioning_to_prev: bool = False
         self.transitioning_to_next: bool = False
         self.transitioning_from_next: bool = False
         self.transition_start_time_ms: int = 0
+        self.transition_prev_duration_ms: int = 400
+        self.transition_prev_pause_time: int = 0
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 0
 
@@ -126,10 +130,9 @@ class TitleScreen:
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """Handles events like button presses."""
-        # Note: mouse_pos is already scaled
 
         if self.transitioning:
-            return ""
+            return constants.NO_ACTION_CODE
 
         hovered_index: int
 
@@ -154,17 +157,17 @@ class TitleScreen:
 
         for event in events:
             if event.type == pygame.QUIT:
-                return "exit"
+                return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if hovered_index == 1:
                     self.current_image = self.title_click_image
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == 1:
                     self.current_image = self.title_default_image
-                    return "track_selection"
+                    return constants.TRACK_SELECTION_NAME
                 elif hovered_index == 2:
-                    return "settings"
-        return ""
+                    return constants.SETTINGS_MENU_NAME
+        return constants.NO_ACTION_CODE
 
     def handle_transitions(self):
         foreground_image_x: int = 0
@@ -190,13 +193,18 @@ class TitleScreen:
                 percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
                 foreground_image_x = int(percent_progress * constants.WIDTH) - constants.WIDTH
         self.screen.blit(self.current_image, (foreground_image_x, 0))
+        
+        if self.transitioning_to_prev or self.transitioning_from_prev:
+            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms, self.transition_prev_duration_ms, self.transitioning_to_prev, self.transition_prev_pause_time, self.game.dark_overlay)
+            if is_over:
+                self.end_transition()
 
     def draw(self) -> None:
         """Draws the title screen."""
         self.screen.blit(self.title_background_image, (0, 0))
         self.handle_transitions()
 
-        # --- MODIFIED: Draw Settings Icon ---
+        # Draw Settings Icon
         if self.settings_icon_default and not self.transitioning:
             if self.last_hovered == 2:
                 # Draw the hover icon (which is now just the plain cog)
@@ -204,17 +212,20 @@ class TitleScreen:
             else:
                 # Draw the default icon
                 self.screen.blit(self.settings_icon_default, self.settings_icon_rect)
-        # --- End Modify ---
 
     def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
         """Set flags and store the starting time of the transition"""
         self.transition_start_time_ms: int = pygame.time.get_ticks()
         self.transitioning = True
+        self.transitioning_to_prev = start_transition and backwards
+        self.transitioning_from_prev = not start_transition and not backwards
         self.transitioning_to_next = start_transition and not backwards
         self.transitioning_from_next = not start_transition and backwards
 
     def end_transition(self) -> None:
         """Reset flags after the transition is complete"""
         self.transitioning = False
+        self.transitioning_to_prev = False
+        self.transitioning_from_prev = False
         self.transitioning_to_next = False
         self.transitioning_from_next = False

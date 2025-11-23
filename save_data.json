@@ -1,17 +1,20 @@
 {
     "unlocked_tracks": [
-        "magnificent_meadow"
+        "magnificent_meadow",
+        "dusty_dunes",
+        "glistening_glacier",
+        "fiery_furnace"
     ],
     "key_bindings": {
         "FORWARD": 119,
         "BACKWARD": 115,
         "LEFT": 97,
         "RIGHT": 100,
-        "DRIFT": 1073742049,
+        "DRIFT": 32,
         "TOGGLE_GHOST": 103
     },
     "volume_settings": {
-        "music": 0.506,
-        "sfx": 0.156
+        "music": 0.504,
+        "sfx": 0.154
     }
 }

@@ -10,10 +10,23 @@ WIDTH: int = 1408
 HEIGHT: int = 792
 GAME_TITLE: str = "RC Rumble Racing"
 
+# Screen Names
+TITLE_SCREEN_NAME: str = "title_screen"
+TRACK_SELECTION_NAME: str = "track_selection"
+CAR_SELECTION_NAME: str = "car_selection"
+DIFFICULTY_SELECTION_NAME: str = "difficulty_selection"
+SETTINGS_MENU_NAME: str = "settings_menu"
+CONTROLS_MENU_NAME: str = "controls_menu"
+SOUND_MENU_NAME: str = "sound_menu"
+RACE_SCREEN_NAME: str = "race_screen"
+
+# Response Codes
+EXIT_GAME_CODE: str = "exit_game"
+NO_ACTION_CODE: str = ""
+
 # Save System
 SAVE_FILE_PATH: str = "save_data.json"
 
-# --- NEW: Settings ---
 # Default Volumes
 DEFAULT_MUSIC_VOLUME: float = 0.5
 DEFAULT_SFX_VOLUME: float = 0.2 # Standardizing all SFX
@@ -39,7 +52,6 @@ DEFAULT_KEY_BINDINGS: dict[str, int] = {
 
 # Settings Menu
 SETTINGS_ICON_PATH: str = "assets/images/general/setting_icon.png"
-# --- End New ---
 
 # General
 GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
@@ -48,7 +60,7 @@ GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
 CURSOR_WIDTH: int = 40
 CURSOR_HEIGHT: int = 40
 
-# --- NEW: Transitions ---
+# Transitions
 FADE_TRANSITION_SPEED_MS: int = 500  # 0.5 seconds
 
 # Title screen
@@ -214,7 +226,7 @@ GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
 
 # Music and audio paths
 TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.mp3"
-TRACK_SONG_TYPES: list[str] = ["track_start", "loop", "final_lap", "fast", "track_complete"]
+TRACK_SONG_TYPES: list[str] = ["before_race", "track_start", "loop", "final_lap", "fast", "track_complete"]
 GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
 
 # Volume settings

@@ -9,6 +9,7 @@ from car import Car
 import constants
 from save_manager import SaveManager
 from track import Track
+import utilities
 
 
 class Race:
@@ -21,15 +22,9 @@ class Race:
         self.save_manager: SaveManager = save_manager
         self.difficulty = difficulty
 
-        # --- NEW: Get settings from save_manager ---
+        # Get settings from save_manager
         self.key_bindings = self.save_manager.get_key_bindings()
         self.sfx_volume = self.save_manager.get_volumes()["sfx"]
-        # --- End New ---
-
-        # --- NEW: Add fade surface ---
-        self.fade_surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
-        self.fade_surface.fill((0, 0, 0))
-        # --- End New ---
 
         # Track
         self.track_name: str = track_name
@@ -150,7 +145,6 @@ class Race:
         self.ghost_total_time: float = float("inf")
 
         # Time
-        self.countdown_start_time: int
         self.elapsed_race_time_ms: int = 0
         self.elapsed_race_time_s: float = 0.0
         self.current_time: int
@@ -169,6 +163,7 @@ class Race:
         self.race_start_time_ms: int = 0
         self.race_end_time_ms: int = 0
         self.countdown_start_time: int = 0
+        self.wait_time_before_countdown_ms: int = 5000
 
         # UI Elements
         self.lap_str: str
@@ -177,6 +172,18 @@ class Race:
 
         # Fonts
         self.countdown_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 120)
+
+        # Transitions
+        self.transitioning: bool = False
+        self.transitioning_from_prev: bool = False
+        self.transitioning_to_prev: bool = False
+        self.transitioning_to_next: bool = False
+        self.transitioning_from_next: bool = False
+        self.transition_start_time_ms: int = 0
+        self.transition_prev_duration_ms: int = 400
+        self.transition_prev_pause_time: int = 400
+        self.transition_next_duration_ms: int = 400
+        self.transition_next_pause_time: int = 400
 
     def _get_current_time(self):
         """Get the current time since the program started in ms"""
@@ -195,9 +202,7 @@ class Race:
         """The main game loop when the user is racing on a track"""
 
         self._initialize_race()
-        self._run_fade_in()
         self.countdown_start_time = pygame.time.get_ticks()
-        self._play_next_track()
 
         while self.running:
             self._next_frame()
@@ -230,9 +235,8 @@ class Race:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self.user_car.update_position()
                 if not self.compared_to_best:
-                    # This logic runs even if racing against AI, ensuring PB is updated if beaten
                     self._compare_to_best()
-                    self._check_unlocks()  # Check for progression
+                    self._check_unlocks()
                 if not self.applause_played:
                     self.applause_played = True
                     self._play_next_track()
@@ -248,44 +252,6 @@ class Race:
         pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
         pygame.mixer.music.play(-1)
         return False
-
-    def _run_fade_in(self) -> None:
-        """Draws the first frame of the race and fades in from black."""
-
-        start_time = pygame.time.get_ticks()
-        elapsed_time = 0
-        duration = constants.FADE_TRANSITION_SPEED_MS
-
-        transitioning = True
-        while transitioning:
-            elapsed_time = pygame.time.get_ticks() - start_time
-
-            # Stop animation from handling events
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.game.quit()  # Use game's quit
-                if event.type == pygame.VIDEORESIZE:
-                    self.game.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
-
-            # Calculate alpha
-            progress = min(elapsed_time / duration, 1.0)
-            alpha = int(255 * (1.0 - progress))  # Fade from 255 to 0
-
-            # Draw the static race frame underneath
-            # This will now draw the ghost at its correct starting pos
-            self._draw_race_frame()
-
-            # Draw the fade surface on top
-            self.fade_surface.set_alpha(alpha)
-            self.game.game_surface.blit(self.fade_surface, (0, 0))
-
-            # Update display
-            self.game.draw_letterboxed_surface()
-            pygame.display.flip()
-            self.clock.tick(60)
-
-            if progress >= 1.0:
-                transitioning = False
 
     def _clean_up(self):
         """Performs clean up actions before exiting the race"""
@@ -353,6 +319,10 @@ class Race:
         # Draw the race over menu if the race is over (and not paused)
         if self.race_over and not self.is_paused:
             self._draw_race_over_menu()
+
+        # Draw dark overlay
+        if self.transitioning:
+            self.handle_transition()
 
         # Only draw the cursor if we are in a menu
         if self.is_paused or self.race_over:
@@ -431,7 +401,7 @@ class Race:
         for event in self.events:
             if event.type == pygame.QUIT:
                 self._clean_up()
-                self.game.quit()
+                utilities.quit_game()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     if not self.race_over:
@@ -455,6 +425,8 @@ class Race:
                 self._calculate_ghost_time()
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
+        self.initialize_transition(start_transition=False, backwards=False)
+        self._play_next_track()
 
     def _get_personal_best_time(self) -> None:
         """Get the user's personal best time for the current track"""
@@ -507,7 +479,6 @@ class Race:
             if self.elapsed_race_time_s < self.ghost_total_time:
                 next_track = self.save_manager.get_next_track_name(self.track_name)
                 if next_track:
-                    print(f"Beat Medium Ghost! Unlocking {next_track}")
                     self.save_manager.unlock_track(next_track)
 
     def _play_next_track(self) -> None:
@@ -597,20 +568,20 @@ class Race:
 
     def _draw_countdown(self) -> None:
         """Calculates and draws the pre-race countdown timer"""
-        elapsed: int = self.current_time - self.countdown_start_time
+        elapsed: int = self.current_time - self.countdown_start_time - self.wait_time_before_countdown_ms
         countdown_text: Optional[str] = None
-        if elapsed < 1000:
+        if 0 < elapsed < 1000:
             countdown_text = "3"
-        elif elapsed < 2000:
+        elif 0 < elapsed < 2000:
             countdown_text = "2"
-        elif elapsed < 3000:
+        elif 0 < elapsed < 3000:
             countdown_text = "1"
-        elif elapsed < 4000:
+        elif 0 < elapsed < 4000:
             if not self.during_race:
                 self.during_race = True
                 self.race_start_time_ms = pygame.time.get_ticks()
             countdown_text = "Go!"
-        else:
+        elif elapsed >= 4000:
             self.countdown_done = True
         if countdown_text:
             countdown_surface: pygame.Surface = self.countdown_font.render(countdown_text, True, constants.TEXT_COLOR)
@@ -742,3 +713,26 @@ class Race:
         right_image_x: int = constants.WIDTH - int(percent_progress * constants.WIDTH)
         self.game.game_surface.blit(self.race_over_image_left, (left_image_x, 0))
         self.game.game_surface.blit(self.race_over_image_right, (right_image_x, 0))
+
+    def handle_transition(self):
+        if self.transitioning_from_prev or self.transitioning_to_prev:
+            is_over: bool = utilities.draw_fade_to_black_transition(self.game.game_surface, self.transition_start_time_ms, self.transition_next_duration_ms, self.transitioning_to_prev, self.transition_next_pause_time, self.game.dark_overlay)
+            if is_over:
+                self.end_transition()
+
+    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
+        """Set flags and store the starting time of the transition"""
+        self.transition_start_time_ms: int = pygame.time.get_ticks()
+        self.transitioning = True
+        self.transitioning_to_prev = start_transition and backwards
+        self.transitioning_from_prev = not start_transition and not backwards
+        self.transitioning_to_next = start_transition and not backwards
+        self.transitioning_from_next = not start_transition and backwards
+
+    def end_transition(self) -> None:
+        """Reset flags after the transition is complete"""
+        self.transitioning = False
+        self.transitioning_to_prev = False
+        self.transitioning_from_prev = False
+        self.transitioning_to_next = False
+        self.transitioning_from_next = False

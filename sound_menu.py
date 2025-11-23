@@ -1,4 +1,5 @@
 import pygame
+
 import constants
 from ui_elements import Slider, ConfirmationDialog
 
@@ -7,7 +8,10 @@ class SoundMenu:
     """Screen for adjusting sound volumes."""
 
     def __init__(self, screen: pygame.Surface, save_manager) -> None:
-        self.screen = screen
+
+        # General
+        self.name: str = "sound_menu"
+        self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
         # Use the title screen's background
@@ -48,6 +52,18 @@ class SoundMenu:
 
         self.dialog = None
 
+        # Transitions
+        self.transitioning: bool = False
+        self.transitioning_from_prev: bool = False
+        self.transitioning_to_prev: bool = False
+        self.transitioning_to_next: bool = False
+        self.transitioning_from_next: bool = False
+        self.transition_start_time_ms: int = 0
+        self.transition_prev_duration_ms: int = 400
+        self.transition_prev_pause_time: int = 400
+        self.transition_next_duration_ms: int = 400
+        self.transition_next_pause_time: int = 400
+
     def settings_changed(self) -> bool:
         """Checks if settings are different from initial."""
         return self.current_volumes != self.initial_volumes
@@ -64,24 +80,22 @@ class SoundMenu:
                 self.dialog = None
             elif action == "no":
                 self.dialog = None
-            return ""
+            return constants.NO_ACTION_CODE
 
-        hovered = "none"
+        hovered = constants.NO_ACTION_CODE
         slider_dragging = any(s.dragging for s in self.sliders)
 
         if not slider_dragging:
             if self.back_button_rect.collidepoint(mouse_pos):
-                hovered = "back"
+                hovered = constants.SETTINGS_MENU_NAME
             elif self.settings_changed() and self.save_button_rect.collidepoint(mouse_pos):
                 hovered = "save"
 
-        if hovered != self.last_hovered and hovered != "none":
+        if hovered != self.last_hovered and hovered != constants.NO_ACTION_CODE:
             self.hover_sound.play()
         self.last_hovered = hovered
 
         for event in events:
-            if event.type == pygame.QUIT:
-                return "exit"
 
             # Pass event to sliders
             music_changed = self.music_slider.handle_event(event, mouse_pos)
@@ -100,16 +114,16 @@ class SoundMenu:
                 self.hover_sound.set_volume(self.current_volumes["sfx"])
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if hovered == "back":
+                if hovered == constants.SETTINGS_MENU_NAME:
                     # If changed, revert to initial settings
                     if self.settings_changed():
                         self.save_manager.update_volumes(self.initial_volumes)
                         self.save_manager.apply_volume_settings()  # Apply the revert
-                    return "back"
+                    return constants.SETTINGS_MENU_NAME
                 elif hovered == "save":
                     self.save_manager.game.click_sound.play()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)
-        return ""
+        return constants.NO_ACTION_CODE
 
     def draw(self) -> None:
         self.screen.blit(self.background, (0, 0))
@@ -135,19 +149,35 @@ class SoundMenu:
         self.sfx_slider.draw(self.screen)
 
         # Back Button
-        back_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == "back" else constants.TRACK_SELECTION_EXIT_COLOR
+        back_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == constants.SETTINGS_MENU_NAME else constants.TRACK_SELECTION_EXIT_COLOR
         back_surf = self.button_font.render("Back", True, back_color)
         self.screen.blit(back_surf, back_surf.get_rect(center=self.back_button_rect.center))
 
         # Save Button
-        save_color = constants.TRACK_SELECTION_EXIT_COLOR
         if self.settings_changed():
             save_color = (0, 200, 0)  # Green
             if self.last_hovered == "save":
                 save_color = (100, 255, 100)  # Light Green
-
-        save_surf = self.button_font.render("Save", True, save_color)
-        self.screen.blit(save_surf, save_surf.get_rect(center=self.save_button_rect.center))
+            save_surf = self.button_font.render("Save", True, save_color)
+            self.screen.blit(save_surf, save_surf.get_rect(center=self.save_button_rect.center))
 
         if self.dialog:
             self.dialog.draw()
+
+    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
+        """Set flags and store the starting time of the transition"""
+        self.transition_start_time_ms: int = pygame.time.get_ticks()
+        self.transitioning = True
+        self.transitioning_to_prev = start_transition and backwards
+        self.transitioning_from_prev = not start_transition and not backwards
+        self.transitioning_to_next = start_transition and not backwards
+        self.transitioning_from_next = not start_transition and backwards
+        self.end_transition()
+
+    def end_transition(self) -> None:
+        """Reset flags after the transition is complete"""
+        self.transitioning = False
+        self.transitioning_to_prev = False
+        self.transitioning_from_prev = False
+        self.transitioning_to_next = False
+        self.transitioning_from_next = False

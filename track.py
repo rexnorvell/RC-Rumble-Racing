@@ -36,10 +36,11 @@ class Track:
         """Creates the playlist for the track"""
         playlist: list[tuple[str, int]] = [
             (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[0]), 0),
-            (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[1]), -1),
-            (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[2]), 0),
-            (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[3]), -1),
-            (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[4]), 0)
+            (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[1]), 0),
+            (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[2]), -1),
+            (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[3]), 0),
+            (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[4]), -1),
+            (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[5]), 0)
         ]
         return playlist
 
