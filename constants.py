@@ -156,24 +156,56 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
-# Replaced with the single F1 car with 7 styles
+# Definition of all car models with types and colors.
+# Each car model has their own statistics.
 CAR_DEFINITIONS = [
     {
         "name": "F1 Racer",
-        "stats": {
-            "Speed": 9,
-            "Acceleration": 8,
-            "Handling": 7,
-        },
-        # These styles map to the .png file names
+        "stats": { "Speed": 9, "Acceleration": 8, "Handling": 7 },
         "styles": [
-            {"name": "f1_car_red", "color": (200, 0, 0)},         # Index 0
-            {"name": "f1_car_blue", "color": (0, 0, 200)},        # Index 1
-            {"name": "f1_car_yellow", "color": (200, 200, 0)},    # Index 2
-            {"name": "f1_car_green", "color": (0, 200, 0)},        # Index 3
-            {"name": "f1_car_orange", "color": (255, 128, 0)},    # Index 4
-            {"name": "f1_car_black", "color": (0, 0, 0)},          # Index 5
-            {"name": "f1_car_white", "color": (255, 255, 255)}   # Index 6
+            {"name": "f1_car_red", "color": (200, 0, 0)},
+            {"name": "f1_car_blue", "color": (0, 0, 200)},
+            {"name": "f1_car_yellow", "color": (200, 200, 0)},
+            {"name": "f1_car_green", "color": (0, 200, 0)},
+            {"name": "f1_car_orange", "color": (255, 128, 0)},
+            {"name": "f1_car_black", "color": (0, 0, 0)},
+            {"name": "f1_car_white", "color": (255, 255, 255)}
+        ],
+    },
+    {
+        "name": "Ferrari",
+        "stats": { "Speed": 10, "Acceleration": 9, "Handling": 5 },
+        "styles": [
+            {"name": "ferrari_car_red", "color": (218, 0, 0)}
+        ],
+    },
+    {
+        "name": "Audi",
+        "stats": { "Speed": 8, "Acceleration": 7, "Handling": 8 },
+        "styles": [
+            {"name": "audi_car_red", "color": (196, 0, 0)},
+            {"name": "audi_car_sport", "color": (180, 180, 180)}
+        ],
+    },
+    {
+        "name": "BMW",
+        "stats": { "Speed": 7, "Acceleration": 8, "Handling": 8 },
+        "styles": [
+            {"name": "bmw_car_red", "color": (204, 0, 0)}
+        ],
+    },
+    {
+        "name": "Chevrolet",
+        "stats": { "Speed": 8, "Acceleration": 9, "Handling": 4 },
+        "styles": [
+            {"name": "chevrolet_car_blue", "color": (0, 102, 204)}
+        ],
+    },
+    {
+        "name": "DeLorean",
+        "stats": { "Speed": 6, "Acceleration": 5, "Handling": 5 },
+        "styles": [
+            {"name": "delorean_car_grey", "color": (132, 132, 132)}
         ],
     }
 ]

@@ -10,11 +10,11 @@
         "BACKWARD": 115,
         "LEFT": 97,
         "RIGHT": 100,
-        "DRIFT": 32,
+        "DRIFT": 1073742049,
         "TOGGLE_GHOST": 103
     },
     "volume_settings": {
-        "music": 0.504,
+        "music": 0.508,
         "sfx": 0.154
     }
 }
