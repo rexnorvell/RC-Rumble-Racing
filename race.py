@@ -111,6 +111,14 @@ class Race:
             constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="respawn"))
         self.respawn_sound.set_volume(self.sfx_volume)
 
+        # Pause Menu Sound
+        self.engine_idle_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.ENGINE_IDLE_SOUND_PATH)
+        self.engine_idle_sound.set_volume(self.sfx_volume)
+        self.engine_off_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.ENGINE_OFF_SOUND_PATH)
+        self.engine_off_sound.set_volume(self.sfx_volume)
+        self.engine_rev_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.ENGINE_REV_SOUND_PATH)
+        self.engine_rev_sound.set_volume(self.sfx_volume)
+
         # User Car
         self.user_car_index = car_index
         self.user_style_index = style_index
@@ -258,6 +266,7 @@ class Race:
         if self.current_race_file.exists():
             self.current_race_file.unlink()
         pygame.mixer.music.stop()
+        self.engine_idle_sound.stop()
 
     def _get_elapsed_race_time(self):
         """Gets the """
@@ -384,6 +393,7 @@ class Race:
         """Perform one-time operations upon pausing the race"""
         pygame.mixer_music.pause()
         self.game.click_sound.play()
+        self.engine_idle_sound.play(-1)
         self.pause_start_time_ms = pygame.time.get_ticks()
         self.pause_start_time_s = self.pause_start_time_ms / 1000.0
         self.pause_hover_index = 0
@@ -409,6 +419,8 @@ class Race:
                         if self.is_paused:
                             self._initialize_pause()
                         else:
+                            # When unpausing, fade out the idle sound
+                            self.engine_idle_sound.fadeout(1000)
                             self._unpause()
                 if event.key == self.key_bindings[constants.KEY_ACTION_TOGGLE_GHOST]:
                     self.show_ghost = not self.show_ghost
@@ -514,12 +526,20 @@ class Race:
                 if self.pause_hover_index == 1:
                     self.game.click_sound.play()
                     self.is_paused = False
+                    self.engine_idle_sound.fadeout(1000)
                     return "resume"
                 elif self.pause_hover_index == 2:
                     self.game.click_sound.play()
+                    self.engine_idle_sound.stop()
+                    self.engine_rev_sound.play()
+                    pygame.time.wait(int(self.engine_rev_sound.get_length() * 1000))
                     return "replay"
                 elif self.pause_hover_index == 3:
                     self.game.click_sound.play()
+                    self.engine_idle_sound.stop()
+                    self.engine_off_sound.play()
+                    # Wait for the sound to finish before exiting
+                    pygame.time.wait(int(self.engine_off_sound.get_length() * 1000))
                     return "exit_to_menu"
         return ""
 
@@ -716,7 +736,12 @@ class Race:
 
     def handle_transition(self):
         if self.transitioning_from_prev or self.transitioning_to_prev:
-            is_over: bool = utilities.draw_fade_to_black_transition(self.game.game_surface, self.transition_start_time_ms, self.transition_next_duration_ms, self.transitioning_to_prev, self.transition_next_pause_time, self.game.dark_overlay)
+            is_over: bool = utilities.draw_fade_to_black_transition(self.game.game_surface,
+                                                                    self.transition_start_time_ms,
+                                                                    self.transition_next_duration_ms,
+                                                                    self.transitioning_to_prev,
+                                                                    self.transition_next_pause_time,
+                                                                    self.game.dark_overlay)
             if is_over:
                 self.end_transition()
 

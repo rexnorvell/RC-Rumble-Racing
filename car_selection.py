@@ -97,9 +97,14 @@ class CarSelection:
         # Color buttons are now dynamic, stored in a list of (Rect, index)
         self.color_buttons: list[tuple[pygame.Rect, int]] = []
 
-        # --- Sound ---
-        self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
+        # --- MODIFIED: Sound ---
+        self.hover_sound_nav = pygame.mixer.Sound(constants.HOVER_SOUND_PATH) # For Back/Select
+        self.hover_sound_nav.set_volume(self.save_manager.get_volumes()["sfx"])
+        self.hover_sound_arrow = pygame.mixer.Sound(constants.HOVER_2_SOUND_PATH) # For car arrows
+        self.hover_sound_arrow.set_volume(self.save_manager.get_volumes()["sfx"])
+        self.select_sound_color = pygame.mixer.Sound(constants.SELECT_PAINT_SOUND_PATH) # For colors
+        self.select_sound_color.set_volume(self.save_manager.get_volumes()["sfx"])
+        # --- END MODIFIED ---
 
         # Transitions
         self.transitioning: bool = False
@@ -160,9 +165,15 @@ class CarSelection:
                     hovered_style_index = idx
                     break
 
-        if hovered_key != self.last_hovered and hovered_key != "none":
-            self.hover_sound.play()
+        # --- MODIFIED: Play conditional hover sound ---
+        if hovered_key != self.last_hovered:
+            if hovered_key in ["arrow_left", "arrow_right"]:
+                self.hover_sound_arrow.play()
+            elif hovered_key in ["back", "select"]:
+                self.hover_sound_nav.play()
+            # Removed color_button hover sound
         self.last_hovered = hovered_key
+        # --- END MODIFIED ---
 
         for event in events:
             if event.type == pygame.QUIT:
@@ -176,6 +187,7 @@ class CarSelection:
                     self.current_car_index += 1
                     self.current_style_index = 0
                 elif hovered_key == "color_button":
+                    self.select_sound_color.play() # <-- MOVED SOUND HERE
                     self.current_style_index = hovered_style_index
                 elif hovered_key == "back":
                     return constants.TRACK_SELECTION_NAME

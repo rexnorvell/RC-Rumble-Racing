@@ -66,9 +66,15 @@ FADE_TRANSITION_SPEED_MS: int = 500  # 0.5 seconds
 # Title screen
 TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
 CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
-HOVER_SOUND_PATH: str = "assets/audio/general/hover.mp3"
 INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
 INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
+
+# Hover Sounds
+HOVER_2_SOUND_PATH: str = "assets/audio/general/hover_2.mp3"
+HOVER_SOUND_PATH: str = "assets/audio/general/hover.mp3"
+
+# Paint sound
+SELECT_PAINT_SOUND_PATH: str = "assets/audio/general/select_paint.mp3"
 
 # Track selection screen
 TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{number}_{type}.png"
@@ -156,8 +162,8 @@ START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
-# Definition of all car models with types and colors.
-# Each car model has their own statistics.
+# CAR DEFINITIONS
+# Includes Colors and Types
 CAR_DEFINITIONS = [
     {
         "name": "F1 Racer",
@@ -260,6 +266,6 @@ GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
 TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.mp3"
 TRACK_SONG_TYPES: list[str] = ["before_race", "track_start", "loop", "final_lap", "fast", "track_complete"]
 GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
-
-# Volume settings
-MUSIC_VOLUME: float = 0.5
+ENGINE_IDLE_SOUND_PATH: str = "assets/audio/general/engine_idle.mp3"
+ENGINE_OFF_SOUND_PATH: str = "assets/audio/general/engine_off.mp3"
+ENGINE_REV_SOUND_PATH: str = "assets/audio/general/engine_rev.mp3"

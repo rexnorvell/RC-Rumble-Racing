@@ -72,6 +72,7 @@ class SaveManager:
         """Unlocks a specific track if it's not already unlocked"""
         if track_name in constants.TRACK_NAMES and track_name not in self.unlocked_tracks:
             self.unlocked_tracks.append(track_name)
+            self.num_unlocked = len(self.unlocked_tracks)
             self.save_data()
 
     def is_track_unlocked(self, track_name: str) -> bool:
@@ -117,22 +118,41 @@ class SaveManager:
 
         pygame.mixer.music.set_volume(music_vol)
 
-        # Update sounds on the game object if it exists
+        # Sounds on the game object if it exists
         if self.game:
             if hasattr(self.game, 'click_sound'):
                 self.game.click_sound.set_volume(sfx_vol)
             if hasattr(self.game, 'hover_sound'):
                 self.game.hover_sound.set_volume(sfx_vol)
 
-            # Update sounds on sub-screens if they exist
+            # Sounds on sub-screens if they exist
             if hasattr(self.game, 'title_screen') and self.game.title_screen:
-                self.game.title_screen.hover_sound.set_volume(sfx_vol)
+                if hasattr(self.game.title_screen, 'hover_sound'):
+                    self.game.title_screen.hover_sound.set_volume(sfx_vol)
             if hasattr(self.game, 'track_selection') and self.game.track_selection:
-                self.game.track_selection.hover_sound.set_volume(sfx_vol)
+                if hasattr(self.game.track_selection, 'hover_sound'):
+                    self.game.track_selection.hover_sound.set_volume(sfx_vol)
+
             if hasattr(self.game, 'car_selection') and self.game.car_selection:
-                self.game.car_selection.hover_sound.set_volume(sfx_vol)
+                if hasattr(self.game.car_selection, 'hover_sound_nav'):
+                    self.game.car_selection.hover_sound_nav.set_volume(sfx_vol)
+                if hasattr(self.game.car_selection, 'hover_sound_arrow'):
+                    self.game.car_selection.hover_sound_arrow.set_volume(sfx_vol)
+                if hasattr(self.game.car_selection, 'select_sound_color'):
+                    self.game.car_selection.select_sound_color.set_volume(sfx_vol)
+
             if hasattr(self.game, 'difficulty_selection') and self.game.difficulty_selection:
-                self.game.difficulty_selection.hover_sound.set_volume(sfx_vol)
+                if hasattr(self.game.difficulty_selection, 'hover_sound'):
+                    self.game.difficulty_selection.hover_sound.set_volume(sfx_vol)
+
             if hasattr(self.game, 'race') and self.game.race:
-                self.game.race.next_lap_sound.set_volume(sfx_vol)
-                self.game.race.respawn_sound.set_volume(sfx_vol)
+                if hasattr(self.game.race, 'next_lap_sound'):
+                    self.game.race.next_lap_sound.set_volume(sfx_vol)
+                if hasattr(self.game.race, 'respawn_sound'):
+                    self.game.race.respawn_sound.set_volume(sfx_vol)
+                if hasattr(self.game.race, 'engine_idle_sound'):
+                    self.game.race.engine_idle_sound.set_volume(sfx_vol)
+                if hasattr(self.game.race, 'engine_off_sound'):
+                    self.game.race.engine_off_sound.set_volume(sfx_vol)
+                if hasattr(self.game.race, 'engine_rev_sound'):
+                    self.game.race.engine_rev_sound.set_volume(sfx_vol)
