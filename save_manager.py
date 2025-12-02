@@ -7,11 +7,14 @@ import constants
 
 
 class SaveManager:
-    """Handles saving and loading of game progress and settings"""
+    """Handles saving and loading of game progress and settings for a specific save slot"""
 
     def __init__(self, game=None):
         self.game = game
-        self.file_path = constants.SAVE_FILE_PATH
+        self.current_slot: int = -1  # No slot selected by default
+        self.file_path: str = ""  # Path to the current save_data_{slot}.json
+
+        # Default values
         self.unlocked_tracks: List[str] = [constants.TRACK_NAMES[0]]  # Default first track unlocked
         self.num_unlocked: int = 1
         self.key_bindings: Dict[str, int] = constants.DEFAULT_KEY_BINDINGS.copy()
@@ -20,11 +23,31 @@ class SaveManager:
             "sfx": constants.DEFAULT_SFX_VOLUME
         }
 
-        self.load_data()
+        # Do NOT load data on init. Wait for a slot to be selected.
+
+    def set_save_slot(self, slot_index: int):
+        """Sets the current save slot and loads its data."""
+        if not (0 <= slot_index < constants.NUM_SAVE_SLOTS):
+            return  # Invalid slot
+
+        self.current_slot = slot_index
+        self.file_path = constants.SAVE_FILE_TEMPLATE.format(slot=slot_index + 1)
+        self.load_data()  # Load data from the new path
 
     def load_data(self):
-        """Loads save data from the JSON file"""
-        if not os.path.exists(self.file_path):
+        """Loads save data from the JSON file specified by self.file_path."""
+
+        # Reset to defaults first
+        self.unlocked_tracks: List[str] = [constants.TRACK_NAMES[0]]
+        self.num_unlocked: int = 1
+        self.key_bindings: Dict[str, int] = constants.DEFAULT_KEY_BINDINGS.copy()
+        self.volume_settings: Dict[str, float] = {
+            "music": constants.DEFAULT_MUSIC_VOLUME,
+            "sfx": constants.DEFAULT_SFX_VOLUME
+        }
+
+        # If no file path is set or file doesn't exist, just apply defaults
+        if not self.file_path or not os.path.exists(self.file_path):
             self.apply_all_settings()
             return
 
@@ -45,7 +68,7 @@ class SaveManager:
             })
 
         except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading save data: {e}")
+            print(f"Error loading save data from {self.file_path}: {e}")
             # Still apply defaults on error
             self.key_bindings = constants.DEFAULT_KEY_BINDINGS.copy()
             self.volume_settings = {
@@ -56,7 +79,11 @@ class SaveManager:
         self.apply_all_settings()
 
     def save_data(self):
-        """Saves current progress and settings to the JSON file"""
+        """Saves current progress and settings to the JSON file."""
+        # Do not save if no save slot is selected
+        if not self.file_path:
+            return
+
         data = {
             "unlocked_tracks": self.unlocked_tracks,
             "key_bindings": self.key_bindings,
@@ -66,7 +93,45 @@ class SaveManager:
             with open(self.file_path, 'w') as f:
                 json.dump(data, f, indent=4)
         except IOError as e:
-            print(f"Error saving data: {e}")
+            print(f"Error saving data to {self.file_path}: {e}")
+
+    def delete_save_data(self, slot_index: int):
+        """Deletes the save file for the given slot."""
+        if not (0 <= slot_index < constants.NUM_SAVE_SLOTS):
+            return
+
+        file_to_delete = constants.SAVE_FILE_TEMPLATE.format(slot=slot_index + 1)
+        try:
+            if os.path.exists(file_to_delete):
+                os.remove(file_to_delete)
+        except OSError as e:
+            print(f"Error deleting save file {file_to_delete}: {e}")
+
+        # If we deleted our own active file, reset the manager
+        if self.current_slot == slot_index:
+            self.current_slot = -1
+            self.file_path = ""
+            self.load_data()  # This will reset to defaults
+
+    def get_save_summary(self, slot_index: int) -> dict | None:
+        """Checks if a save file exists and returns a brief summary. Returns None if empty."""
+        if not (0 <= slot_index < constants.NUM_SAVE_SLOTS):
+            return None
+
+        file_to_check = constants.SAVE_FILE_TEMPLATE.format(slot=slot_index + 1)
+        if not os.path.exists(file_to_check):
+            return None
+
+        try:
+            with open(file_to_check, 'r') as f:
+                data = json.load(f)
+            # Provide some summary data
+            unlocked = data.get("unlocked_tracks", [constants.TRACK_NAMES[0]])
+            return {
+                "unlocked_tracks_count": len(unlocked)
+            }
+        except (json.JSONDecodeError, IOError):
+            return None  # File is corrupted or unreadable
 
     def unlock_track(self, track_name: str):
         """Unlocks a specific track if it's not already unlocked"""
@@ -129,6 +194,12 @@ class SaveManager:
             if hasattr(self.game, 'title_screen') and self.game.title_screen:
                 if hasattr(self.game.title_screen, 'hover_sound'):
                     self.game.title_screen.hover_sound.set_volume(sfx_vol)
+
+            # ADDED: Save Selection Screen
+            if hasattr(self.game, 'save_selection') and self.game.save_selection:
+                if hasattr(self.game.save_selection, 'hover_sound'):
+                    self.game.save_selection.hover_sound.set_volume(sfx_vol)
+
             if hasattr(self.game, 'track_selection') and self.game.track_selection:
                 if hasattr(self.game.track_selection, 'hover_sound'):
                     self.game.track_selection.hover_sound.set_volume(sfx_vol)

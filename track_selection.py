@@ -17,13 +17,14 @@ class TrackSelection:
         self.num_unlocked: int = self.save_manager.num_unlocked
 
         # Background image
-        self.background_image: pygame.Surface = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
-        self.background_image = pygame.transform.scale(self.background_image,(constants.WIDTH, constants.HEIGHT))
+        self.background_image: pygame.Surface = pygame.image.load(
+            constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
+        self.background_image = pygame.transform.scale(self.background_image, (constants.WIDTH, constants.HEIGHT))
 
         # Track button rects
         button_width: int = 380
         button_height: int = 213
-        
+
         # First track
         self.first_default_image: pygame.Surface = utilities.load_image(
             constants.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="default"), True, button_width, button_height)
@@ -115,7 +116,7 @@ class TrackSelection:
         self.transitioning_from_next: bool = False
         self.transition_start_time_ms: int = 0
         self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 400
+        self.transition_prev_pause_time: int = 0  # <-- CHANGED FROM 400
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 400
 
@@ -152,7 +153,7 @@ class TrackSelection:
                 return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == self.back_button_index:
-                    return constants.TITLE_SCREEN_NAME
+                    return constants.SAVE_SELECTION_NAME
                 elif hovered_index > self.nothing_hovered_index:
                     self.game.set_track_name(self.buttons[hovered_index]["track"])
                     return constants.CAR_SELECTION_NAME
@@ -168,14 +169,14 @@ class TrackSelection:
             self.second_image = self.second_hover_image
         else:
             self.second_image = self.second_default_image
-        
+
         if self.num_unlocked <= 2:
             self.third_image = self.third_locked_image
         elif hovered_index == 2:
             self.third_image = self.third_hover_image
         else:
             self.third_image = self.third_default_image
-        
+
         if self.num_unlocked <= 3:
             self.fourth_image = self.fourth_locked_image
         elif hovered_index == 3:
@@ -222,7 +223,10 @@ class TrackSelection:
         self.blit_current_images(foreground_x)
 
         if self.transitioning_to_next or self.transitioning_from_next:
-            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms, self.transition_next_duration_ms, self.transitioning_to_next, self.transition_next_pause_time, self.game.garage_door)
+            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms,
+                                                             self.transition_next_duration_ms,
+                                                             self.transitioning_to_next,
+                                                             self.transition_next_pause_time, self.game.garage_door)
             if is_over:
                 self.end_transition()
 

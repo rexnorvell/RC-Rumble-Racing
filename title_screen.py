@@ -4,6 +4,7 @@ import pygame
 import constants
 import utilities
 
+
 class TitleScreen:
     """Handles the title screen."""
 
@@ -164,13 +165,28 @@ class TitleScreen:
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == 1:
                     self.current_image = self.title_default_image
-                    return constants.TRACK_SELECTION_NAME
+                    return constants.SAVE_SELECTION_NAME
                 elif hovered_index == 2:
                     return constants.SETTINGS_MENU_NAME
         return constants.NO_ACTION_CODE
 
+    def _draw_content(self, x_offset: int = 0):
+        """Draws the foreground and settings icon at the given offset."""
+        self.screen.blit(self.current_image, (x_offset, 0))
+
+        if self.settings_icon_default:
+            icon_to_draw = self.settings_icon_default
+            if self.last_hovered == 2:
+                icon_to_draw = self.settings_icon_hover
+
+            # Draw icon at its rect position, offset by the transition
+            icon_rect = self.settings_icon_rect.move(x_offset, 0)
+            self.screen.blit(icon_to_draw, icon_rect)
+
     def handle_transitions(self):
         foreground_image_x: int = 0
+
+        # SLIDE: To Save Selection (Slide out to left)
         if self.transitioning_to_next:
             current_time: int = pygame.time.get_ticks()
             time_elapsed_ms: int = current_time - self.transition_start_time_ms
@@ -181,7 +197,9 @@ class TitleScreen:
                 transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
                 percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
                 foreground_image_x = int(-percent_progress * constants.WIDTH)
-                self.screen.blit(self.current_image, (foreground_image_x, 0))
+            self._draw_content(foreground_image_x)  # Draw the content at the offset
+
+        # SLIDE: From Save Selection (Slide in from left)
         elif self.transitioning_from_next:
             current_time: int = pygame.time.get_ticks()
             time_elapsed_ms: int = current_time - self.transition_start_time_ms
@@ -192,26 +210,26 @@ class TitleScreen:
                 transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
                 percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
                 foreground_image_x = int(percent_progress * constants.WIDTH) - constants.WIDTH
-        self.screen.blit(self.current_image, (foreground_image_x, 0))
-        
+            self._draw_content(foreground_image_x)  # Draw the content at the offset
+
+        # FADE: To/From Settings
         if self.transitioning_to_prev or self.transitioning_from_prev:
-            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms, self.transition_prev_duration_ms, self.transitioning_to_prev, self.transition_prev_pause_time, self.game.dark_overlay)
+            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms,
+                                                                    self.transition_prev_duration_ms,
+                                                                    self.transitioning_to_prev,
+                                                                    self.transition_prev_pause_time,
+                                                                    self.game.dark_overlay)
             if is_over:
                 self.end_transition()
 
     def draw(self) -> None:
         """Draws the title screen."""
         self.screen.blit(self.title_background_image, (0, 0))
-        self.handle_transitions()
 
-        # Draw Settings Icon
-        if self.settings_icon_default and not self.transitioning:
-            if self.last_hovered == 2:
-                # Draw the hover icon (which is now just the plain cog)
-                self.screen.blit(self.settings_icon_hover, self.settings_icon_rect)
-            else:
-                # Draw the default icon
-                self.screen.blit(self.settings_icon_default, self.settings_icon_rect)
+        if self.transitioning:
+            self.handle_transitions()
+        else:
+            self._draw_content(0)  # Draw content at rest
 
     def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
         """Set flags and store the starting time of the transition"""

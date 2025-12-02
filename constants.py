@@ -12,6 +12,7 @@ GAME_TITLE: str = "RC Rumble Racing"
 
 # Screen Names
 TITLE_SCREEN_NAME: str = "title_screen"
+SAVE_SELECTION_NAME: str = "save_selection"
 TRACK_SELECTION_NAME: str = "track_selection"
 CAR_SELECTION_NAME: str = "car_selection"
 DIFFICULTY_SELECTION_NAME: str = "difficulty_selection"
@@ -25,7 +26,8 @@ EXIT_GAME_CODE: str = "exit_game"
 NO_ACTION_CODE: str = ""
 
 # Save System
-SAVE_FILE_PATH: str = "save_data.json"
+SAVE_FILE_TEMPLATE: str = "save_data_{slot}.json"
+NUM_SAVE_SLOTS: int = 3
 
 # Default Volumes
 DEFAULT_MUSIC_VOLUME: float = 0.5
