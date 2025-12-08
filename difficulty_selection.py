@@ -1,4 +1,5 @@
 import pygame
+from pathlib import Path
 
 import constants
 import utilities
@@ -15,7 +16,7 @@ class DifficultySelection:
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
-        # Use a generic background or one of the existing ones as fallback
+        # Background
         self.background = pygame.Surface((constants.WIDTH, constants.HEIGHT))
         self.background.fill((30, 30, 30))  # Dark Grey
 
@@ -23,18 +24,13 @@ class DifficultySelection:
         self.title_font = pygame.font.Font(constants.TEXT_FONT_PATH, 80)
         self.button_font = pygame.font.Font(constants.TEXT_FONT_PATH, 50)
 
-        # Options
+        # Options - REORDERED: Easy -> Medium -> Hard -> Personal Best
         self.options = [
-            {"key": constants.GHOST_DIFFICULTY_PERSONAL_BEST, "label": "Personal Best", "index": 1},
-            {"key": "easy", "label": "Easy Ghost", "index": 2},
-            {"key": "medium", "label": "Medium Ghost", "index": 3},
-            {"key": "hard", "label": "Hard Ghost", "index": 4}
+            {"key": "easy", "label": "Easy Ghost"},
+            {"key": "medium", "label": "Medium Ghost"},
+            {"key": "hard", "label": "Hard Ghost"},
+            {"key": constants.GHOST_DIFFICULTY_PERSONAL_BEST, "label": "Personal Best"}
         ]
-
-        self.difficulties: list[str] = [constants.GHOST_DIFFICULTY_PERSONAL_BEST,
-                                        "easy",
-                                        "medium",
-                                        "hard"]
 
         # Setup Buttons
         self.buttons = []
@@ -45,7 +41,8 @@ class DifficultySelection:
         for i, option in enumerate(self.options):
             text_surf = self.button_font.render(option["label"], True, constants.TEXT_COLOR)
             rect = text_surf.get_rect(center=(center_x, start_y + i * gap))
-            self.buttons.append({"rect": rect, "key": option["key"], "index": option["index"], "label": option["label"]})
+            # We store the key directly so we don't rely on list indices matching
+            self.buttons.append({"rect": rect, "key": option["key"], "label": option["label"]})
 
         # Back Button
         self.back_button_x: int = 10
@@ -63,7 +60,7 @@ class DifficultySelection:
                                                          self.back_button_height)
         self.back_current_image: pygame.Surface = self.back_default_image
 
-        self.last_hovered_index: int = 0
+        self.last_hovered_index: int = -1
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
@@ -79,6 +76,14 @@ class DifficultySelection:
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 400
 
+    def _is_personal_best_available(self) -> bool:
+        """Checks if a personal best exists for the currently selected track."""
+        if not hasattr(self.game, "selected_track_name"):
+            return False
+
+        pb_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.game.selected_track_name))
+        return pb_path.exists()
+
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
         """Returns the selected difficulty key string, 'back', 'exit', or empty string."""
 
@@ -86,13 +91,18 @@ class DifficultySelection:
             return constants.NO_ACTION_CODE
 
         hovered_index: int = -1
+        pb_available = self._is_personal_best_available()
 
         if self.back_button_rect.collidepoint(mouse_pos):
-            hovered_index = 0
+            hovered_index = 0  # 0 represents the Back Button
         else:
-            for btn in self.buttons:
+            for i, btn in enumerate(self.buttons):
                 if btn["rect"].collidepoint(mouse_pos):
-                    hovered_index = btn["index"]
+                    # IGNORE hover if this is the Personal Best button and it is disabled
+                    if btn["key"] == constants.GHOST_DIFFICULTY_PERSONAL_BEST and not pb_available:
+                        continue
+
+                    hovered_index = i + 1  # 1-based index for difficulty buttons
                     break
 
         if hovered_index != self.last_hovered_index and hovered_index != -1:
@@ -104,9 +114,12 @@ class DifficultySelection:
                 return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index > 0:
-                    self.game.set_difficulty(self.difficulties[hovered_index - 1])
+                    # Difficulty Selected
+                    selected_btn = self.buttons[hovered_index - 1]
+                    self.game.set_difficulty(selected_btn["key"])
                     return constants.RACE_SCREEN_NAME
                 elif hovered_index == 0:
+                    # Back Button Selected
                     return constants.CAR_SELECTION_NAME
 
         return constants.NO_ACTION_CODE
@@ -119,10 +132,16 @@ class DifficultySelection:
         title_rect = title_surf.get_rect(center=(constants.WIDTH // 2, 100))
         self.screen.blit(title_surf, title_rect)
 
+        pb_available = self._is_personal_best_available()
+
         # Options
-        for btn in self.buttons:
+        for i, btn in enumerate(self.buttons):
             color = constants.TEXT_COLOR
-            if btn["index"] == self.last_hovered_index:
+
+            # Logic for coloring buttons
+            if btn["key"] == constants.GHOST_DIFFICULTY_PERSONAL_BEST and not pb_available:
+                color = constants.BUTTON_DISABLED_COLOR  # Grey out disabled PB
+            elif (i + 1) == self.last_hovered_index:
                 color = (255, 255, 0)  # Yellow hover
 
             text_surf = self.button_font.render(btn["label"], True, color)
@@ -136,19 +155,20 @@ class DifficultySelection:
             self.handle_transitions()
 
     def handle_transitions(self):
-        """Handles the four kinds of transitions:
-            - Transitioning from the previous screen to the current screen (self.transitioning_from_prev)
-            - Transitioning from the current screen to the next screen (self.transitioning_to_next)
-            - Transitioning from the current screen to the previous screen (self.transitioning_to_prev)
-            - Transitioning from the next screen to the current screen (self.transitioning_from_next)
-        """
-
+        """Handles the four kinds of transitions"""
         if self.transitioning_to_prev or self.transitioning_from_prev:
-            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms, self.transition_prev_duration_ms, self.transitioning_to_prev, self.transition_prev_pause_time, self.game.garage_door)
+            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms,
+                                                             self.transition_prev_duration_ms,
+                                                             self.transitioning_to_prev,
+                                                             self.transition_prev_pause_time, self.game.garage_door)
             if is_over:
                 self.end_transition()
         elif self.transitioning_to_next or self.transitioning_from_next:
-            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms, self.transition_next_duration_ms, self.transitioning_to_next, self.transition_next_pause_time, self.game.dark_overlay)
+            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms,
+                                                                    self.transition_next_duration_ms,
+                                                                    self.transitioning_to_next,
+                                                                    self.transition_next_pause_time,
+                                                                    self.game.dark_overlay)
             if is_over:
                 self.end_transition()
 

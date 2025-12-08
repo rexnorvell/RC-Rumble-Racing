@@ -31,10 +31,9 @@ NUM_SAVE_SLOTS: int = 3
 
 # Default Volumes
 DEFAULT_MUSIC_VOLUME: float = 0.5
-DEFAULT_SFX_VOLUME: float = 0.2 # Standardizing all SFX
+DEFAULT_SFX_VOLUME: float = 0.2
 
 # Key Bindings
-# Action names used internally
 KEY_ACTION_FORWARD: str = "FORWARD"
 KEY_ACTION_BACKWARD: str = "BACKWARD"
 KEY_ACTION_LEFT: str = "LEFT"
@@ -42,7 +41,6 @@ KEY_ACTION_RIGHT: str = "RIGHT"
 KEY_ACTION_DRIFT: str = "DRIFT"
 KEY_ACTION_TOGGLE_GHOST: str = "TOGGLE_GHOST"
 
-# Default keys
 DEFAULT_KEY_BINDINGS: dict[str, int] = {
     KEY_ACTION_FORWARD: pygame.K_w,
     KEY_ACTION_BACKWARD: pygame.K_s,
@@ -63,7 +61,7 @@ CURSOR_WIDTH: int = 40
 CURSOR_HEIGHT: int = 40
 
 # Transitions
-FADE_TRANSITION_SPEED_MS: int = 500  # 0.5 seconds
+FADE_TRANSITION_SPEED_MS: int = 500
 
 # Title screen
 TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
@@ -87,44 +85,45 @@ CAR_SELECTION_ARROW_LEFT_PATH: str = "assets/images/car_selection/arrow_left.png
 CAR_SELECTION_ARROW_RIGHT_PATH: str = "assets/images/car_selection/arrow_right.png"
 
 # Car selection UI
-CAR_STAT_BAR_COLOR: tuple[int, int, int] = (185, 5, 5) # Use main text color
+CAR_STAT_BAR_COLOR: tuple[int, int, int] = (185, 5, 5)
 CAR_STAT_BAR_BG_COLOR: tuple[int, int, int] = (50, 50, 50)
 CAR_STAT_BAR_WIDTH: int = 300
 CAR_STAT_BAR_HEIGHT: int = 25
-CAR_STAT_MAX_VALUE: int = 10 # Stats are out of 10
+CAR_STAT_MAX_VALUE: int = 10
 
 # Track Selection Exit/Back button
 TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
 TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 
+# Difficulty Selection UI
+DIFFICULTY_BUTTON_WIDTH: int = 720
+DIFFICULTY_BUTTON_HEIGHT: int = 85
+DIFFICULTY_BUTTON_GAP: int = 20
+DIFFICULTY_BUTTON_START_Y: int = 250
+# Colors
+BUTTON_DISABLED_COLOR: tuple[int, int, int] = (100, 100, 100) # Grey for locked buttons
+
 # Track parameters
-TRACK_NAMES: list[str] = ["magnificent_meadow",
-                          "dusty_dunes",
-                          "glistening_glacier",
-                          "fiery_furnace"]
-NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3,
-                            TRACK_NAMES[1]: 3,
-                            TRACK_NAMES[2]: 3,
-                            TRACK_NAMES[3]: 3}
-CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(2256, 944, 200, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(1621, 644, 50, 300),
-                                                TRACK_NAMES[2]: pygame.Rect(1056, 994, 200, 50),
-                                                TRACK_NAMES[3]: pygame.Rect(3950, 1350, 250, 50)}
+TRACK_NAMES: list[str] = ["magnificent_meadow", "dusty_dunes", "glistening_glacier", "fiery_furnace"]
+NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3, TRACK_NAMES[1]: 3, TRACK_NAMES[2]: 3, TRACK_NAMES[3]: 3}
+CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {
+    TRACK_NAMES[0]: pygame.Rect(2256, 944, 200, 50),
+    TRACK_NAMES[1]: pygame.Rect(1621, 644, 50, 300),
+    TRACK_NAMES[2]: pygame.Rect(1056, 994, 200, 50),
+    TRACK_NAMES[3]: pygame.Rect(3950, 1350, 250, 50)
+}
 
-# Angle to face when respawning at the checkpoint
-CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180,
-                                     TRACK_NAMES[1]: 90,
-                                     TRACK_NAMES[2]: 180,
-                                     TRACK_NAMES[3]: 180}
+CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180, TRACK_NAMES[1]: 90, TRACK_NAMES[2]: 180, TRACK_NAMES[3]: 180}
 
-FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {TRACK_NAMES[0]: pygame.Rect(1068, 994, 180, 50),
-                                                TRACK_NAMES[1]: pygame.Rect(1736, 1184, 50, 180),
-                                                TRACK_NAMES[2]: pygame.Rect(2276, 924, 180, 50),
-                                                TRACK_NAMES[3]: pygame.Rect(675, 1176, 400, 50)}
-TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[float, float]] = {TRACK_NAMES[0]: (2.5, 2.5),
-                                                            TRACK_NAMES[1]: (2.5, 2.5),
-                                                            TRACK_NAMES[2]: (2.5, 2.5),
-                                                            TRACK_NAMES[3]: (3.5, 3.5)}
+FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {
+    TRACK_NAMES[0]: pygame.Rect(1068, 994, 180, 50),
+    TRACK_NAMES[1]: pygame.Rect(1736, 1184, 50, 180),
+    TRACK_NAMES[2]: pygame.Rect(2276, 924, 180, 50),
+    TRACK_NAMES[3]: pygame.Rect(675, 1176, 400, 50)
+}
+TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[float, float]] = {
+    TRACK_NAMES[0]: (2.5, 2.5), TRACK_NAMES[1]: (2.5, 2.5), TRACK_NAMES[2]: (2.5, 2.5), TRACK_NAMES[3]: (3.5, 3.5)
+}
 TRACK_IMAGE_PATH: str = "assets/images/tracks/{track_name}/{image_type}.png"
 TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 
@@ -132,40 +131,33 @@ TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 CAR_WIDTH: int = 30
 CAR_HEIGHT: int = 60
 
-# Physics Base Values (Used to calculate actual stats from the 1-10 ratings)
-# Formula: Actual = Base + (Stat * Multiplier)
-BASE_MAX_SPEED: float = 4.5
+# Physics Base Values
+BASE_MAX_SPEED: float = 4.1
 SPEED_STAT_MULTIPLIER: float = 0.25
-
 BASE_ACCELERATION: float = 0.1
 ACCEL_STAT_MULTIPLIER: float = 0.015
-
 BASE_TURN_SPEED: float = 1.5
 HANDLING_STAT_MULTIPLIER: float = 0.15
 
-# Global constants (Fallback or Common)
+# Global constants
 FRICTION: float = 0.1
 MAX_DRIFT_ANGLE: float = 50.0
 MIN_DRIFT_ANGLE: float = 15.0
 DRIFT_RECOVERY_SPEED: float = 1.5
 
-START_X: dict[str, float] = {TRACK_NAMES[0]: 1156.0,
-                             TRACK_NAMES[1]: 1836.0,
-                             TRACK_NAMES[2]: 2366.0,
-                             TRACK_NAMES[3]: 875.0}
-START_Y: dict[str, float] = {TRACK_NAMES[0]: 1094.0,
-                             TRACK_NAMES[1]: 1264.0,
-                             TRACK_NAMES[2]: 1044.0,
-                             TRACK_NAMES[3]: 1275.0}
-START_ROTATION: dict[str, int] = {TRACK_NAMES[0]: 0,
-                                  TRACK_NAMES[1]: 270,
-                                  TRACK_NAMES[2]: 0,
-                                  TRACK_NAMES[3]: 0}
+START_X: dict[str, float] = {
+    TRACK_NAMES[0]: 1156.0, TRACK_NAMES[1]: 1836.0, TRACK_NAMES[2]: 2366.0, TRACK_NAMES[3]: 875.0
+}
+START_Y: dict[str, float] = {
+    TRACK_NAMES[0]: 1094.0, TRACK_NAMES[1]: 1264.0, TRACK_NAMES[2]: 1044.0, TRACK_NAMES[3]: 1275.0
+}
+START_ROTATION: dict[str, int] = {
+    TRACK_NAMES[0]: 0, TRACK_NAMES[1]: 270, TRACK_NAMES[2]: 0, TRACK_NAMES[3]: 0
+}
 CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
 # CAR DEFINITIONS
-# Includes Colors and Types
 CAR_DEFINITIONS = [
     {
         "name": "Formula 1",
@@ -180,58 +172,12 @@ CAR_DEFINITIONS = [
             {"name": "f1_car_white", "color": (255, 255, 255)}
         ],
     },
-    {
-        "name": "Ferrari",
-        "stats": { "Speed": 10, "Acceleration": 9, "Handling": 5 },
-        "styles": [
-            {"name": "ferrari_car_red", "color": (218, 0, 0)}
-        ],
-    },
-    {
-        "name": "Audi",
-        "stats": { "Speed": 8, "Acceleration": 8, "Handling": 8 },
-        "styles": [
-            {"name": "audi_car_red", "color": (196, 0, 0)},
-            {"name": "audi_car_sport", "color": (180, 180, 180)}
-        ],
-    },
-    {
-        "name": "BMW",
-        "stats": { "Speed": 7, "Acceleration": 9, "Handling": 8 },
-        "styles": [
-            {"name": "bmw_car_red", "color": (204, 0, 0)}
-        ],
-    },
-    {
-        "name": "Chevrolet",
-        "stats": { "Speed": 10, "Acceleration": 10, "Handling": 4 },
-        "styles": [
-            {"name": "chevrolet_car_blue", "color": (0, 102, 204)}
-        ],
-    },
-    {
-        "name": "DeLorean",
-        "stats": { "Speed": 7, "Acceleration": 10, "Handling": 6 },
-        "styles": [
-            {"name": "delorean_car_grey", "color": (132, 132, 132)}
-        ],
-    }
+    { "name": "Ferrari", "stats": { "Speed": 10, "Acceleration": 9, "Handling": 5 }, "styles": [{"name": "ferrari_car_red", "color": (218, 0, 0)}] },
+    { "name": "Audi", "stats": { "Speed": 8, "Acceleration": 8, "Handling": 8 }, "styles": [{"name": "audi_car_red", "color": (196, 0, 0)}, {"name": "audi_car_sport", "color": (180, 180, 180)}] },
+    { "name": "BMW", "stats": { "Speed": 7, "Acceleration": 9, "Handling": 8 }, "styles": [{"name": "bmw_car_red", "color": (204, 0, 0)}] },
+    { "name": "Chevrolet", "stats": { "Speed": 10, "Acceleration": 10, "Handling": 4 }, "styles": [{"name": "chevrolet_car_blue", "color": (0, 102, 204)}] },
+    { "name": "DeLorean", "stats": { "Speed": 7, "Acceleration": 10, "Handling": 6 }, "styles": [{"name": "delorean_car_grey", "color": (132, 132, 132)}] }
 ]
-
-# Ghost Definition (Unavailable to player)
-GHOST_CAR_DEFINITION = {
-    "name": "Ghost",
-    "stats": {
-        "Speed": 8,
-        "Acceleration": 8,
-        "Handling": 8,
-    },
-    "styles": [{
-        "name": "f1_car_red",
-        "color": (128, 128, 128) # Placeholder, color tinting handles transparency
-    }]
-}
-
 
 # Pause Menu
 PAUSE_MENU_IMAGE_PATH: str = "assets/images/pause/{image_name}.png"
@@ -258,11 +204,17 @@ PERSONAL_BEST_FILE_PATH: str = "assets/replays/{track_name}/personal_best.csv"
 PERSONAL_BEST_FILE_NAME: str = "personal_best.csv"
 PERSONAL_BEST_METADATA_FILE_PATH: str = "assets/replays/{track_name}/personal_best.json"
 
-# Ghost files
-GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/{difficulty}.csv"
-GHOST_METADATA_FILE_PATH: str = "assets/ghosts/{track_name}/{difficulty}.json"
+# Ghost / CPU files
+CPU_GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/track_path.csv"
 GHOST_DIFFICULTY_PERSONAL_BEST: str = "personal_best"
-GHOST_DIFFICULTIES: list[str] = ["easy", "medium", "hard"]
+
+# CPU Difficulty Settings
+CPU_DIFFICULTY_SETTINGS: dict = {
+    "easy":   {"speed_multiplier": 0.85, "accel_multiplier": 1.25, "turn_multiplier": 1.2, "lookahead": 20},
+    "medium": {"speed_multiplier": 0.98, "accel_multiplier": 1.7, "turn_multiplier": 1.5, "lookahead": 40},
+    "hard":   {"speed_multiplier": 1.75, "accel_multiplier": 2.20, "turn_multiplier": 2.00, "lookahead": 60},
+    "personal_best": {"speed_multiplier": 0.85, "accel_multiplier": 1.9, "turn_multiplier": 1.6, "lookahead": 50}
+}
 
 # Music and audio paths
 TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.mp3"
