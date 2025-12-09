@@ -5,7 +5,7 @@ from car_selection import CarSelection
 from controls_menu import ControlsMenu
 from difficulty_selection import DifficultySelection
 from save_manager import SaveManager
-from save_selection import SaveSelection  # <-- IMPORTED
+# REMOVED: from save_selection import SaveSelection (Moved inside init)
 from settings_menu import SettingsMenu
 from sound_menu import SoundMenu
 from title_screen import TitleScreen
@@ -29,9 +29,11 @@ class Game:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
 
-        # Data Manager
-        # SaveManager no longer loads data on init
-        self.save_manager = SaveManager(self)
+        # Initialize with Index 0 (which SaveManager converts to File 1)
+        self.save_manager = SaveManager(0)
+
+        # Import here to avoid circular imports
+        from save_selection import SaveSelection
 
         # Menu screens
         self.title_screen: TitleScreen = TitleScreen(self, self.game_surface, self.save_manager)
@@ -76,7 +78,7 @@ class Game:
         self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
 
-        # Apply *default* volumes from save manager (since no file is loaded)
+        # Apply volumes immediately
         self.save_manager.apply_all_settings()
 
         # Letterbox scaling
@@ -97,15 +99,12 @@ class Game:
         self.dark_overlay: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
 
     def set_save_slot_and_load(self, slot_index: int) -> None:
-        """
-        Sets the active save slot in the SaveManager and re-initializes all
-        screens that depend on loaded save data (volumes, unlocks, etc.)
-        """
+        """Sets the active save slot and re-initializes screens."""
         self.save_manager.set_save_slot(slot_index)
-        # Apply_all_settings is called inside set_save_slot via load_data()
 
         # Re-create screens that depend on save_manager data
-        # This ensures they have the correct volumes, unlocks, and bindings
+        from save_selection import SaveSelection  # Re-import here just in case
+
         self.title_screen = TitleScreen(self, self.game_surface, self.save_manager)
         self.save_selection = SaveSelection(self, self.game_surface, self.save_manager)
         self.track_selection = TrackSelection(self, self.game_surface, self.save_manager)
@@ -115,7 +114,6 @@ class Game:
         self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
         self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
 
-        # Update the main screen dictionary with the new instances
         self.menu_screens = {
             constants.TITLE_SCREEN_NAME: self.title_screen,
             constants.SAVE_SELECTION_NAME: self.save_selection,
@@ -128,46 +126,35 @@ class Game:
         }
 
     def set_track_name(self, track_name: str) -> None:
-        """Allows Track Selection screen to set the name of the track that the user chose"""
         self.track_name = track_name
 
     def set_difficulty(self, difficulty: str) -> None:
-        """Allows Difficulty Selection screen to set the difficulty that the user chose"""
         self.difficulty = difficulty
 
     def set_car_style(self, car_index: int, style_index: int) -> None:
-        """Allows Car Selection screen to set the car index and style index that the user chose"""
         self.car_index = car_index
         self.style_index = style_index
 
     def draw_letterboxed_surface(self) -> None:
-        """Calculates letterbox scaling and blits the game_surface to the screen"""
-
         window_width, window_height = self.screen.get_size()
         if window_width == 0 or window_height == 0:
-            return  # Avoid division by zero if window is minimized
+            return
 
-        # Calculate aspect ratios
         window_aspect: float = window_width / window_height
         game_aspect: float = constants.WIDTH / constants.HEIGHT
 
-        # Determine scaling factor
         new_width: int = window_width
         new_height: int = window_height
         if window_aspect > game_aspect:
-            # Window is wider than game
             self.scale_factor = window_height / constants.HEIGHT
             new_width = int(constants.WIDTH * self.scale_factor)
         else:
-            # Window is taller than game
             self.scale_factor = window_width / constants.WIDTH
             new_height = int(constants.HEIGHT * self.scale_factor)
 
-        # Calculate offsets for centering
         self.offset_x: int = (window_width - new_width) // 2
         self.offset_y: int = (window_height - new_height) // 2
 
-        # Scale and blit
         scaled_surface: pygame.Surface = pygame.transform.scale(self.game_surface, (new_width, new_height))
         self.screen.fill((0, 0, 0))
         self.screen.blit(scaled_surface, (self.offset_x, self.offset_y))
@@ -188,8 +175,6 @@ class Game:
         return events
 
     def start(self) -> None:
-        """Displays the title screen and manages main screen transitions"""
-
         pygame.mouse.set_visible(False)
         self._play_intro_music()
         if not self.title_screen.play_intro(self.screen):
@@ -213,19 +198,19 @@ class Game:
                 self.click_sound.play()
                 self.next_screen = next_action
                 start_transition: bool = True
-                backwards: bool = False if self.menu_screen_indices[self.next_screen] > self.menu_screen_indices[
-                    self.current_screen] else True
+                backwards: bool = False if self.menu_screen_indices.get(self.next_screen,
+                                                                        0) > self.menu_screen_indices.get(
+                    self.current_screen, 0) else True
                 self.menu_screens[self.current_screen].initialize_transition(start_transition=start_transition,
                                                                              backwards=backwards)
 
             if self.next_screen != "" and not self.menu_screens[self.current_screen].transitioning:
                 if self.next_screen != constants.RACE_SCREEN_NAME:
                     start_transition: bool = False
-                    backwards: bool = False if self.menu_screen_indices[self.next_screen] > self.menu_screen_indices[
-                        self.current_screen] else True
+                    backwards: bool = False if self.menu_screen_indices.get(self.next_screen,
+                                                                            0) > self.menu_screen_indices.get(
+                        self.current_screen, 0) else True
 
-                    # Special case: If moving from save select to track select, re-load summaries
-                    # for when the user eventually comes back.
                     if self.current_screen == constants.SAVE_SELECTION_NAME:
                         self.save_selection.load_summaries()
 
@@ -235,10 +220,13 @@ class Game:
                     self.next_screen = ""
                 else:
                     self._start_race()
-                    # After race, reload all screens with new save data (e.g., unlocks)
-                    # and return to track selection.
+                    # After race, reload screens to reflect unlocks
                     if self.save_manager.current_slot != -1:
-                        self.set_save_slot_and_load(self.save_manager.current_slot)
+                        # Use current_slot - 1 because set_save_slot_and_load expects 0-based index
+                        # and adds 1 internally.
+                        # self.save_manager.current_slot is 1-based (e.g. 1).
+                        # So pass 0.
+                        self.set_save_slot_and_load(self.save_manager.current_slot - 1)
 
                     self.current_screen = constants.TRACK_SELECTION_NAME
                     self.next_screen = ""
@@ -250,12 +238,10 @@ class Game:
             self.ui_clock.tick(60)
 
     def get_scaled_mouse_pos(self) -> None:
-        """Scales mouse position from window coordinates to game_surface coordinates"""
         pos = pygame.mouse.get_pos()
-        if self.scale_factor == 0:  # Prevent divide-by-zero
+        if self.scale_factor == 0:
             self._set_scaled_mouse_pos(x=0, y=0)
         else:
-            # Un-scale and un-offset the mouse position
             game_x = (pos[0] - self.offset_x) / self.scale_factor
             game_y = (pos[1] - self.offset_y) / self.scale_factor
             self._set_scaled_mouse_pos(int(game_x), int(game_y))
@@ -264,13 +250,11 @@ class Game:
         self.scaled_mouse_pos = (x, y)
 
     def draw_cursor(self) -> None:
-        """Draws the custom cursor on the game surface"""
-        if (self.scaled_mouse_pos[0] not in [0, constants.WIDTH - 1]
-                and self.scaled_mouse_pos[1] not in [0, constants.HEIGHT - 1]):
+        if (0 <= self.scaled_mouse_pos[0] < constants.WIDTH and
+                0 <= self.scaled_mouse_pos[1] < constants.HEIGHT):
             self.game_surface.blit(self.custom_cursor_image, self.scaled_mouse_pos)
 
     def _start_race(self) -> None:
-        """Starts the race loop"""
         racing: bool = True
         while racing:
             self.race = Race(self, self.track_name, self.car_index, self.style_index, self.difficulty,

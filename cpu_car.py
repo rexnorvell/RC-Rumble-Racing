@@ -51,16 +51,11 @@ class CpuCar(Car):
             print(f"Error loading CPU path: {e}")
 
     def _analyze_track_shape(self, start_idx: int) -> tuple[float, float]:
-        """
-        Samples 7 points ahead to determine curvature.
-        Uses modulo to wrap around the end of the track.
-        """
         points = []
         path_len = len(self.path_points)
         if path_len == 0: return 0.0, 0.0
 
         for i in range(0, 70, 10):
-            # Use modulo to wrap around
             idx = (start_idx + i) % path_len
             points.append(self.path_points[idx])
 
@@ -83,18 +78,17 @@ class CpuCar(Car):
 
         return total_change, max_change
 
-    def update_cpu(self):
+    def update(self):  # <--- RENAMED FROM update_cpu
         if not self.path_points:
             return
 
         path_len = len(self.path_points)
 
-        # 1. FIND CLOSEST POINT (With Wrap-Around Search)
+        # 1. FIND CLOSEST POINT
         search_window = 50
         closest_dist = float('inf')
         best_index = self.current_path_index
 
-        # Check next 50 points, wrapping around to start if needed
         for i in range(search_window):
             idx = (self.current_path_index + i) % path_len
             px, py = self.path_points[idx]
@@ -120,7 +114,6 @@ class CpuCar(Car):
         else:
             lookahead_distance = base_lookahead
 
-        # Wrap lookahead index
         final_lookahead_index = (self.current_path_index + lookahead_distance) % path_len
         aim_x, aim_y = self.path_points[final_lookahead_index]
 
@@ -130,18 +123,25 @@ class CpuCar(Car):
         target_angle = math.degrees(math.atan2(dx, -dy))
         angle_diff = (target_angle - self.car_angle + 180) % 360 - 180
 
+        check_dist = 40
+        check_idx = (self.current_path_index + check_dist) % path_len
+        cx, cy = self.path_points[check_idx]
+        cdx, cdy = cx - self.x, cy - self.y
+        future_angle = math.degrees(math.atan2(cdx, -cdy))
+        future_turn_severity = abs((future_angle - self.car_angle + 180) % 360 - 180)
+
         # 5. DRIFTING LOGIC
         if self.is_off_road:
             self.is_drifting = False
         else:
-            speed_threshold = self.base_max_speed * 0.6
+            speed_threshold = self.base_max_speed * 0.65
             if not self.is_drifting:
                 if self.speed > speed_threshold:
-                    if total_curvature > 25 or abs(angle_diff) > 18:
+                    if total_curvature > 35 or abs(angle_diff) > 22:
                         self.is_drifting = True
 
             if self.is_drifting:
-                if abs(angle_diff) < 8:
+                if abs(angle_diff) < 10:
                     self.is_drifting = False
                 elif (self.last_angle_diff > 0 and angle_diff < 0) or (self.last_angle_diff < 0 and angle_diff > 0):
                     self.is_drifting = False
@@ -164,14 +164,6 @@ class CpuCar(Car):
         # 7. THROTTLE LOGIC
         current_target_speed = self.base_max_speed
 
-        # Pre-braking logic (Check future curvature)
-        check_dist = 40
-        check_idx = (self.current_path_index + check_dist) % path_len
-        cx, cy = self.path_points[check_idx]
-        cdx, cdy = cx - self.x, cy - self.y
-        future_angle = math.degrees(math.atan2(cdx, -cdy))
-        future_turn_severity = abs((future_angle - self.car_angle + 180) % 360 - 180)
-
         if self.is_off_road:
             current_target_speed *= 0.5
         elif future_turn_severity > 30:
@@ -185,9 +177,9 @@ class CpuCar(Car):
                 current_target_speed *= 0.90
         else:
             if abs(angle_diff) > 20:
-                current_target_speed *= 0.75
+                current_target_speed *= 0.80
             elif abs(angle_diff) > 10:
-                current_target_speed *= 0.90
+                current_target_speed *= 0.95
 
         if self.speed < current_target_speed:
             self.speed += self.acceleration

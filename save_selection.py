@@ -5,43 +5,44 @@ import utilities
 from ui_elements import ConfirmationDialog
 
 
+# Do NOT import 'game' here
+
 class SaveSelection:
     """Screen for selecting one of three save files."""
 
     def __init__(self, game, screen: pygame.Surface, save_manager) -> None:
 
-        # General
         self.name: str = "save_selection"
         self.game = game
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
-        # Background
         self.background: pygame.Surface = pygame.image.load(
             constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
         self.background = pygame.transform.scale(self.background, (constants.WIDTH, constants.HEIGHT))
         self.overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
         self.overlay.fill((0, 0, 0, 150))
 
-        # Fonts
         self.title_font = pygame.font.Font(constants.TEXT_FONT_PATH, 80)
         self.slot_font = pygame.font.Font(constants.TEXT_FONT_PATH, 50)
-        self.info_font = pygame.font.Font(constants.FALLBACK_FONT_PATH, 30)
+        self.info_font = pygame.font.Font(constants.FALLBACK_FONT_PATH, 24)
         self.button_font = pygame.font.Font(constants.TEXT_FONT_PATH, 40)
 
-        # State
-        self.summaries: list[dict | None] = []
-        self.load_summaries()
+        # STATE
         self.delete_mode: bool = False
         self.dialog: ConfirmationDialog | None = None
         self.pending_delete_slot: int = -1
-        self.last_hovered = "none"  # "back", "delete", "slot_0", "slot_1", "slot_2"
+        self.last_hovered = "none"
+        self.summaries: list[dict | None] = []
+        self.show_delete_button: bool = False
+
+        self.load_summaries()
 
         # Slot Rects
         slot_width = 800
-        slot_height = 120
-        slot_gap = 40
-        start_y = 200
+        slot_height = 130
+        slot_gap = 30
+        start_y = 180
         center_x = constants.WIDTH // 2
         slot_x = center_x - (slot_width / 2)
         self.slot_rects: list[pygame.Rect] = []
@@ -52,13 +53,10 @@ class SaveSelection:
         # Buttons
         self.back_button_rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
         self.delete_button_rect = pygame.Rect(constants.WIDTH - 220, constants.HEIGHT - 70, 200, 50)
-        self.show_delete_button: bool = any(s is not None for s in self.summaries)
 
-        # Sounds
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
-        # Transitions
         self.transitioning: bool = False
         self.transitioning_from_prev: bool = False
         self.transitioning_to_prev: bool = False
@@ -71,19 +69,18 @@ class SaveSelection:
         self.transition_next_pause_time: int = 0
 
     def load_summaries(self) -> None:
-        """Loads summaries for all save slots."""
         self.summaries = [self.save_manager.get_save_summary(i) for i in range(constants.NUM_SAVE_SLOTS)]
-        self.show_delete_button = any(s is not None for s in self.summaries)
+        self.show_delete_button = any(not s["empty"] for s in self.summaries)
+
+        if self.delete_mode and not self.show_delete_button:
+            self.delete_mode = False
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
-        """Returns 'back', 'exit', or ''."""
-
         if self.dialog:
             action = self.dialog.handle_events(events, mouse_pos)
             if action == "yes":
                 self.save_manager.delete_save_data(self.pending_delete_slot)
-                self.load_summaries()  # Refresh summaries
-                self.delete_mode = False
+                self.load_summaries()
                 self.dialog = None
                 self.pending_delete_slot = -1
             elif action == "no":
@@ -102,6 +99,8 @@ class SaveSelection:
         else:
             for i, rect in enumerate(self.slot_rects):
                 if rect.collidepoint(mouse_pos):
+                    if self.delete_mode and self.summaries[i]["empty"]:
+                        continue
                     hovered = f"slot_{i}"
                     break
 
@@ -120,42 +119,39 @@ class SaveSelection:
                 elif "slot_" in hovered:
                     slot_index = int(hovered.split("_")[1])
                     if self.delete_mode:
-                        # If in delete mode, try to delete
-                        if self.summaries[slot_index] is not None:
+                        if not self.summaries[slot_index]["empty"]:
                             self.pending_delete_slot = slot_index
                             self.dialog = ConfirmationDialog(self.screen, "Delete this save file?", self.button_font)
                     else:
-                        # Not in delete mode, load the file
                         self.game.set_save_slot_and_load(slot_index)
                         return constants.TRACK_SELECTION_NAME
 
         return constants.NO_ACTION_CODE
 
     def _draw_content(self, x_offset: int = 0):
-        """Draws all screen content at the given x_offset."""
-        # Blit overlay at offset
         self.screen.blit(self.overlay, (x_offset, 0))
 
-        # Title
         title_surf = self.title_font.render("Select Save File", True, (255, 255, 255))
-        title_rect = title_surf.get_rect(center=(constants.WIDTH // 2 + x_offset, 100))
+        title_rect = title_surf.get_rect(center=(constants.WIDTH // 2 + x_offset, 90))
         self.screen.blit(title_surf, title_rect)
 
-        # Draw Slots
         for i, rect in enumerate(self.slot_rects):
             summary = self.summaries[i]
             hovered = self.last_hovered == f"slot_{i}"
+            is_empty = summary["empty"]
 
             offset_rect = rect.move(x_offset, 0)
 
-            # Determine colors
             bg_color = (40, 40, 40)
             border_color = constants.TEXT_COLOR
 
             if self.delete_mode and summary:
-                border_color = (255, 0, 0)  # Red border in delete mode if file exists
-                if hovered:
-                    bg_color = (80, 20, 20)
+                if not is_empty:
+                    border_color = (255, 0, 0)
+                    if hovered:
+                        bg_color = (80, 20, 20)
+                else:
+                    border_color = (100, 100, 100)
             elif hovered:
                 bg_color = (70, 70, 70)
 
@@ -163,20 +159,44 @@ class SaveSelection:
             pygame.draw.rect(self.screen, border_color, offset_rect, width=4, border_radius=10)
 
             # Slot Title
-            slot_title_surf = self.slot_font.render(f"File {i + 1}", True, (255, 255, 255))
-            self.screen.blit(slot_title_surf, (offset_rect.x + 30, offset_rect.y + 20))
+            title_color = (255, 255, 255)
+            if self.delete_mode and is_empty:
+                title_color = (100, 100, 100)
 
-            # Slot Info
-            info_text = ""
-            if summary:
-                count = summary["unlocked_tracks_count"]
-                track_word = "Track" if count == 1 else "Tracks"
-                info_text = f"{count} {track_word} Unlocked"
+            slot_title_surf = self.slot_font.render(f"File {i + 1}", True, title_color)
+            title_y = offset_rect.centery - (slot_title_surf.get_height() // 2)
+            self.screen.blit(slot_title_surf, (offset_rect.x + 40, title_y))
+
+            # --- CENTERED TEXT LOGIC ---
+            info_color = (200, 200, 200)
+            if self.delete_mode and is_empty:
+                info_color = (80, 80, 80)
+
+            # Define the visual center of the "Info" area (Right half of the button)
+            # Button width is 800. Center is 400. Info area is 400->800. Center is 600 relative to X.
+            info_center_x = offset_rect.x + (offset_rect.width * 0.75)
+
+            if not is_empty:
+                unlocked = summary["unlocked_tracks_count"]
+                completed = summary["completed_tracks_count"]
+                total = summary["total_tracks_count"]
+
+                # Line 1: Tracks Unlocked (Centered)
+                line1_text = f"Tracks Unlocked: {unlocked}/{total}"
+                line1_surf = self.info_font.render(line1_text, True, info_color)
+                line1_rect = line1_surf.get_rect(center=(info_center_x, offset_rect.centery - 15))
+                self.screen.blit(line1_surf, line1_rect)
+
+                # Line 2: Tracks Completed (Centered)
+                line2_text = f"Tracks Completed: {completed}/{total}"
+                line2_surf = self.info_font.render(line2_text, True, info_color)
+                line2_rect = line2_surf.get_rect(center=(info_center_x, offset_rect.centery + 15))
+                self.screen.blit(line2_surf, line2_rect)
             else:
-                info_text = "[ Empty Slot ]"
-
-            info_surf = self.info_font.render(info_text, True, (200, 200, 200))
-            self.screen.blit(info_surf, (offset_rect.x + 30, offset_rect.y + 75))
+                # Empty Message (Centered)
+                empty_surf = self.info_font.render("[ Empty Slot ]", True, info_color)
+                empty_rect = empty_surf.get_rect(center=(info_center_x, offset_rect.centery))
+                self.screen.blit(empty_surf, empty_rect)
 
         # Back Button
         back_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == "back" else constants.TRACK_SELECTION_EXIT_COLOR
@@ -201,17 +221,15 @@ class SaveSelection:
         if self.transitioning:
             self.handle_transitions()
         else:
-            self._draw_content(0)  # Draw at base position
+            self._draw_content(0)
             if self.dialog:
-                self.dialog.draw()  # Dialog draws on top, no transition
+                self.dialog.draw()
 
     def handle_transitions(self):
-        """Handles screen transitions"""
         current_time: int = pygame.time.get_ticks()
         time_elapsed_ms: int = current_time - self.transition_start_time_ms
         foreground_x: int
 
-        # SLIDE: From Title Screen (Slide in from right)
         if self.transitioning_from_prev:
             if time_elapsed_ms >= self.transition_prev_duration_ms:
                 foreground_x = 0
@@ -219,11 +237,9 @@ class SaveSelection:
             else:
                 transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
                 percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
-                # Slide in from +WIDTH to 0
                 foreground_x = constants.WIDTH - int(percent_progress * constants.WIDTH)
             self._draw_content(foreground_x)
 
-        # SLIDE: To Title Screen (Slide out to right)
         elif self.transitioning_to_prev:
             if time_elapsed_ms >= self.transition_prev_duration_ms:
                 foreground_x = constants.WIDTH
@@ -231,11 +247,9 @@ class SaveSelection:
             else:
                 transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
                 percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
-                # Slide out from 0 to +WIDTH
                 foreground_x = int(percent_progress * constants.WIDTH)
             self._draw_content(foreground_x)
 
-        # SLIDE: To Track Selection (Slide out to left)
         elif self.transitioning_to_next:
             if time_elapsed_ms >= self.transition_next_duration_ms:
                 foreground_x = -constants.WIDTH
@@ -246,7 +260,6 @@ class SaveSelection:
                 foreground_x = int(-percent_progress * constants.WIDTH)
             self._draw_content(foreground_x)
 
-        # SLIDE: From Track Selection (Slide in from left)
         elif self.transitioning_from_next:
             if time_elapsed_ms >= self.transition_next_duration_ms:
                 foreground_x = 0
@@ -254,12 +267,10 @@ class SaveSelection:
             else:
                 transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
                 percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
-                # Slide in from -WIDTH to 0
                 foreground_x = int(percent_progress * constants.WIDTH) - constants.WIDTH
             self._draw_content(foreground_x)
 
     def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        """Set flags and store the starting time of the transition"""
         self.transition_start_time_ms: int = pygame.time.get_ticks()
         self.transitioning = True
         self.transitioning_to_prev = start_transition and backwards
@@ -268,13 +279,11 @@ class SaveSelection:
         self.transitioning_from_next = not start_transition and backwards
 
     def end_transition(self) -> None:
-        """Reset flags after the transition is complete"""
         self.transitioning = False
         self.transitioning_to_prev = False
         self.transitioning_from_prev = False
         self.transitioning_to_next = False
         self.transitioning_from_next = False
-        # Reload summaries when transitioning in, in case they changed
         if self.transitioning_from_prev:
             self.load_summaries()
             self.delete_mode = False

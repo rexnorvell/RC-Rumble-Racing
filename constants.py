@@ -210,10 +210,9 @@ GHOST_DIFFICULTY_PERSONAL_BEST: str = "personal_best"
 
 # CPU Difficulty Settings
 CPU_DIFFICULTY_SETTINGS: dict = {
-    "easy":   {"speed_multiplier": 0.85, "accel_multiplier": 1.25, "turn_multiplier": 1.2, "lookahead": 20},
-    "medium": {"speed_multiplier": 0.98, "accel_multiplier": 1.7, "turn_multiplier": 1.5, "lookahead": 40},
-    "hard":   {"speed_multiplier": 1.75, "accel_multiplier": 2.20, "turn_multiplier": 2.00, "lookahead": 60},
-    "personal_best": {"speed_multiplier": 0.85, "accel_multiplier": 1.9, "turn_multiplier": 1.6, "lookahead": 50}
+    "easy":   {"speed_multiplier": 1.50, "accel_multiplier": 1.75, "turn_multiplier": 1.50, "lookahead": 20},
+    "medium": {"speed_multiplier": 1.63, "accel_multiplier": 2.00, "turn_multiplier": 1.50, "lookahead": 40},
+    "hard":   {"speed_multiplier": 1.75, "accel_multiplier": 2.25, "turn_multiplier": 1.50, "lookahead": 60},
 }
 
 # Music and audio paths

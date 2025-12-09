@@ -7,6 +7,7 @@ import pygame
 
 from car import Car
 from cpu_car import CpuCar
+from ghost_car import GhostCar  # <--- IMPORT GHOST CAR
 import constants
 from save_manager import SaveManager
 from track import Track
@@ -75,14 +76,13 @@ class Race:
         # Race Over Menu Variables
         self.race_over_hover_index: int = 0
 
-        # Calculate SOURCE Rects (Where the buttons live on the original image)
+        # Calculate SOURCE Rects
         race_over_btn_x = (constants.WIDTH - constants.RACE_OVER_BUTTON_WIDTH) // 2
         self.source_retry_rect = pygame.Rect(race_over_btn_x, constants.RACE_OVER_RETRY_Y,
                                              constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
         self.source_exit_rect = pygame.Rect(race_over_btn_x, constants.RACE_OVER_EXIT_Y,
                                             constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
 
-        # Dynamic Rects (Used for clicking/drawing during animation)
         self.retry_button_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
 
@@ -92,7 +92,6 @@ class Race:
         self.race_over_image_left = pygame.transform.scale(self.race_over_image_left,
                                                            (constants.WIDTH, constants.HEIGHT))
 
-        # Load Base and Hover States
         self.race_over_default: pygame.Surface = pygame.image.load(
             constants.RACE_OVER_IMAGE_PATH.format(image_name="right")).convert_alpha()
         self.race_over_default = pygame.transform.scale(self.race_over_default, (constants.WIDTH, constants.HEIGHT))
@@ -106,11 +105,9 @@ class Race:
         self.race_over_hover_2 = pygame.transform.scale(self.race_over_hover_2, (constants.WIDTH, constants.HEIGHT))
 
         # --- CROP BUTTONS ---
-        # 1. Retry Button (Lives in Default and Hover_1)
         self.btn_retry_default = self.race_over_default.subsurface(self.source_retry_rect).copy()
         self.btn_retry_hover = self.race_over_hover_1.subsurface(self.source_retry_rect).copy()
 
-        # 2. Exit Button (Lives in Default and Hover_2)
         self.btn_exit_default = self.race_over_default.subsurface(self.source_exit_rect).copy()
         self.btn_exit_hover = self.race_over_hover_2.subsurface(self.source_exit_rect).copy()
 
@@ -145,14 +142,40 @@ class Race:
         # User Data
         self.personal_best_time: float = float("inf")
 
-        # CPU / Ghost Car
-        self.show_ghost: bool = True
+        # --- OPPONENT SETUP ---
+        self.opponent: Car = None
         self.ghost_found: bool = False
-        self.master_ghost_path = Path(constants.CPU_GHOST_FILE_PATH.format(track_name=self.track.name))
-        self.ghost_found = self.master_ghost_path.exists()
-        self.cpu_car = CpuCar(self.game.game_surface, self.track.name, self.difficulty, self.master_ghost_path)
+        self.show_ghost: bool = True
 
-        # CPU Race State
+        # 1. CPU vs GHOST Selection Logic
+        if self.difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
+            # -- GHOST MODE (Playback) --
+            # Read metadata to find which car/style was used
+            meta_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+            pb_car_idx = 0
+            pb_style_idx = 0
+            if meta_path.exists():
+                try:
+                    with open(meta_path, "r") as f:
+                        meta_data = json.load(f)
+                        pb_car_idx = meta_data.get("car_type_index", 0)
+                        pb_style_idx = meta_data.get("style_index", 0)
+                except:
+                    pass
+
+            pb_config = constants.CAR_DEFINITIONS[pb_car_idx]
+            pb_path = Path(constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name))
+
+            self.opponent = GhostCar(self.game.game_surface, self.track.name, pb_path, pb_config, pb_style_idx)
+            self.ghost_found = pb_path.exists()
+
+        else:
+            # -- CPU MODE (AI) --
+            cpu_path = Path(constants.CPU_GHOST_FILE_PATH.format(track_name=self.track.name))
+            self.opponent = CpuCar(self.game.game_surface, self.track.name, self.difficulty, cpu_path)
+            self.ghost_found = cpu_path.exists()
+
+        # Opponent Race State
         self.cpu_current_lap: int = 1
         self.cpu_has_checkpoint: bool = False
 
@@ -204,7 +227,10 @@ class Race:
     def _set_max_speed(self):
         self.user_car.is_off_road = True if self.track.is_off_road(self.user_car.x, self.user_car.y) else False
         self.user_car.set_max_speed()
-        self.cpu_car.is_off_road = True if self.track.is_off_road(self.cpu_car.x, self.cpu_car.y) else False
+        # For CPU/Ghost, they handle their own logic/updates, but we set physics flags if needed
+        # (Though GhostCar ignores them)
+        if isinstance(self.opponent, CpuCar):
+            self.opponent.is_off_road = True if self.track.is_off_road(self.opponent.x, self.opponent.y) else False
 
     def start(self) -> bool:
         """The main game loop when the user is racing on a track"""
@@ -236,9 +262,9 @@ class Race:
                 self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
                 self.user_car.update_position()
 
-                # UPDATE CPU
+                # UPDATE OPPONENT (CPU or GHOST)
                 if self.ghost_found and self.show_ghost:
-                    self.cpu_car.update_cpu()
+                    self.opponent.update()
 
                 self._check_out_of_bounds()
                 self._check_user_lap_completion()
@@ -251,21 +277,19 @@ class Race:
                 # --- COASTING LOGIC ---
                 self._set_max_speed()
 
-                # 1. User Car: Coasting (Empty inputs = friction applied by class)
                 self.user_car.handle_input({}, False)
                 self.user_car.update_position()
 
-                # 2. CPU Car: Coasting (Manual friction)
-                if self.ghost_found and self.show_ghost:
-                    if self.cpu_car.speed > 0:
-                        self.cpu_car.speed -= constants.FRICTION * 1.5
-                        if self.cpu_car.speed < 0: self.cpu_car.speed = 0
-                    elif self.cpu_car.speed < 0:
-                        self.cpu_car.speed += constants.FRICTION * 1.5
-                        if self.cpu_car.speed > 0: self.cpu_car.speed = 0
-
-                    self.cpu_car.move_angle = self.cpu_car.car_angle
-                    self.cpu_car.update_position()
+                # Coast Opponent (Only if it's CPU, Ghost just stops or finishes replay)
+                if self.ghost_found and self.show_ghost and isinstance(self.opponent, CpuCar):
+                    if self.opponent.speed > 0:
+                        self.opponent.speed -= constants.FRICTION * 1.5
+                        if self.opponent.speed < 0: self.opponent.speed = 0
+                    elif self.opponent.speed < 0:
+                        self.opponent.speed += constants.FRICTION * 1.5
+                        if self.opponent.speed > 0: self.opponent.speed = 0
+                    self.opponent.move_angle = self.opponent.car_angle
+                    self.opponent.update_position()
 
                 if not self.compared_to_best and self.race_result == "win":
                     self._compare_to_best()
@@ -309,7 +333,7 @@ class Race:
         self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
 
         if self.ghost_found and self.show_ghost:
-            self.cpu_car.draw(self.camera_x, self.camera_y)
+            self.opponent.draw(self.camera_x, self.camera_y)
 
         self.user_car.draw(self.camera_x, self.camera_y)
 
@@ -398,7 +422,8 @@ class Race:
     def _initialize_race(self) -> None:
         self._get_personal_best_time()
         self._create_replay_file()
-        self.ghost_found = self.master_ghost_path.exists()
+        self.ghost_found = (self.opponent and (
+                    getattr(self.opponent, 'path_points', False) or getattr(self.opponent, 'recording_data', False)))
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
         self.initialize_transition(start_transition=False, backwards=False)
@@ -421,10 +446,25 @@ class Race:
             pass
 
     def _check_unlocks(self):
-        if self.difficulty == "medium" and self.race_result == "win":
-            next_track = self.save_manager.get_next_track_name(self.track_name)
-            if next_track:
-                self.save_manager.unlock_track(next_track)
+        """Unlocks difficulties and tracks based on race result"""
+        if self.race_result == "win":
+
+            if self.difficulty == "easy":
+                # Winning Easy unlocks Medium
+                self.save_manager.unlock_difficulty(self.track_name, "medium")
+
+            elif self.difficulty == "medium":
+                # Winning Medium unlocks Hard...
+                self.save_manager.unlock_difficulty(self.track_name, "hard")
+
+                # ...AND unlocks the Next Track
+                next_track = self.save_manager.get_next_track_name(self.track_name)
+                if next_track:
+                    self.save_manager.unlock_track(next_track)
+
+            elif self.difficulty == "hard":
+                # Winning Hard marks the track as fully COMPLETE
+                self.save_manager.unlock_difficulty(self.track_name, "complete")
 
     def _play_next_track(self) -> None:
         if self.current_track_index < len(self.track.playlist):
@@ -480,9 +520,12 @@ class Race:
 
     def _check_cpu_progress(self) -> None:
         if not self.ghost_found: return
-        if self.track.check_checkpoint(self.cpu_car.x, self.cpu_car.y):
+
+        # Check opponent position (x, y) - works for both CpuCar and GhostCar
+        if self.track.check_checkpoint(self.opponent.x, self.opponent.y):
             self.cpu_has_checkpoint = True
-        if self.cpu_has_checkpoint and self.track.check_finish_line(self.cpu_car.x, self.cpu_car.y):
+
+        if self.cpu_has_checkpoint and self.track.check_finish_line(self.opponent.x, self.opponent.y):
             self.cpu_has_checkpoint = False
             self.cpu_current_lap += 1
             if self.cpu_current_lap > constants.NUM_LAPS[self.track.name]:
@@ -653,7 +696,7 @@ class Race:
         self.game.game_surface.blit(box_surf, box_rect)
 
         # Draw Win/Lose Text
-        result_text = "YOU WIN!" if is_win else "YOU LOSE..."
+        result_text = "YOU WIN!" if is_win else "YOU LOSE"
         scaled_font_size = int(100 * current_scale)
         scaled_font = pygame.font.Font(constants.TEXT_FONT_PATH, scaled_font_size)
         text_surf = scaled_font.render(result_text, True, (255, 255, 255))

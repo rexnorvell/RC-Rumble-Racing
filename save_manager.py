@@ -1,229 +1,205 @@
 import json
 import os
-from typing import List, Dict
 import pygame
-
 import constants
 
 
 class SaveManager:
-    """Handles saving and loading of game progress and settings for a specific save slot"""
+    def __init__(self, slot_index: int = 0):
+        self.slot_index = slot_index
+        # Convert 0-based index (0, 1, 2) to 1-based file slot (1, 2, 3)
+        try:
+            self.slot_num = int(slot_index) + 1
+        except:
+            self.slot_num = 1
 
-    def __init__(self, game=None):
-        self.game = game
-        self.current_slot: int = -1  # No slot selected by default
-        self.file_path: str = ""  # Path to the current save_data_{slot}.json
-
-        # Default values
-        self.unlocked_tracks: List[str] = [constants.TRACK_NAMES[0]]  # Default first track unlocked
-        self.num_unlocked: int = 1
-        self.key_bindings: Dict[str, int] = constants.DEFAULT_KEY_BINDINGS.copy()
-        self.volume_settings: Dict[str, float] = {
-            "music": constants.DEFAULT_MUSIC_VOLUME,
-            "sfx": constants.DEFAULT_SFX_VOLUME
-        }
-
-        # Do NOT load data on init. Wait for a slot to be selected.
+        self.current_slot = self.slot_num
+        self.file_path = constants.SAVE_FILE_TEMPLATE.format(slot=self.slot_num)
+        self.data = self._load_data()
 
     def set_save_slot(self, slot_index: int):
-        """Sets the current save slot and loads its data."""
-        if not (0 <= slot_index < constants.NUM_SAVE_SLOTS):
-            return  # Invalid slot
-
-        self.current_slot = slot_index
-        self.file_path = constants.SAVE_FILE_TEMPLATE.format(slot=slot_index + 1)
-        self.load_data()  # Load data from the new path
-
-    def load_data(self):
-        """Loads save data from the JSON file specified by self.file_path."""
-
-        # Reset to defaults first
-        self.unlocked_tracks: List[str] = [constants.TRACK_NAMES[0]]
-        self.num_unlocked: int = 1
-        self.key_bindings: Dict[str, int] = constants.DEFAULT_KEY_BINDINGS.copy()
-        self.volume_settings: Dict[str, float] = {
-            "music": constants.DEFAULT_MUSIC_VOLUME,
-            "sfx": constants.DEFAULT_SFX_VOLUME
-        }
-
-        # If no file path is set or file doesn't exist, just apply defaults
-        if not self.file_path or not os.path.exists(self.file_path):
-            self.apply_all_settings()
-            return
-
+        """Switches the active save slot and reloads data."""
         try:
-            with open(self.file_path, 'r') as f:
-                data = json.load(f)
-                self.unlocked_tracks = data.get("unlocked_tracks", [constants.TRACK_NAMES[0]])
-            self.num_unlocked = len(self.unlocked_tracks)
-            self.key_bindings = data.get("key_bindings", constants.DEFAULT_KEY_BINDINGS.copy())
-            # Ensure all keys are present
-            for key, value in constants.DEFAULT_KEY_BINDINGS.items():
-                if key not in self.key_bindings:
-                    self.key_bindings[key] = value
+            self.slot_num = int(slot_index) + 1  # FIX: Add 1
+        except:
+            self.slot_num = 1
 
-            self.volume_settings = data.get("volume_settings", {
-                "music": constants.DEFAULT_MUSIC_VOLUME,
-                "sfx": constants.DEFAULT_SFX_VOLUME
-            })
-
-        except (json.JSONDecodeError, IOError) as e:
-            print(f"Error loading save data from {self.file_path}: {e}")
-            # Still apply defaults on error
-            self.key_bindings = constants.DEFAULT_KEY_BINDINGS.copy()
-            self.volume_settings = {
-                "music": constants.DEFAULT_MUSIC_VOLUME,
-                "sfx": constants.DEFAULT_SFX_VOLUME
-            }
-
+        self.current_slot = self.slot_num
+        self.file_path = constants.SAVE_FILE_TEMPLATE.format(slot=self.slot_num)
+        self.data = self._load_data()
         self.apply_all_settings()
 
-    def save_data(self):
-        """Saves current progress and settings to the JSON file."""
-        # Do not save if no save slot is selected
-        if not self.file_path:
+    def delete_save_data(self, slot_index: int):
+        """Deletes the save file for the specified slot index."""
+        try:
+            target_file_num = int(slot_index) + 1  # FIX: Add 1
+        except:
             return
 
-        data = {
-            "unlocked_tracks": self.unlocked_tracks,
-            "key_bindings": self.key_bindings,
-            "volume_settings": self.volume_settings
+        filename = constants.SAVE_FILE_TEMPLATE.format(slot=target_file_num)
+
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+                # If we deleted the active slot, reset memory to defaults (but don't save)
+                if self.slot_num == target_file_num:
+                    self.data = self._create_default_dict()
+            except OSError as e:
+                print(f"[SaveManager] Error deleting file: {e}")
+
+    def _load_data(self):
+        if not os.path.exists(self.file_path):
+            return self._create_default_dict()
+        try:
+            with open(self.file_path, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError):
+            return self._create_default_dict()
+
+    def _create_default_dict(self):
+        return {
+            "unlocked_tracks": [constants.TRACK_NAMES[0]],
+            "unlocked_difficulties": {
+                constants.TRACK_NAMES[0]: ["easy"],
+                constants.TRACK_NAMES[1]: ["easy"],
+                constants.TRACK_NAMES[2]: ["easy"],
+                constants.TRACK_NAMES[3]: ["easy"]
+            },
+            "key_bindings": constants.DEFAULT_KEY_BINDINGS.copy(),
+            "volume_settings": {"music": constants.DEFAULT_MUSIC_VOLUME, "sfx": constants.DEFAULT_SFX_VOLUME}
         }
+
+    def save_data(self):
         try:
             with open(self.file_path, 'w') as f:
-                json.dump(data, f, indent=4)
-        except IOError as e:
-            print(f"Error saving data to {self.file_path}: {e}")
+                json.dump(self.data, f, indent=4)
+        except Exception as e:
+            print(f"[SaveManager] FAIL: Could not save data! Error: {e}")
 
-    def delete_save_data(self, slot_index: int):
-        """Deletes the save file for the given slot."""
-        if not (0 <= slot_index < constants.NUM_SAVE_SLOTS):
-            return
+    # --- TRACKS ---
+    @property
+    def num_unlocked(self):
+        return len(self.get_unlocked_tracks())
 
-        file_to_delete = constants.SAVE_FILE_TEMPLATE.format(slot=slot_index + 1)
-        try:
-            if os.path.exists(file_to_delete):
-                os.remove(file_to_delete)
-        except OSError as e:
-            print(f"Error deleting save file {file_to_delete}: {e}")
-
-        # If we deleted our own active file, reset the manager
-        if self.current_slot == slot_index:
-            self.current_slot = -1
-            self.file_path = ""
-            self.load_data()  # This will reset to defaults
-
-    def get_save_summary(self, slot_index: int) -> dict | None:
-        """Checks if a save file exists and returns a brief summary. Returns None if empty."""
-        if not (0 <= slot_index < constants.NUM_SAVE_SLOTS):
-            return None
-
-        file_to_check = constants.SAVE_FILE_TEMPLATE.format(slot=slot_index + 1)
-        if not os.path.exists(file_to_check):
-            return None
-
-        try:
-            with open(file_to_check, 'r') as f:
-                data = json.load(f)
-            # Provide some summary data
-            unlocked = data.get("unlocked_tracks", [constants.TRACK_NAMES[0]])
-            return {
-                "unlocked_tracks_count": len(unlocked)
-            }
-        except (json.JSONDecodeError, IOError):
-            return None  # File is corrupted or unreadable
-
-    def unlock_track(self, track_name: str):
-        """Unlocks a specific track if it's not already unlocked"""
-        if track_name in constants.TRACK_NAMES and track_name not in self.unlocked_tracks:
-            self.unlocked_tracks.append(track_name)
-            self.num_unlocked = len(self.unlocked_tracks)
-            self.save_data()
+    def get_unlocked_tracks(self):
+        return self.data.get("unlocked_tracks", [])
 
     def is_track_unlocked(self, track_name: str) -> bool:
-        """Checks if a track is currently unlocked"""
-        return track_name in self.unlocked_tracks
+        return track_name in self.get_unlocked_tracks()
 
-    def get_next_track_name(self, current_track_name: str) -> str | None:
-        """Returns the name of the next track in the list, or None if last"""
+    def unlock_track(self, track_name):
+        if track_name not in self.data["unlocked_tracks"]:
+            self.data["unlocked_tracks"].append(track_name)
+            if "unlocked_difficulties" not in self.data:
+                self.data["unlocked_difficulties"] = {}
+            if track_name not in self.data["unlocked_difficulties"]:
+                self.data["unlocked_difficulties"][track_name] = ["easy"]
+            self.save_data()
+
+    def get_next_track_name(self, current_track_name):
         try:
-            idx = constants.TRACK_NAMES.index(current_track_name)
-            if idx + 1 < len(constants.TRACK_NAMES):
-                return constants.TRACK_NAMES[idx + 1]
+            current_index = constants.TRACK_NAMES.index(current_track_name)
+            if current_index + 1 < len(constants.TRACK_NAMES):
+                return constants.TRACK_NAMES[current_index + 1]
         except ValueError:
             pass
         return None
 
-    def get_key_bindings(self) -> Dict[str, int]:
-        """Returns the current key bindings."""
-        return self.key_bindings
+    # --- DIFFICULTIES ---
+    def is_difficulty_unlocked(self, track_name, difficulty):
+        if difficulty == "easy":
+            return True
+        if difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
+            return True
+        unlocked = self.data.get("unlocked_difficulties", {}).get(track_name, ["easy"])
+        return difficulty in unlocked
 
-    def get_volumes(self) -> Dict[str, float]:
-        """Returns the current volume settings."""
-        return self.volume_settings
+    def unlock_difficulty(self, track_name, difficulty):
+        if "unlocked_difficulties" not in self.data:
+            self.data["unlocked_difficulties"] = {}
 
-    def update_key_bindings(self, new_bindings: Dict[str, int]):
-        """Updates key bindings. Does not save until save_data() is called."""
-        self.key_bindings = new_bindings.copy()
+        if track_name not in self.data["unlocked_difficulties"]:
+            self.data["unlocked_difficulties"][track_name] = ["easy"]
 
-    def update_volumes(self, new_volumes: Dict[str, float]):
-        """Updates volumes. Does not save until save_data() is called."""
-        self.volume_settings = new_volumes.copy()
-        self.apply_all_settings()  # Apply volumes immediately
+        if difficulty not in self.data["unlocked_difficulties"][track_name]:
+            self.data["unlocked_difficulties"][track_name].append(difficulty)
+            self.save_data()
+        else:
+            # Force save even if already unlocked, just to be safe with file creation
+            self.save_data()
+
+    # --- SETTINGS ---
+    def get_key_bindings(self):
+        return self.data.get("key_bindings", constants.DEFAULT_KEY_BINDINGS)
+
+    def set_key_binding(self, action, key):
+        self.data["key_bindings"][action] = key
+        self.save_data()
+
+    def update_key_bindings(self, new_bindings):
+        self.data["key_bindings"] = new_bindings
+
+    def get_volumes(self):
+        return self.data.get("volume_settings", {"music": 0.5, "sfx": 0.5})
+
+    def update_volumes(self, new_volumes):
+        self.data["volume_settings"] = new_volumes
+
+    def set_volume(self, type_name, volume):
+        self.data["volume_settings"][type_name] = volume
+        self.save_data()
+
+    # --- SAVE MANAGEMENT UI HELPERS ---
+    def get_save_summary(self, slot_index: int) -> dict:
+        # Convert 0-based index to 1-based file slot
+        file_slot = slot_index + 1
+        filename = constants.SAVE_FILE_TEMPLATE.format(slot=file_slot)
+
+        total_tracks = len(constants.TRACK_NAMES)
+
+        if not os.path.exists(filename):
+            return {
+                "text": "EMPTY",
+                "empty": True,
+                "unlocked_tracks_count": 0,
+                "completed_tracks_count": 0,
+                "total_tracks_count": total_tracks
+            }
+
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+
+            unlocked_count = len(data.get("unlocked_tracks", []))
+
+            # Count Completed Tracks
+            completed_count = 0
+            diff_map = data.get("unlocked_difficulties", {})
+            for track in constants.TRACK_NAMES:
+                unlocked_diffs = diff_map.get(track, [])
+                if "complete" in unlocked_diffs:
+                    completed_count += 1
+
+            return {
+                "text": "DATA FOUND",
+                "empty": False,
+                "unlocked_tracks_count": unlocked_count,
+                "completed_tracks_count": completed_count,
+                "total_tracks_count": total_tracks
+            }
+
+        except:
+            return {
+                "text": "CORRUPT",
+                "empty": True,
+                "unlocked_tracks_count": 0,
+                "completed_tracks_count": 0,
+                "total_tracks_count": total_tracks
+            }
 
     def apply_all_settings(self):
-        """Applies all current settings to the game."""
         self.apply_volume_settings()
-        # Key bindings are read live, so no "apply" needed
 
     def apply_volume_settings(self):
-        """Applies current volume settings to all game sounds."""
-        music_vol = self.volume_settings.get("music", constants.DEFAULT_MUSIC_VOLUME)
-        sfx_vol = self.volume_settings.get("sfx", constants.DEFAULT_SFX_VOLUME)
-
-        pygame.mixer.music.set_volume(music_vol)
-
-        # Sounds on the game object if it exists
-        if self.game:
-            if hasattr(self.game, 'click_sound'):
-                self.game.click_sound.set_volume(sfx_vol)
-            if hasattr(self.game, 'hover_sound'):
-                self.game.hover_sound.set_volume(sfx_vol)
-
-            # Sounds on sub-screens if they exist
-            if hasattr(self.game, 'title_screen') and self.game.title_screen:
-                if hasattr(self.game.title_screen, 'hover_sound'):
-                    self.game.title_screen.hover_sound.set_volume(sfx_vol)
-
-            # ADDED: Save Selection Screen
-            if hasattr(self.game, 'save_selection') and self.game.save_selection:
-                if hasattr(self.game.save_selection, 'hover_sound'):
-                    self.game.save_selection.hover_sound.set_volume(sfx_vol)
-
-            if hasattr(self.game, 'track_selection') and self.game.track_selection:
-                if hasattr(self.game.track_selection, 'hover_sound'):
-                    self.game.track_selection.hover_sound.set_volume(sfx_vol)
-
-            if hasattr(self.game, 'car_selection') and self.game.car_selection:
-                if hasattr(self.game.car_selection, 'hover_sound_nav'):
-                    self.game.car_selection.hover_sound_nav.set_volume(sfx_vol)
-                if hasattr(self.game.car_selection, 'hover_sound_arrow'):
-                    self.game.car_selection.hover_sound_arrow.set_volume(sfx_vol)
-                if hasattr(self.game.car_selection, 'select_sound_color'):
-                    self.game.car_selection.select_sound_color.set_volume(sfx_vol)
-
-            if hasattr(self.game, 'difficulty_selection') and self.game.difficulty_selection:
-                if hasattr(self.game.difficulty_selection, 'hover_sound'):
-                    self.game.difficulty_selection.hover_sound.set_volume(sfx_vol)
-
-            if hasattr(self.game, 'race') and self.game.race:
-                if hasattr(self.game.race, 'next_lap_sound'):
-                    self.game.race.next_lap_sound.set_volume(sfx_vol)
-                if hasattr(self.game.race, 'respawn_sound'):
-                    self.game.race.respawn_sound.set_volume(sfx_vol)
-                if hasattr(self.game.race, 'engine_idle_sound'):
-                    self.game.race.engine_idle_sound.set_volume(sfx_vol)
-                if hasattr(self.game.race, 'engine_off_sound'):
-                    self.game.race.engine_off_sound.set_volume(sfx_vol)
-                if hasattr(self.game.race, 'engine_rev_sound'):
-                    self.game.race.engine_rev_sound.set_volume(sfx_vol)
+        volumes = self.get_volumes()
+        pygame.mixer.music.set_volume(volumes.get("music", constants.DEFAULT_MUSIC_VOLUME))
