@@ -172,8 +172,21 @@ CAR_DEFINITIONS = [
             {"name": "f1_car_white", "color": (255, 255, 255)}
         ],
     },
-    { "name": "Ferrari", "stats": { "Speed": 10, "Acceleration": 9, "Handling": 5 }, "styles": [{"name": "ferrari_car_red", "color": (218, 0, 0)}] },
-    { "name": "Audi", "stats": { "Speed": 8, "Acceleration": 8, "Handling": 8 }, "styles": [{"name": "audi_car_red", "color": (196, 0, 0)}, {"name": "audi_car_sport", "color": (180, 180, 180)}] },
+    {
+        "name": "Ferrari",
+        "stats": { "Speed": 10, "Acceleration": 9, "Handling": 5 },
+        "styles": [
+            {"name": "ferrari_car_red", "color": (218, 0, 0)}
+        ],
+      },
+    {
+        "name": "Audi",
+        "stats": { "Speed": 8, "Acceleration": 8, "Handling": 8 },
+        "styles": [
+            {"name": "audi_car_red", "color": (196, 0, 0)},
+            {"name": "audi_car_sport", "color": (180, 180, 180)}
+        ]
+    },
     { "name": "BMW", "stats": { "Speed": 7, "Acceleration": 9, "Handling": 8 }, "styles": [{"name": "bmw_car_red", "color": (204, 0, 0)}] },
     { "name": "Chevrolet", "stats": { "Speed": 10, "Acceleration": 10, "Handling": 4 }, "styles": [{"name": "chevrolet_car_blue", "color": (0, 102, 204)}] },
     { "name": "DeLorean", "stats": { "Speed": 7, "Acceleration": 10, "Handling": 6 }, "styles": [{"name": "delorean_car_grey", "color": (132, 132, 132)}] }
