@@ -1,0 +1,28 @@
+{
+    "unlocked_tracks": [
+        "magnificent_meadow",
+        "dusty_dunes",
+        "glistening_glacier",
+        "fiery_furnace"
+    ],
+    "key_bindings": {
+        "FORWARD": 119,
+        "BACKWARD": 115,
+        "LEFT": 97,
+        "RIGHT": 100,
+        "DRIFT": 32,
+        "TOGGLE_GHOST": 103
+    },
+    "volume_settings": {
+        "music": 0.5,
+        "sfx": 0.2
+    },
+    "unlocked_difficulties": {
+        "magnificent_meadow": [
+            "easy",
+            "medium",
+            "hard",
+            "complete"
+        ]
+    }
+}
