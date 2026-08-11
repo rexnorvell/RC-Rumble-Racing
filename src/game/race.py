@@ -442,7 +442,9 @@ class Race:
                 print("Error loading personal best metadata")
 
     def _create_replay_file(self) -> None:
-        with open(constants.REPLAY_FILE_PATH.format(track_name=self.track.name), "w", newline=""):
+        replay_path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
+        replay_path.parent.mkdir(parents=True, exist_ok=True)
+        with replay_path.open("w", newline=""):
             pass
 
     def _check_unlocks(self):

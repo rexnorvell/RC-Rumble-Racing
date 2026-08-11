@@ -23,6 +23,18 @@
             "medium",
             "hard",
             "complete"
+        ],
+        "dusty_dunes": [
+            "easy",
+            "medium"
+        ],
+        "glistening_glacier": [
+            "easy",
+            "medium"
+        ],
+        "fiery_furnace": [
+            "easy",
+            "medium"
         ]
     }
 }
