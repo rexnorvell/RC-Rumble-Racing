@@ -116,7 +116,7 @@ class TrackSelection:
         self.transitioning_from_next: bool = False
         self.transition_start_time_ms: int = 0
         self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 0  # <-- CHANGED FROM 400
+        self.transition_prev_pause_time: int = 0
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 400
 

@@ -13,6 +13,7 @@ from ..menus.track_selection import TrackSelection
 from ..utilities import utilities
 from .race import Race
 from ..enums.difficulty import Difficulty
+from ..enums.track_name import TrackName
 
 
 class Game:
@@ -43,7 +44,7 @@ class Game:
     offset_x: int
     offset_y: int
     race: Race
-    track_name: str
+    track_name: TrackName | None
     car_index: int
     style_index: int
     difficulty: Difficulty | None
@@ -113,7 +114,7 @@ class Game:
         self.offset_y = 0
 
         # Race
-        self.track_name = ""
+        self.track_name = None
         self.car_index = 0
         self.style_index = 0
         self.difficulty = None
@@ -147,7 +148,7 @@ class Game:
             constants.SOUND_MENU_NAME: self.sound_menu
         }
 
-    def set_track_name(self, track_name: str) -> None:
+    def set_track_name(self, track_name: TrackName) -> None:
         self.track_name = track_name
 
     def set_difficulty(self, difficulty: Difficulty) -> None:

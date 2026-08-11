@@ -13,11 +13,12 @@ from ..utilities.save_manager import SaveManager
 from .track import Track
 from ..utilities import utilities
 from ..enums.difficulty import Difficulty
+from ..enums.track_name import TrackName
 
 
 class Race:
 
-    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: Difficulty,
+    def __init__(self, game, track_name: TrackName, car_index: int, style_index: int, difficulty: Difficulty,
                  save_manager: SaveManager) -> None:
 
         # General
@@ -30,7 +31,7 @@ class Race:
         self.sfx_volume = self.save_manager.get_volumes()["sfx"]
 
         # Track
-        self.track_name: str = track_name
+        self.track_name: TrackName = track_name
         self.track: Track = Track(self.track_name)
 
         # Race Result State
@@ -165,14 +166,14 @@ class Race:
                     pass
 
             pb_config = constants.CAR_DEFINITIONS[pb_car_idx]
-            pb_path = Path(constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name))
+            pb_path = Path(constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name.value))
 
             self.opponent = GhostCar(self.game.game_surface, self.track.name, pb_path, pb_config, pb_style_idx)
             self.ghost_found = pb_path.exists()
 
         else:
             # -- CPU MODE (AI) --
-            cpu_path = Path(constants.CPU_GHOST_FILE_PATH.format(track_name=self.track.name))
+            cpu_path = Path(constants.CPU_GHOST_FILE_PATH.format(track_name=self.track.name.value))
             self.opponent = CpuCar(self.game.game_surface, self.track.name, self.difficulty, cpu_path)
             self.ghost_found = cpu_path.exists()
 
@@ -648,7 +649,7 @@ class Race:
         Animates the Race Over Screen with Dynamic Elements.
         Phase 1: Win/Lose Box Pops In
         Phase 2: Box Moves Up
-        Phase 3: Buttons Drop Down + Time Appears in Middle
+        Phase 3: Buttons Drop Down + Time Appfrs in Middle
         """
         current_time = pygame.time.get_ticks()
         time_elapsed = current_time - self.race_end_time_ms

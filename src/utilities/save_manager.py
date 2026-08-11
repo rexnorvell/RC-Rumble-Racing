@@ -4,6 +4,7 @@ import pygame
 
 from . import constants
 from ..enums.difficulty import Difficulty
+from ..enums.track_name import TrackName
 
 
 class SaveManager:
@@ -60,12 +61,12 @@ class SaveManager:
 
     def _create_default_dict(self):
         return {
-            "unlocked_tracks": [constants.TRACK_NAMES[0]],
+            "unlocked_tracks": [constants.TRACK_NAMES[0].value],
             "unlocked_difficulties": {
-                constants.TRACK_NAMES[0]: ["easy"],
-                constants.TRACK_NAMES[1]: ["easy"],
-                constants.TRACK_NAMES[2]: ["easy"],
-                constants.TRACK_NAMES[3]: ["easy"]
+                constants.TRACK_NAMES[0].value: [Difficulty.EASY.value],
+                constants.TRACK_NAMES[1].value: [Difficulty.EASY.value],
+                constants.TRACK_NAMES[2].value: [Difficulty.EASY.value],
+                constants.TRACK_NAMES[3].value: [Difficulty.EASY.value]
             },
             "key_bindings": constants.DEFAULT_KEY_BINDINGS.copy(),
             "volume_settings": {"music": constants.DEFAULT_MUSIC_VOLUME, "sfx": constants.DEFAULT_SFX_VOLUME}
@@ -86,19 +87,19 @@ class SaveManager:
     def get_unlocked_tracks(self):
         return self.data.get("unlocked_tracks", [])
 
-    def is_track_unlocked(self, track_name: str) -> bool:
-        return track_name in self.get_unlocked_tracks()
+    def is_track_unlocked(self, track_name: TrackName) -> bool:
+        return track_name.value in self.get_unlocked_tracks()
 
-    def unlock_track(self, track_name):
-        if track_name not in self.data["unlocked_tracks"]:
-            self.data["unlocked_tracks"].append(track_name)
+    def unlock_track(self, track_name: TrackName):
+        if track_name.value not in self.data["unlocked_tracks"]:
+            self.data["unlocked_tracks"].append(track_name.value)
             if "unlocked_difficulties" not in self.data:
                 self.data["unlocked_difficulties"] = {}
-            if track_name not in self.data["unlocked_difficulties"]:
-                self.data["unlocked_difficulties"][track_name] = ["easy"]
+            if track_name.value not in self.data["unlocked_difficulties"]:
+                self.data["unlocked_difficulties"][track_name.value] = [Difficulty.EASY.value]
             self.save_data()
 
-    def get_next_track_name(self, current_track_name):
+    def get_next_track_name(self, current_track_name: TrackName) -> TrackName | None:
         try:
             current_index = constants.TRACK_NAMES.index(current_track_name)
             if current_index + 1 < len(constants.TRACK_NAMES):
@@ -108,21 +109,21 @@ class SaveManager:
         return None
 
     # --- DIFFICULTIES ---
-    def is_difficulty_unlocked(self, track_name, difficulty: Difficulty):
+    def is_difficulty_unlocked(self, track_name: TrackName, difficulty: Difficulty):
         if difficulty == Difficulty.EASY or difficulty == Difficulty.PB:
             return True
-        unlocked = self.data.get("unlocked_difficulties", {}).get(track_name, [Difficulty.EASY.value])
+        unlocked = self.data.get("unlocked_difficulties", {}).get(track_name.value, [Difficulty.EASY.value])
         return difficulty.value in unlocked
 
-    def unlock_difficulty(self, track_name, difficulty: Difficulty):
+    def unlock_difficulty(self, track_name: TrackName, difficulty: Difficulty):
         if "unlocked_difficulties" not in self.data:
             self.data["unlocked_difficulties"] = {}
 
-        if track_name not in self.data["unlocked_difficulties"]:
-            self.data["unlocked_difficulties"][track_name] = [Difficulty.EASY.value]
+        if track_name.value not in self.data["unlocked_difficulties"]:
+            self.data["unlocked_difficulties"][track_name.value] = [Difficulty.EASY.value]
 
-        if difficulty.value not in self.data["unlocked_difficulties"][track_name]:
-            self.data["unlocked_difficulties"][track_name].append(difficulty.value)
+        if difficulty.value not in self.data["unlocked_difficulties"][track_name.value]:
+            self.data["unlocked_difficulties"][track_name.value].append(difficulty.value)
         
         self.save_data()
 
@@ -173,8 +174,8 @@ class SaveManager:
             # Count Completed Tracks
             completed_count = 0
             diff_map = data.get("unlocked_difficulties", {})
-            for track in constants.TRACK_NAMES:
-                unlocked_diffs = diff_map.get(track, [])
+            for track_name in constants.TRACK_NAMES:
+                unlocked_diffs = diff_map.get(track_name.value, [])
                 if "complete" in unlocked_diffs:
                     completed_count += 1
 

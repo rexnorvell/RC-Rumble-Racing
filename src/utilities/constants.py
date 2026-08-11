@@ -1,5 +1,8 @@
 import pygame
 
+from ..enums.difficulty import Difficulty
+from ..enums.track_name import TrackName
+
 
 # Display
 TEXT_COLOR: tuple[int, int, int] = (185, 5, 5)
@@ -100,11 +103,12 @@ DIFFICULTY_BUTTON_WIDTH: int = 720
 DIFFICULTY_BUTTON_HEIGHT: int = 85
 DIFFICULTY_BUTTON_GAP: int = 20
 DIFFICULTY_BUTTON_START_Y: int = 250
+
 # Colors
-BUTTON_DISABLED_COLOR: tuple[int, int, int] = (100, 100, 100) # Grey for locked buttons
+BUTTON_DISABLED_COLOR: tuple[int, int, int] = (100, 100, 100)
 
 # Track parameters
-TRACK_NAMES: list[str] = ["magnificent_meadow", "dusty_dunes", "glistening_glacier", "fiery_furnace"]
+TRACK_NAMES: list[str] = [TrackName.MM, TrackName.DD, TrackName.GG, TrackName.FF]
 NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3, TRACK_NAMES[1]: 3, TRACK_NAMES[2]: 3, TRACK_NAMES[3]: 3}
 CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {
     TRACK_NAMES[0]: pygame.Rect(2256, 944, 200, 50),
@@ -223,9 +227,9 @@ GHOST_DIFFICULTY_PERSONAL_BEST: str = "personal_best"
 
 # CPU Difficulty Settings
 CPU_DIFFICULTY_SETTINGS: dict = {
-    "easy":   {"speed_multiplier": 1.50, "accel_multiplier": 1.75, "turn_multiplier": 1.50, "lookahead": 20},
-    "medium": {"speed_multiplier": 1.63, "accel_multiplier": 2.00, "turn_multiplier": 1.50, "lookahead": 40},
-    "hard":   {"speed_multiplier": 1.75, "accel_multiplier": 2.25, "turn_multiplier": 1.50, "lookahead": 60},
+    Difficulty.EASY.value:   {"speed_multiplier": 1.50, "accel_multiplier": 1.75, "turn_multiplier": 1.50, "lookahead": 20},
+    Difficulty.MEDIUM.value: {"speed_multiplier": 1.63, "accel_multiplier": 2.00, "turn_multiplier": 1.50, "lookahead": 40},
+    Difficulty.HARD.value:   {"speed_multiplier": 1.75, "accel_multiplier": 2.25, "turn_multiplier": 1.50, "lookahead": 60},
 }
 
 # Music and audio paths

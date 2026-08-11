@@ -1,7 +1,8 @@
 {
     "unlocked_tracks": [
         "magnificent_meadow",
-        "dusty_dunes"
+        "dusty_dunes",
+        "glistening_glacier"
     ],
     "key_bindings": {
         "FORWARD": 119,
@@ -22,6 +23,11 @@
             "hard"
         ],
         "dusty_dunes": [
+            "easy",
+            "medium",
+            "hard"
+        ],
+        "glistening_glacier": [
             "easy"
         ]
     }

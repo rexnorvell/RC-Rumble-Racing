@@ -3,23 +3,24 @@ import numpy.typing as npt
 import pygame
 
 from ..utilities import constants
+from ..enums.track_name import TrackName
 
 
 class Track:
     """Handles all track-related logic, images, and collision geometry"""
 
-    def __init__(self, name: str) -> None:
-        self.name = name
+    def __init__(self, name: TrackName) -> None:
+        self.name: TrackName = name
 
         self.finish_line: pygame.Rect = constants.FINISH_LINE_LOCATIONS[self.name]
         self.checkpoint_1: pygame.Rect = constants.CHECKPOINT_LOCATIONS[self.name]
 
-        self.track_image: pygame.Surface = pygame.image.load(constants.TRACK_IMAGE_PATH.format(track_name=self.name, image_type=constants.TRACK_IMAGE_TYPES[0])).convert()
+        self.track_image: pygame.Surface = pygame.image.load(constants.TRACK_IMAGE_PATH.format(track_name=self.name.value, image_type=constants.TRACK_IMAGE_TYPES[0])).convert()
         self.track_image = pygame.transform.scale(self.track_image,
                                                   (constants.WIDTH * constants.TRACK_IMAGE_SCALE_FACTOR[self.name][0],
                                                    constants.HEIGHT * constants.TRACK_IMAGE_SCALE_FACTOR[self.name][1]))
 
-        track_image_mask: pygame.Surface = pygame.image.load(constants.TRACK_IMAGE_PATH.format(track_name=self.name, image_type=constants.TRACK_IMAGE_TYPES[1])).convert()
+        track_image_mask: pygame.Surface = pygame.image.load(constants.TRACK_IMAGE_PATH.format(track_name=self.name.value, image_type=constants.TRACK_IMAGE_TYPES[1])).convert()
         track_image_mask = pygame.transform.scale(track_image_mask,
                                                   (constants.WIDTH * constants.TRACK_IMAGE_SCALE_FACTOR[self.name][0],
                                                   constants.HEIGHT * constants.TRACK_IMAGE_SCALE_FACTOR[self.name][1]))
@@ -37,9 +38,9 @@ class Track:
         playlist: list[tuple[str, int]] = [
             (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[0]), 0),
             (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[1]), 0),
-            (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[2]), -1),
+            (constants.TRACK_AUDIO_PATH.format(track_name=self.name.value, song_type=constants.TRACK_SONG_TYPES[2]), -1),
             (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[3]), 0),
-            (constants.TRACK_AUDIO_PATH.format(track_name=self.name, song_type=constants.TRACK_SONG_TYPES[4]), -1),
+            (constants.TRACK_AUDIO_PATH.format(track_name=self.name.value, song_type=constants.TRACK_SONG_TYPES[4]), -1),
             (constants.TRACK_AUDIO_PATH.format(track_name="general", song_type=constants.TRACK_SONG_TYPES[5]), 0)
         ]
         return playlist

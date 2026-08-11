@@ -74,8 +74,7 @@ class DifficultySelection:
     def _is_personal_best_available(self) -> bool:
         if not hasattr(self.game, "track_name"):
             return False
-        # Use game.track_name here instead of selected_track_name if that was the attribute
-        pb_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.game.track_name))
+        pb_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.game.track_name.value))
         return pb_path.exists()
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
