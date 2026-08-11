@@ -1,4 +1,10 @@
 from .game.game import Game
 
-game: Game = Game()
-game.start()
+
+def main() -> None:
+    game: Game = Game()
+    game.start()
+
+
+if __name__ == "__main__":
+    main()
