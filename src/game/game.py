@@ -8,42 +8,73 @@ from ..utilities.save_manager import SaveManager
 from ..menus.settings_menu import SettingsMenu
 from ..menus.sound_menu import SoundMenu
 from ..menus.title_screen import TitleScreen
+from ..menus.save_selection import SaveSelection
 from ..menus.track_selection import TrackSelection
 from ..utilities import utilities
 from .race import Race
+from ..enums.difficulty import Difficulty
 
 
 class Game:
     """Manages the overall game state, main loop, and coordination between Car and Track"""
 
+    width: int
+    height: int
+    screen: pygame.Surface
+    game_surface: pygame.Surface
+    ui_clock: pygame.time.Clock
+    save_manager: SaveManager
+    title_screen: TitleScreen
+    save_selection: SaveSelection
+    track_selection: TrackSelection
+    car_selection: CarSelection
+    difficulty_selection: DifficultySelection
+    settings_menu: SettingsMenu
+    controls_menu: ControlsMenu
+    sound_menu: SoundMenu
+    menu_screens: dict[str, object]
+    menu_screen_indices: dict[str, int]
+    custom_cursor_image: pygame.Surface
+    current_screen: str
+    next_screen: str
+    click_sound: pygame.mixer.Sound
+    hover_sound: pygame.mixer.Sound
+    scale_factor: float
+    offset_x: int
+    offset_y: int
+    race: Race
+    track_name: str
+    car_index: int
+    style_index: int
+    difficulty: Difficulty | None
+    garage_door: pygame.Surface
+    dark_overlay: pygame.Surface
+
     def __init__(self) -> None:
+
+        # Initialize Pygame
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
-
-        self.width = constants.WIDTH
-        self.height = constants.HEIGHT
-        self.screen: pygame.Surface = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-        self.game_surface: pygame.Surface = pygame.Surface((self.width, self.height))
-        self.clock: pygame.time.Clock = pygame.time.Clock()
         pygame.display.set_caption(constants.GAME_TITLE)
 
-        # Initialize with Index 0 (which SaveManager converts to File 1)
+        # Create the window
+        self.width = constants.WIDTH
+        self.height = constants.HEIGHT
+        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
+        self.game_surface = pygame.Surface((self.width, self.height))
+        self.ui_clock = pygame.time.Clock()
         self.save_manager = SaveManager(0)
 
-        # Import here to avoid circular imports
-        from src.menus.save_selection import SaveSelection
-
-        # Menu screens
-        self.title_screen: TitleScreen = TitleScreen(self, self.game_surface, self.save_manager)
-        self.save_selection: SaveSelection = SaveSelection(self, self.game_surface, self.save_manager)
-        self.track_selection: TrackSelection = TrackSelection(self, self.game_surface, self.save_manager)
-        self.car_selection: CarSelection = CarSelection(self, self.game_surface, self.save_manager)
-        self.difficulty_selection: DifficultySelection = DifficultySelection(self, self.game_surface, self.save_manager)
-        self.settings_menu: SettingsMenu = SettingsMenu(self, self.game_surface, self.save_manager)
-        self.controls_menu: ControlsMenu = ControlsMenu(self.game_surface, self.save_manager)
-        self.sound_menu: SoundMenu = SoundMenu(self.game_surface, self.save_manager)
-
+        # Create menu screens and initialize menu state variables
+        self.title_screen = TitleScreen(self, self.game_surface, self.save_manager)
+        self.save_selection = SaveSelection(self, self.game_surface, self.save_manager)
+        self.track_selection = TrackSelection(self, self.game_surface, self.save_manager)
+        self.car_selection = CarSelection(self, self.game_surface, self.save_manager)
+        self.difficulty_selection  = DifficultySelection(self, self.game_surface, self.save_manager)
+        self.settings_menu = SettingsMenu(self, self.game_surface, self.save_manager)
+        self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
+        self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
         self.menu_screens: dict[str, object] = {
             constants.TITLE_SCREEN_NAME: self.title_screen,
             constants.SAVE_SELECTION_NAME: self.save_selection,
@@ -54,8 +85,7 @@ class Game:
             constants.CONTROLS_MENU_NAME: self.controls_menu,
             constants.SOUND_MENU_NAME: self.sound_menu
         }
-
-        self.menu_screen_indices: dict[str, int] = {
+        self.menu_screen_indices = {
             constants.TITLE_SCREEN_NAME: 0,
             constants.SAVE_SELECTION_NAME: 1,
             constants.TRACK_SELECTION_NAME: 2,
@@ -66,43 +96,36 @@ class Game:
             constants.CONTROLS_MENU_NAME: -2,
             constants.SOUND_MENU_NAME: -3
         }
-        self.current_screen: str = ""
-        self.next_screen: str = ""
-        self.ui_clock: pygame.time.Clock = pygame.time.Clock()
+        self.current_screen = ""
+        self.next_screen = ""
 
-        self.custom_cursor_image: pygame.Surface = pygame.image.load(
-            constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
-        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image,
-                                                          (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
-        self.click_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
-        self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
+        self.custom_cursor_image = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
+        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
+        self.click_sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
+        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
 
         # Apply volumes immediately
         self.save_manager.apply_all_settings()
 
         # Letterbox scaling
-        self.scale_factor: float = 1.0
-        self.offset_x: int = 0
-        self.offset_y: int = 0
+        self.scale_factor = 1.0
+        self.offset_x = 0
+        self.offset_y = 0
 
         # Race
-        self.race: Race
-        self.track_name: str = ""
-        self.car_index: int = 0
-        self.style_index: int = 0
-        self.difficulty: str = ""
+        self.track_name = ""
+        self.car_index = 0
+        self.style_index = 0
+        self.difficulty = None
 
         # Transitions
-        self.garage_door: pygame.Surface = utilities.load_image(constants.GENERAL_IMAGE_PATH.format(name="garage"),
+        self.garage_door = utilities.load_image(constants.GENERAL_IMAGE_PATH.format(name="garage"),
                                                                 False, constants.WIDTH, constants.HEIGHT)
-        self.dark_overlay: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
+        self.dark_overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
 
     def set_save_slot_and_load(self, slot_index: int) -> None:
         """Sets the active save slot and re-initializes screens."""
         self.save_manager.set_save_slot(slot_index)
-
-        # Re-create screens that depend on save_manager data
-        from src.menus.save_selection import SaveSelection  # Re-import here just in case
 
         self.title_screen = TitleScreen(self, self.game_surface, self.save_manager)
         self.save_selection = SaveSelection(self, self.game_surface, self.save_manager)
@@ -127,7 +150,7 @@ class Game:
     def set_track_name(self, track_name: str) -> None:
         self.track_name = track_name
 
-    def set_difficulty(self, difficulty: str) -> None:
+    def set_difficulty(self, difficulty: Difficulty) -> None:
         self.difficulty = difficulty
 
     def set_car_style(self, car_index: int, style_index: int) -> None:
@@ -197,9 +220,7 @@ class Game:
                 self.click_sound.play()
                 self.next_screen = next_action
                 start_transition: bool = True
-                backwards: bool = False if self.menu_screen_indices.get(self.next_screen,
-                                                                        0) > self.menu_screen_indices.get(
-                    self.current_screen, 0) else True
+                backwards: bool = False if self.menu_screen_indices.get(self.next_screen, 0) > self.menu_screen_indices.get(self.current_screen, 0) else True
                 self.menu_screens[self.current_screen].initialize_transition(start_transition=start_transition,
                                                                              backwards=backwards)
 
@@ -221,10 +242,6 @@ class Game:
                     self._start_race()
                     # After race, reload screens to reflect unlocks
                     if self.save_manager.current_slot != -1:
-                        # Use current_slot - 1 because set_save_slot_and_load expects 0-based index
-                        # and adds 1 internally.
-                        # self.save_manager.current_slot is 1-based (e.g. 1).
-                        # So pass 0.
                         self.set_save_slot_and_load(self.save_manager.current_slot - 1)
 
                     self.current_screen = constants.TRACK_SELECTION_NAME

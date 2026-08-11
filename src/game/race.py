@@ -12,17 +12,18 @@ from ..utilities import constants
 from ..utilities.save_manager import SaveManager
 from .track import Track
 from ..utilities import utilities
+from ..enums.difficulty import Difficulty
 
 
 class Race:
 
-    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: str,
+    def __init__(self, game, track_name: str, car_index: int, style_index: int, difficulty: Difficulty,
                  save_manager: SaveManager) -> None:
 
         # General
         self.game = game
         self.save_manager: SaveManager = save_manager
-        self.difficulty = difficulty
+        self.difficulty: Difficulty = difficulty
 
         # Get settings
         self.key_bindings = self.save_manager.get_key_bindings()
@@ -451,22 +452,20 @@ class Race:
         """Unlocks difficulties and tracks based on race result"""
         if self.race_result == "win":
 
-            if self.difficulty == "easy":
-                # Winning Easy unlocks Medium
-                self.save_manager.unlock_difficulty(self.track_name, "medium")
+            if self.difficulty == Difficulty.EASY:
+                self.save_manager.unlock_difficulty(self.track_name, Difficulty.MEDIUM)
 
-            elif self.difficulty == "medium":
-                # Winning Medium unlocks Hard...
-                self.save_manager.unlock_difficulty(self.track_name, "hard")
+            elif self.difficulty == Difficulty.MEDIUM:
+                self.save_manager.unlock_difficulty(self.track_name, Difficulty.HARD)
 
                 # ...AND unlocks the Next Track
                 next_track = self.save_manager.get_next_track_name(self.track_name)
                 if next_track:
                     self.save_manager.unlock_track(next_track)
 
-            elif self.difficulty == "hard":
+            #elif self.difficulty == Difficulty.HARD:
                 # Winning Hard marks the track as fully COMPLETE
-                self.save_manager.unlock_difficulty(self.track_name, "complete")
+                #self.save_manager.unlock_difficulty(self.track_name, "complete")
 
     def _play_next_track(self) -> None:
         if self.current_track_index < len(self.track.playlist):

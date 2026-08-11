@@ -3,6 +3,7 @@ from pathlib import Path
 
 from ..utilities import constants
 from ..utilities import utilities
+from ..enums.difficulty import Difficulty
 
 
 class DifficultySelection:
@@ -22,10 +23,10 @@ class DifficultySelection:
         self.button_font = pygame.font.Font(constants.TEXT_FONT_PATH, 50)
 
         self.options = [
-            {"key": "easy", "label": "Easy Ghost"},
-            {"key": "medium", "label": "Medium Ghost"},
-            {"key": "hard", "label": "Hard Ghost"},
-            {"key": constants.GHOST_DIFFICULTY_PERSONAL_BEST, "label": "Personal Best"}
+            {"key": Difficulty.EASY, "label": "Easy Ghost"},
+            {"key": Difficulty.MEDIUM, "label": "Medium Ghost"},
+            {"key": Difficulty.HARD, "label": "Hard Ghost"},
+            {"key": Difficulty.PB, "label": "Personal Best"}
         ]
 
         self.buttons = []
@@ -137,7 +138,7 @@ class DifficultySelection:
             key = btn["key"]
             is_disabled = False
 
-            if key == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
+            if key == Difficulty.PB:
                 if not pb_available: is_disabled = True
             else:
                 if not self.save_manager.is_difficulty_unlocked(current_track, key):

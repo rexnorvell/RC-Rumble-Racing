@@ -3,6 +3,7 @@ import os
 import pygame
 
 from . import constants
+from ..enums.difficulty import Difficulty
 
 
 class SaveManager:
@@ -107,27 +108,23 @@ class SaveManager:
         return None
 
     # --- DIFFICULTIES ---
-    def is_difficulty_unlocked(self, track_name, difficulty):
-        if difficulty == "easy":
+    def is_difficulty_unlocked(self, track_name, difficulty: Difficulty):
+        if difficulty == Difficulty.EASY or difficulty == Difficulty.PB:
             return True
-        if difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
-            return True
-        unlocked = self.data.get("unlocked_difficulties", {}).get(track_name, ["easy"])
-        return difficulty in unlocked
+        unlocked = self.data.get("unlocked_difficulties", {}).get(track_name, [Difficulty.EASY.value])
+        return difficulty.value in unlocked
 
-    def unlock_difficulty(self, track_name, difficulty):
+    def unlock_difficulty(self, track_name, difficulty: Difficulty):
         if "unlocked_difficulties" not in self.data:
             self.data["unlocked_difficulties"] = {}
 
         if track_name not in self.data["unlocked_difficulties"]:
-            self.data["unlocked_difficulties"][track_name] = ["easy"]
+            self.data["unlocked_difficulties"][track_name] = [Difficulty.EASY.value]
 
-        if difficulty not in self.data["unlocked_difficulties"][track_name]:
-            self.data["unlocked_difficulties"][track_name].append(difficulty)
-            self.save_data()
-        else:
-            # Force save even if already unlocked, just to be safe with file creation
-            self.save_data()
+        if difficulty.value not in self.data["unlocked_difficulties"][track_name]:
+            self.data["unlocked_difficulties"][track_name].append(difficulty.value)
+        
+        self.save_data()
 
     # --- SETTINGS ---
     def get_key_bindings(self):
