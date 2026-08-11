@@ -4,8 +4,8 @@ import random
 import pygame
 from pathlib import Path
 
-import constants
-from car import Car
+from ..utilities import constants
+from .car import Car
 
 
 class CpuCar(Car):

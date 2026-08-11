@@ -1,11 +1,9 @@
 import pygame
 
-import constants
-import utilities
-from ui_elements import ConfirmationDialog
+from ..utilities import constants
+from ..utilities import utilities
+from ..utilities.ui_elements import ConfirmationDialog
 
-
-# Do NOT import 'game' here
 
 class SaveSelection:
     """Screen for selecting one of three save files."""

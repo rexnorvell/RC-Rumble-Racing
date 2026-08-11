@@ -1,7 +1,7 @@
 import pygame
 
-import constants
-from ui_elements import Slider, ConfirmationDialog
+from ..utilities import constants
+from ..utilities.ui_elements import Slider, ConfirmationDialog
 
 
 class SoundMenu:

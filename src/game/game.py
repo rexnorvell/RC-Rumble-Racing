@@ -1,17 +1,16 @@
 import pygame
 
-import constants
-from car_selection import CarSelection
-from controls_menu import ControlsMenu
-from difficulty_selection import DifficultySelection
-from save_manager import SaveManager
-# REMOVED: from save_selection import SaveSelection (Moved inside init)
-from settings_menu import SettingsMenu
-from sound_menu import SoundMenu
-from title_screen import TitleScreen
-from track_selection import TrackSelection
-import utilities
-from race import Race
+from ..utilities import constants
+from ..menus.car_selection import CarSelection
+from ..menus.controls_menu import ControlsMenu
+from ..menus.difficulty_selection import DifficultySelection
+from ..utilities.save_manager import SaveManager
+from ..menus.settings_menu import SettingsMenu
+from ..menus.sound_menu import SoundMenu
+from ..menus.title_screen import TitleScreen
+from ..menus.track_selection import TrackSelection
+from ..utilities import utilities
+from .race import Race
 
 
 class Game:
@@ -33,7 +32,7 @@ class Game:
         self.save_manager = SaveManager(0)
 
         # Import here to avoid circular imports
-        from save_selection import SaveSelection
+        from src.menus.save_selection import SaveSelection
 
         # Menu screens
         self.title_screen: TitleScreen = TitleScreen(self, self.game_surface, self.save_manager)
@@ -103,7 +102,7 @@ class Game:
         self.save_manager.set_save_slot(slot_index)
 
         # Re-create screens that depend on save_manager data
-        from save_selection import SaveSelection  # Re-import here just in case
+        from src.menus.save_selection import SaveSelection  # Re-import here just in case
 
         self.title_screen = TitleScreen(self, self.game_surface, self.save_manager)
         self.save_selection = SaveSelection(self, self.game_surface, self.save_manager)

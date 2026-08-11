@@ -1,7 +1,8 @@
 import json
 import os
 import pygame
-import constants
+
+from . import constants
 
 
 class SaveManager:

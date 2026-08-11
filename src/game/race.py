@@ -5,13 +5,13 @@ from typing import Optional
 
 import pygame
 
-from car import Car
-from cpu_car import CpuCar
-from ghost_car import GhostCar  # <--- IMPORT GHOST CAR
-import constants
-from save_manager import SaveManager
-from track import Track
-import utilities
+from .car import Car
+from .cpu_car import CpuCar
+from .ghost_car import GhostCar
+from ..utilities import constants
+from ..utilities.save_manager import SaveManager
+from .track import Track
+from ..utilities import utilities
 
 
 class Race:

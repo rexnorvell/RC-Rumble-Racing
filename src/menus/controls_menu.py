@@ -1,6 +1,7 @@
 import pygame
-import constants
-from ui_elements import ConfirmationDialog
+
+from ..utilities import constants
+from ..utilities.ui_elements import ConfirmationDialog
 
 
 class ControlsMenu:

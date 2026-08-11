@@ -1,8 +1,9 @@
 import csv
 import pygame
 from pathlib import Path
-from car import Car
-import constants
+
+from .car import Car
+from ..utilities import constants
 
 
 class GhostCar(Car):

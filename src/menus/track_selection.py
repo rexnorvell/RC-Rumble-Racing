@@ -1,7 +1,7 @@
 import pygame
 
-import constants
-import utilities
+from ..utilities import constants
+from ..utilities import utilities
 
 
 class TrackSelection:

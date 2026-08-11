@@ -2,7 +2,7 @@ import csv
 import math
 import pygame
 
-import constants
+from ..utilities import constants
 
 
 class Car:
