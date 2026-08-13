@@ -81,8 +81,9 @@ class DifficultySelection:
                     key = btn["key"]
                     is_disabled = False
 
-                    if key == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
-                        if not pb_available: is_disabled = True
+                    if key == Difficulty.PB:
+                        if not pb_available: 
+                            is_disabled = True
                     else:
                         if not self.save_manager.is_difficulty_unlocked(current_track, key):
                             is_disabled = True

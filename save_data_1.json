@@ -2,7 +2,8 @@
     "unlocked_tracks": [
         "magnificent_meadow",
         "dusty_dunes",
-        "glistening_glacier"
+        "glistening_glacier",
+        "fiery_furnace"
     ],
     "key_bindings": {
         "FORWARD": 119,
@@ -29,7 +30,11 @@
         ],
         "glistening_glacier": [
             "easy",
-            "medium"
+            "medium",
+            "hard"
+        ],
+        "fiery_furnace": [
+            "easy"
         ]
     }
 }

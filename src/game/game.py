@@ -245,8 +245,7 @@ class Game:
     def _start_race(self) -> None:
         racing: bool = True
         while racing:
-            self.race = Race(self, self.track_name, self.car_index, self.style_index, self.difficulty,
-                             self.save_manager)
+            self.race = Race(self, self.track_name, self.car_index, self.style_index, self.difficulty, self.save_manager)
             racing = self.race.start()
 
 """

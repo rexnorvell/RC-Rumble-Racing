@@ -144,15 +144,12 @@ class Race:
         # User Data
         self.personal_best_time: float = float("inf")
 
-        # --- OPPONENT SETUP ---
+        # Opponent setup
         self.opponent: Car = None
         self.ghost_found: bool = False
         self.show_ghost: bool = True
 
-        # 1. CPU vs GHOST Selection Logic
-        if self.difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
-            # -- GHOST MODE (Playback) --
-            # Read metadata to find which car/style was used
+        if self.difficulty == Difficulty.PB:
             meta_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
             pb_car_idx = 0
             pb_style_idx = 0
@@ -172,7 +169,6 @@ class Race:
             self.ghost_found = pb_path.exists()
 
         else:
-            # -- CPU MODE (AI) --
             cpu_path = Path(constants.CPU_GHOST_FILE_PATH.format(track_name=self.track.name.value))
             self.opponent = CpuCar(self.game.game_surface, self.track.name, self.difficulty, cpu_path)
             self.ghost_found = cpu_path.exists()
@@ -409,15 +405,13 @@ class Race:
     def _initialize_race(self) -> None:
         self._get_personal_best_time()
         self._create_replay_file()
-        self.ghost_found = (self.opponent and (
-                    getattr(self.opponent, 'path_points', False) or getattr(self.opponent, 'recording_data', False)))
+        self.ghost_found = (self.opponent and (getattr(self.opponent, 'path_points', False) or getattr(self.opponent, 'recording_data', False)))
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
         self._play_next_track()
 
     def _get_personal_best_time(self) -> None:
-        personal_best_metadata_path: Path = Path(
-            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
+        personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
         self.personal_best_time = float("inf")
         if personal_best_metadata_path.exists():
             try:

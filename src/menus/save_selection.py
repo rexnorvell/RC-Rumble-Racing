@@ -21,7 +21,6 @@ class SaveSelection:
             constants.GENERAL_IMAGE_PATH.format(name="background")).convert()
         self.background = pygame.transform.scale(self.background, (constants.WIDTH, constants.HEIGHT))
         self.overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
-        self.overlay.fill((0, 0, 0, 150))
 
         self.title_font = pygame.font.Font(constants.TEXT_FONT_PATH, 80)
         self.slot_font = pygame.font.Font(constants.TEXT_FONT_PATH, 50)
@@ -115,7 +114,7 @@ class SaveSelection:
     def _draw_content(self, x_offset: int = 0):
         self.screen.blit(self.overlay, (x_offset, 0))
 
-        title_surf = self.title_font.render("Select Save File", True, (255, 255, 255))
+        title_surf = self.title_font.render("Select Save File", True, constants.TEXT_COLOR)
         title_rect = title_surf.get_rect(center=(constants.WIDTH // 2 + x_offset, 90))
         self.screen.blit(title_surf, title_rect)
 
