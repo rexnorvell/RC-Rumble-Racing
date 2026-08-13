@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..utilities import constants
 from .car import Car
+from ..enums.difficulty import Difficulty
 
 
 class CpuCar(Car):
@@ -13,6 +14,12 @@ class CpuCar(Car):
     A car controlled by AI that follows a recorded path.
     It functions as a 'Smart Ghost' - physics-based but no collisions.
     """
+
+    CPU_DIFFICULTY_SETTINGS: dict = {
+        Difficulty.EASY.value:   {"speed_multiplier": 1.50, "accel_multiplier": 1.75, "turn_multiplier": 1.50, "lookahead": 20},
+        Difficulty.MEDIUM.value: {"speed_multiplier": 1.63, "accel_multiplier": 2.00, "turn_multiplier": 1.50, "lookahead": 40},
+        Difficulty.HARD.value:   {"speed_multiplier": 1.75, "accel_multiplier": 2.25, "turn_multiplier": 1.50, "lookahead": 60},
+    }
 
     def __init__(self, screen: pygame.Surface, track_name: str, difficulty: str, game_map_path: Path):
         car_config = random.choice(constants.CAR_DEFINITIONS)
@@ -27,7 +34,7 @@ class CpuCar(Car):
 
         self._load_path()
 
-        self.settings = constants.CPU_DIFFICULTY_SETTINGS.get(difficulty, constants.CPU_DIFFICULTY_SETTINGS["medium"])
+        self.settings = self.CPU_DIFFICULTY_SETTINGS.get(difficulty, self.CPU_DIFFICULTY_SETTINGS["medium"])
 
         self.base_max_speed = constants.BASE_MAX_SPEED * self.settings["speed_multiplier"]
         self.acceleration = constants.BASE_ACCELERATION * self.settings.get("accel_multiplier", 1.0)

@@ -1,10 +1,24 @@
 {
     "unlocked_tracks": [
         "magnificent_meadow",
-        "dusty_dunes",
-        "glistening_glacier",
-        "fiery_furnace"
+        "dusty_dunes"
     ],
+    "unlocked_difficulties": {
+        "magnificent_meadow": [
+            "easy",
+            "medium",
+            "hard"
+        ],
+        "dusty_dunes": [
+            "easy"
+        ],
+        "glistening_glacier": [
+            "easy"
+        ],
+        "fiery_furnace": [
+            "easy"
+        ]
+    },
     "key_bindings": {
         "FORWARD": 119,
         "BACKWARD": 115,
@@ -16,25 +30,5 @@
     "volume_settings": {
         "music": 0.5,
         "sfx": 0.2
-    },
-    "unlocked_difficulties": {
-        "magnificent_meadow": [
-            "easy",
-            "medium",
-            "hard"
-        ],
-        "dusty_dunes": [
-            "easy",
-            "medium",
-            "hard"
-        ],
-        "glistening_glacier": [
-            "easy",
-            "medium",
-            "hard"
-        ],
-        "fiery_furnace": [
-            "easy"
-        ]
     }
 }

@@ -11,6 +11,8 @@ from ..types.menu_results import MenuResults
 class DifficultySelection:
     """Handles the difficulty selection screen."""
 
+    BUTTON_DISABLED_COLOR: tuple[int, int, int] = (100, 100, 100)
+
     def __init__(self, game, screen: pygame.Surface, save_manager) -> None:
 
         self.name: str = "difficulty_selection"
@@ -131,7 +133,7 @@ class DifficultySelection:
                     is_disabled = True
 
             if is_disabled:
-                color = constants.BUTTON_DISABLED_COLOR
+                color = self.BUTTON_DISABLED_COLOR
             elif (i + 1) == self.last_hovered_index:
                 color = (255, 255, 0)
 

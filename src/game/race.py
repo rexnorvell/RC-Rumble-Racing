@@ -18,6 +18,44 @@ from ..enums.track_name import TrackName
 
 class Race:
 
+    NUM_LAPS: dict[str, int] = {
+        constants.TRACK_NAMES[0]: 3,
+        constants.TRACK_NAMES[1]: 3,
+        constants.TRACK_NAMES[2]: 3,
+        constants.TRACK_NAMES[3]: 3
+    }
+    CHECKPOINT_ANGLES: dict[str, int] = {
+        constants.TRACK_NAMES[0]: 180, 
+        constants.TRACK_NAMES[1]: 90, 
+        constants.TRACK_NAMES[2]: 180, 
+        constants.TRACK_NAMES[3]: 180
+    }
+
+    # Pause Menu
+    PAUSE_MENU_IMAGE_PATH: str = "assets/images/pause/{image_name}.png"
+    PAUSE_OVERLAY_OPACITY: int = 100
+    PAUSE_BUTTON_WIDTH: int = 720
+    PAUSE_BUTTON_HEIGHT: int = 85
+    PAUSE_RESUME_Y: int = 288
+    PAUSE_REPLAY_Y: int = 419
+    PAUSE_EXIT_Y: int = 548
+
+    # Race Over Menu
+    RACE_OVER_IMAGE_PATH: str = "assets/images/race_over/{image_name}.png"
+    RACE_OVER_BUTTON_WIDTH: int = 720
+    RACE_OVER_BUTTON_HEIGHT: int = 85
+    RACE_OVER_RETRY_Y: int = 419
+    RACE_OVER_EXIT_Y: int = 548
+
+    PERSONAL_BEST_FILE_PATH: str = "assets/replays/{track_name}/personal_best.csv"
+    PERSONAL_BEST_FILE_NAME: str = "personal_best.csv"
+
+    CPU_GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/track_path.csv"
+
+    ENGINE_IDLE_SOUND_PATH: str = "assets/audio/general/engine_idle.mp3"
+    ENGINE_OFF_SOUND_PATH: str = "assets/audio/general/engine_off.mp3"
+    ENGINE_REV_SOUND_PATH: str = "assets/audio/general/engine_rev.mp3"
+
     def __init__(self, game, track_name: TrackName, car_index: int, style_index: int, difficulty: Difficulty,
                  save_manager: SaveManager) -> None:
 
@@ -44,31 +82,31 @@ class Race:
         self.pause_start_time_s: float = 0.0
 
         self.dark_overlay: pygame.Surface = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
-        self.dark_overlay.fill((0, 0, 0, constants.PAUSE_OVERLAY_OPACITY))
-        button_x: float = (constants.WIDTH - constants.PAUSE_BUTTON_WIDTH) / 2
-        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_RESUME_Y,
-                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_REPLAY_Y,
-                                                           constants.PAUSE_BUTTON_WIDTH, constants.PAUSE_BUTTON_HEIGHT)
-        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, constants.PAUSE_EXIT_Y, constants.PAUSE_BUTTON_WIDTH,
-                                                         constants.PAUSE_BUTTON_HEIGHT)
+        self.dark_overlay.fill((0, 0, 0, self.PAUSE_OVERLAY_OPACITY))
+        button_x: float = (constants.WIDTH - self.PAUSE_BUTTON_WIDTH) / 2
+        self.resume_button_rect: pygame.Rect = pygame.Rect(button_x, self.PAUSE_RESUME_Y,
+                                                           self.PAUSE_BUTTON_WIDTH, self.PAUSE_BUTTON_HEIGHT)
+        self.replay_button_rect: pygame.Rect = pygame.Rect(button_x, self.PAUSE_REPLAY_Y,
+                                                           self.PAUSE_BUTTON_WIDTH, self.PAUSE_BUTTON_HEIGHT)
+        self.exit_button_rect: pygame.Rect = pygame.Rect(button_x, self.PAUSE_EXIT_Y, self.PAUSE_BUTTON_WIDTH,
+                                                         self.PAUSE_BUTTON_HEIGHT)
 
         # Pause Images
         self.pause_image_left: pygame.Surface = pygame.image.load(
-            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="left")).convert_alpha()
+            self.PAUSE_MENU_IMAGE_PATH.format(image_name="left")).convert_alpha()
         self.pause_image_left = pygame.transform.scale(self.pause_image_left, (constants.WIDTH, constants.HEIGHT))
         self.pause_default_image_right: pygame.Surface = pygame.image.load(
-            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="right")).convert_alpha()
+            self.PAUSE_MENU_IMAGE_PATH.format(image_name="right")).convert_alpha()
         self.pause_default_image_right = pygame.transform.scale(self.pause_default_image_right,
                                                                 (constants.WIDTH, constants.HEIGHT))
         self.pause_image_hover_1: pygame.Surface = pygame.image.load(
-            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="1")).convert_alpha()
+            self.PAUSE_MENU_IMAGE_PATH.format(image_name="1")).convert_alpha()
         self.pause_image_hover_1 = pygame.transform.scale(self.pause_image_hover_1, (constants.WIDTH, constants.HEIGHT))
         self.pause_image_hover_2: pygame.Surface = pygame.image.load(
-            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="2")).convert_alpha()
+            self.PAUSE_MENU_IMAGE_PATH.format(image_name="2")).convert_alpha()
         self.pause_image_hover_2 = pygame.transform.scale(self.pause_image_hover_2, (constants.WIDTH, constants.HEIGHT))
         self.pause_image_hover_3: pygame.Surface = pygame.image.load(
-            constants.PAUSE_MENU_IMAGE_PATH.format(image_name="3")).convert_alpha()
+            self.PAUSE_MENU_IMAGE_PATH.format(image_name="3")).convert_alpha()
         self.pause_image_hover_3 = pygame.transform.scale(self.pause_image_hover_3, (constants.WIDTH, constants.HEIGHT))
         self.pause_image_right: pygame.Surface = self.pause_default_image_right
 
@@ -79,31 +117,31 @@ class Race:
         self.race_over_hover_index: int = 0
 
         # Calculate SOURCE Rects
-        race_over_btn_x = (constants.WIDTH - constants.RACE_OVER_BUTTON_WIDTH) // 2
-        self.source_retry_rect = pygame.Rect(race_over_btn_x, constants.RACE_OVER_RETRY_Y,
-                                             constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
-        self.source_exit_rect = pygame.Rect(race_over_btn_x, constants.RACE_OVER_EXIT_Y,
-                                            constants.RACE_OVER_BUTTON_WIDTH, constants.RACE_OVER_BUTTON_HEIGHT)
+        race_over_btn_x = (constants.WIDTH - self.RACE_OVER_BUTTON_WIDTH) // 2
+        self.source_retry_rect = pygame.Rect(race_over_btn_x, self.RACE_OVER_RETRY_Y,
+                                             self.RACE_OVER_BUTTON_WIDTH, self.RACE_OVER_BUTTON_HEIGHT)
+        self.source_exit_rect = pygame.Rect(race_over_btn_x, self.RACE_OVER_EXIT_Y,
+                                            self.RACE_OVER_BUTTON_WIDTH, self.RACE_OVER_BUTTON_HEIGHT)
 
         self.retry_button_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
         self.exit_race_over_button_rect: pygame.Rect = pygame.Rect(0, 0, 0, 0)
 
         # Load Race Over Images
         self.race_over_image_left: pygame.Surface = pygame.image.load(
-            constants.RACE_OVER_IMAGE_PATH.format(image_name="left")).convert_alpha()
+            self.RACE_OVER_IMAGE_PATH.format(image_name="left")).convert_alpha()
         self.race_over_image_left = pygame.transform.scale(self.race_over_image_left,
                                                            (constants.WIDTH, constants.HEIGHT))
 
         self.race_over_default: pygame.Surface = pygame.image.load(
-            constants.RACE_OVER_IMAGE_PATH.format(image_name="right")).convert_alpha()
+            self.RACE_OVER_IMAGE_PATH.format(image_name="right")).convert_alpha()
         self.race_over_default = pygame.transform.scale(self.race_over_default, (constants.WIDTH, constants.HEIGHT))
 
         self.race_over_hover_1: pygame.Surface = pygame.image.load(
-            constants.RACE_OVER_IMAGE_PATH.format(image_name="1")).convert_alpha()
+            self.RACE_OVER_IMAGE_PATH.format(image_name="1")).convert_alpha()
         self.race_over_hover_1 = pygame.transform.scale(self.race_over_hover_1, (constants.WIDTH, constants.HEIGHT))
 
         self.race_over_hover_2: pygame.Surface = pygame.image.load(
-            constants.RACE_OVER_IMAGE_PATH.format(image_name="2")).convert_alpha()
+            self.RACE_OVER_IMAGE_PATH.format(image_name="2")).convert_alpha()
         self.race_over_hover_2 = pygame.transform.scale(self.race_over_hover_2, (constants.WIDTH, constants.HEIGHT))
 
         # --- CROP BUTTONS ---
@@ -127,11 +165,11 @@ class Race:
         self.respawn_sound: pygame.mixer.Sound = pygame.mixer.Sound(
             constants.TRACK_AUDIO_PATH.format(track_name="general", song_type="respawn"))
         self.respawn_sound.set_volume(self.sfx_volume)
-        self.engine_idle_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.ENGINE_IDLE_SOUND_PATH)
+        self.engine_idle_sound: pygame.mixer.Sound = pygame.mixer.Sound(self.ENGINE_IDLE_SOUND_PATH)
         self.engine_idle_sound.set_volume(self.sfx_volume)
-        self.engine_off_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.ENGINE_OFF_SOUND_PATH)
+        self.engine_off_sound: pygame.mixer.Sound = pygame.mixer.Sound(self.ENGINE_OFF_SOUND_PATH)
         self.engine_off_sound.set_volume(self.sfx_volume)
-        self.engine_rev_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.ENGINE_REV_SOUND_PATH)
+        self.engine_rev_sound: pygame.mixer.Sound = pygame.mixer.Sound(self.ENGINE_REV_SOUND_PATH)
         self.engine_rev_sound.set_volume(self.sfx_volume)
 
         # User Car
@@ -163,13 +201,13 @@ class Race:
                     pass
 
             pb_config = constants.CAR_DEFINITIONS[pb_car_idx]
-            pb_path = Path(constants.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name.value))
+            pb_path = Path(self.PERSONAL_BEST_FILE_PATH.format(track_name=self.track.name.value))
 
             self.opponent = GhostCar(self.game.game_surface, self.track.name, pb_path, pb_config, pb_style_idx)
             self.ghost_found = pb_path.exists()
 
         else:
-            cpu_path = Path(constants.CPU_GHOST_FILE_PATH.format(track_name=self.track.name.value))
+            cpu_path = Path(self.CPU_GHOST_FILE_PATH.format(track_name=self.track.name.value))
             self.opponent = CpuCar(self.game.game_surface, self.track.name, self.difficulty, cpu_path)
             self.ghost_found = cpu_path.exists()
 
@@ -346,7 +384,7 @@ class Race:
         transition_duration_ms: int = 250
         percent_progress: float = min(time_elapsed_ms, transition_duration_ms) / transition_duration_ms
 
-        dark_overlay_opacity: int = int(percent_progress * constants.PAUSE_OVERLAY_OPACITY)
+        dark_overlay_opacity: int = int(percent_progress * self.PAUSE_OVERLAY_OPACITY)
         dark_overlay_color: tuple[int, int, int, int] = (0, 0, 0, dark_overlay_opacity)
         self.dark_overlay.fill(dark_overlay_color)
 
@@ -508,7 +546,7 @@ class Race:
         if self.cpu_has_checkpoint and self.track.check_finish_line(self.opponent.x, self.opponent.y):
             self.cpu_has_checkpoint = False
             self.cpu_current_lap += 1
-            if self.cpu_current_lap > constants.NUM_LAPS[self.track.name]:
+            if self.cpu_current_lap > self.NUM_LAPS[self.track.name]:
                 self.race_result = "lose"
                 self.during_race = False
                 self.race_over = True
@@ -520,7 +558,7 @@ class Race:
                 self.has_checkpoint = True
                 cp_x = self.track.checkpoint_1.centerx
                 cp_y = self.track.checkpoint_1.centery
-                cp_angle = constants.CHECKPOINT_ANGLES[self.track.name]
+                cp_angle = self.CHECKPOINT_ANGLES[self.track.name]
                 self.user_car.set_respawn_point(cp_x, cp_y, cp_angle)
 
         if self.has_checkpoint and self.track.check_finish_line(self.user_car.x, self.user_car.y):
@@ -532,13 +570,13 @@ class Race:
             start_angle = self.user_car.start_angle
             self.user_car.set_respawn_point(start_x, start_y, start_angle)
 
-            if self.current_lap > constants.NUM_LAPS[self.track.name]:
+            if self.current_lap > self.NUM_LAPS[self.track.name]:
                 self.race_result = "win"
                 self.during_race = False
                 self.race_over = True
                 self.race_end_time_ms = pygame.time.get_ticks()
             else:
-                if self.current_lap == constants.NUM_LAPS[self.track.name]:
+                if self.current_lap == self.NUM_LAPS[self.track.name]:
                     self._play_next_track()
                 else:
                     self.next_lap_sound.play()
@@ -565,7 +603,7 @@ class Race:
             self.game.game_surface.blit(countdown_surface, countdown_rect)
 
     def _render_lap_text(self):
-        self.lap_str: str = f"Lap {self.current_lap}/{constants.NUM_LAPS[self.track.name]}"
+        self.lap_str: str = f"Lap {self.current_lap}/{self.NUM_LAPS[self.track.name]}"
         self.lap_surf: pygame.Surface = self.timer_font.render(self.lap_str, True, constants.TEXT_COLOR)
         self.lap_shadow: pygame.Surface = self.timer_font.render(self.lap_str, True, constants.TEXT_SHADOW_COLOR)
 
@@ -582,7 +620,7 @@ class Race:
             with open(personal_best_metadata_path, "w") as file:
                 json.dump(metadata, file)
             if self.current_race_file.exists():
-                new_personal_best: Path = self.current_race_file.with_name(constants.PERSONAL_BEST_FILE_NAME)
+                new_personal_best: Path = self.current_race_file.with_name(self.PERSONAL_BEST_FILE_NAME)
                 self.current_race_file.replace(new_personal_best)
             self.personal_best_time = self.elapsed_race_time_s
         if self.current_race_file.exists():
@@ -634,7 +672,7 @@ class Race:
 
         # 1. Dark Overlay Fade-in
         overlay_progress = min(time_elapsed / 1000.0, 1.0)
-        dark_overlay_opacity = int(overlay_progress * constants.PAUSE_OVERLAY_OPACITY)
+        dark_overlay_opacity = int(overlay_progress * self.PAUSE_OVERLAY_OPACITY)
         self.dark_overlay.fill((0, 0, 0, dark_overlay_opacity))
         self.game.game_surface.blit(self.dark_overlay, (0, 0))
 
@@ -701,11 +739,11 @@ class Race:
             exit_y = int(current_base_y) + 110  # Gap between buttons
 
             # Update Button Rects for Clicking
-            center_x = (constants.WIDTH - constants.PAUSE_BUTTON_WIDTH) // 2
-            self.retry_button_rect = pygame.Rect(center_x, retry_y, constants.PAUSE_BUTTON_WIDTH,
-                                                 constants.PAUSE_BUTTON_HEIGHT)
-            self.exit_race_over_button_rect = pygame.Rect(center_x, exit_y, constants.PAUSE_BUTTON_WIDTH,
-                                                          constants.PAUSE_BUTTON_HEIGHT)
+            center_x = (constants.WIDTH - self.PAUSE_BUTTON_WIDTH) // 2
+            self.retry_button_rect = pygame.Rect(center_x, retry_y, self.PAUSE_BUTTON_WIDTH,
+                                                 self.PAUSE_BUTTON_HEIGHT)
+            self.exit_race_over_button_rect = pygame.Rect(center_x, exit_y, self.PAUSE_BUTTON_WIDTH,
+                                                          self.PAUSE_BUTTON_HEIGHT)
 
             # Draw TIME (Centered in the gap between Box and Buttons)
             time_str = f"{self.elapsed_race_time_s:.2f} s"

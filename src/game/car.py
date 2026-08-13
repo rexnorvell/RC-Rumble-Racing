@@ -9,6 +9,25 @@ from ..enums.track_name import TrackName
 class Car:
     """Represents the player's car, handling its state, movement, input, and drawing"""
 
+    START_X: dict[str, float] = {
+        constants.TRACK_NAMES[0]: 1156.0,
+        constants.TRACK_NAMES[1]: 1836.0,
+        constants.TRACK_NAMES[2]: 2366.0,
+        constants.TRACK_NAMES[3]: 875.0
+    }
+    START_Y: dict[str, float] = {
+        constants.TRACK_NAMES[0]: 1094.0,
+        constants.TRACK_NAMES[1]: 1264.0,
+        constants.TRACK_NAMES[2]: 1044.0,
+        constants.TRACK_NAMES[3]: 1275.0
+    }
+    START_ROTATION: dict[str, int] = {
+        constants.TRACK_NAMES[0]: 0,
+        constants.TRACK_NAMES[1]: 270,
+        constants.TRACK_NAMES[2]: 0,
+        constants.TRACK_NAMES[3]: 0
+    }
+
     def __init__(self, screen: pygame.Surface, track_name: str, is_ghost: bool, car_config: dict,
                  style_index: int, key_bindings: dict) -> None:
         self.screen: pygame.Surface = screen
@@ -27,9 +46,9 @@ class Car:
         self.color = style["color"]
 
         # Store start values
-        self.start_x: float = constants.START_X[track_name]
-        self.start_y: float = constants.START_Y[track_name]
-        self.start_angle: float = constants.START_ROTATION[track_name]
+        self.start_x: float = self.START_X[track_name]
+        self.start_y: float = self.START_Y[track_name]
+        self.start_angle: float = self.START_ROTATION[track_name]
 
         self.max_speed: float = self.base_max_speed
 

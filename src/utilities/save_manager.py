@@ -8,6 +8,10 @@ from ..enums.track_name import TrackName
 
 
 class SaveManager:
+    SAVE_FILE_TEMPLATE: str = "save_data_{slot}.json"
+    DEFAULT_MUSIC_VOLUME: float = 0.5
+    DEFAULT_SFX_VOLUME: float = 0.2
+
     def __init__(self, slot_index: int = 0):
         self.slot_index = slot_index
         # Convert 0-based index (0, 1, 2) to 1-based file slot (1, 2, 3)
@@ -17,7 +21,7 @@ class SaveManager:
             self.slot_num = 1
 
         self.current_slot = self.slot_num
-        self.file_path = constants.SAVE_FILE_TEMPLATE.format(slot=self.slot_num)
+        self.file_path = self.SAVE_FILE_TEMPLATE.format(slot=self.slot_num)
         self.data = self._load_data()
 
     def set_save_slot(self, slot_index: int):
@@ -28,7 +32,7 @@ class SaveManager:
             self.slot_num = 1
 
         self.current_slot = self.slot_num
-        self.file_path = constants.SAVE_FILE_TEMPLATE.format(slot=self.slot_num)
+        self.file_path = self.SAVE_FILE_TEMPLATE.format(slot=self.slot_num)
         self.data = self._load_data()
         self.apply_all_settings()
 
@@ -39,7 +43,7 @@ class SaveManager:
         except:
             return
 
-        filename = constants.SAVE_FILE_TEMPLATE.format(slot=target_file_num)
+        filename = self.SAVE_FILE_TEMPLATE.format(slot=target_file_num)
 
         if os.path.exists(filename):
             try:
@@ -69,7 +73,7 @@ class SaveManager:
                 constants.TRACK_NAMES[3].value: [Difficulty.EASY.value]
             },
             "key_bindings": constants.DEFAULT_KEY_BINDINGS.copy(),
-            "volume_settings": {"music": constants.DEFAULT_MUSIC_VOLUME, "sfx": constants.DEFAULT_SFX_VOLUME}
+            "volume_settings": {"music": self.DEFAULT_MUSIC_VOLUME, "sfx": self.DEFAULT_SFX_VOLUME}
         }
 
     def save_data(self):
@@ -152,7 +156,7 @@ class SaveManager:
     def get_save_summary(self, slot_index: int) -> dict:
         # Convert 0-based index to 1-based file slot
         file_slot = slot_index + 1
-        filename = constants.SAVE_FILE_TEMPLATE.format(slot=file_slot)
+        filename = self.SAVE_FILE_TEMPLATE.format(slot=file_slot)
 
         total_tracks = len(constants.TRACK_NAMES)
 
@@ -201,4 +205,4 @@ class SaveManager:
 
     def apply_volume_settings(self):
         volumes = self.get_volumes()
-        pygame.mixer.music.set_volume(volumes.get("music", constants.DEFAULT_MUSIC_VOLUME))
+        pygame.mixer.music.set_volume(volumes.get("music", self.DEFAULT_MUSIC_VOLUME))

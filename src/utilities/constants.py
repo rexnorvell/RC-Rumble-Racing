@@ -1,6 +1,5 @@
 import pygame
 
-from ..enums.difficulty import Difficulty
 from ..enums.track_name import TrackName
 
 
@@ -11,30 +10,15 @@ TEXT_FONT_PATH: str = "assets/fonts/Elektrik.otf"
 FALLBACK_FONT_PATH: str = "assets/fonts/60s-scoreboard.otf"
 WIDTH: int = 1408
 HEIGHT: int = 792
-GAME_TITLE: str = "RC Rumble Racing"
 
 # Screen Names
 TITLE_SCREEN_NAME: str = "title_screen"
-SAVE_SELECTION_NAME: str = "save_selection"
-TRACK_SELECTION_NAME: str = "track_selection"
-CAR_SELECTION_NAME: str = "car_selection"
-DIFFICULTY_SELECTION_NAME: str = "difficulty_selection"
 SETTINGS_MENU_NAME: str = "settings_menu"
 CONTROLS_MENU_NAME: str = "controls_menu"
 SOUND_MENU_NAME: str = "sound_menu"
-RACE_SCREEN_NAME: str = "race_screen"
 
 # Response Codes
-EXIT_GAME_CODE: str = "exit_game"
 NO_ACTION_CODE: str = ""
-
-# Save System
-SAVE_FILE_TEMPLATE: str = "save_data_{slot}.json"
-NUM_SAVE_SLOTS: int = 3
-
-# Default Volumes
-DEFAULT_MUSIC_VOLUME: float = 0.5
-DEFAULT_SFX_VOLUME: float = 0.2
 
 # Key Bindings
 KEY_ACTION_FORWARD: str = "FORWARD"
@@ -53,83 +37,18 @@ DEFAULT_KEY_BINDINGS: dict[str, int] = {
     KEY_ACTION_TOGGLE_GHOST: pygame.K_g,
 }
 
-# Settings Menu
-SETTINGS_ICON_PATH: str = "assets/images/general/setting_icon.png"
-
 # General
 GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
 
-# Cursor
-CURSOR_WIDTH: int = 40
-CURSOR_HEIGHT: int = 40
-
-# Transitions
-FADE_TRANSITION_SPEED_MS: int = 500
-
-# Title screen
-TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
-CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
-INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
-INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
-
 # Hover Sounds
-HOVER_2_SOUND_PATH: str = "assets/audio/general/hover_2.mp3"
 HOVER_SOUND_PATH: str = "assets/audio/general/hover.mp3"
-
-# Paint sound
-SELECT_PAINT_SOUND_PATH: str = "assets/audio/general/select_paint.mp3"
-
-# Track selection screen
-TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{number}_{type}.png"
-
-# Car selection screen
-CAR_SELECTION_IMAGE_PATH: str = "assets/images/car_selection/{image_name}.png"
-CAR_SELECTION_ARROW_LEFT_PATH: str = "assets/images/car_selection/arrow_left.png"
-CAR_SELECTION_ARROW_RIGHT_PATH: str = "assets/images/car_selection/arrow_right.png"
-
-# Car selection UI
-CAR_STAT_BAR_COLOR: tuple[int, int, int] = (185, 5, 5)
-CAR_STAT_BAR_BG_COLOR: tuple[int, int, int] = (50, 50, 50)
-CAR_STAT_BAR_WIDTH: int = 300
-CAR_STAT_BAR_HEIGHT: int = 25
-CAR_STAT_MAX_VALUE: int = 10
 
 # Track Selection Exit/Back button
 TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
 TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
 
-# Difficulty Selection UI
-DIFFICULTY_BUTTON_WIDTH: int = 720
-DIFFICULTY_BUTTON_HEIGHT: int = 85
-DIFFICULTY_BUTTON_GAP: int = 20
-DIFFICULTY_BUTTON_START_Y: int = 250
-
-# Colors
-BUTTON_DISABLED_COLOR: tuple[int, int, int] = (100, 100, 100)
-
 # Track parameters
 TRACK_NAMES: list[str] = [TrackName.MM, TrackName.DD, TrackName.GG, TrackName.FF]
-NUM_LAPS: dict[str, int] = {TRACK_NAMES[0]: 3, TRACK_NAMES[1]: 3, TRACK_NAMES[2]: 3, TRACK_NAMES[3]: 3}
-CHECKPOINT_LOCATIONS: dict[str, pygame.Rect] = {
-    TRACK_NAMES[0]: pygame.Rect(2256, 944, 200, 50),
-    TRACK_NAMES[1]: pygame.Rect(1621, 644, 50, 300),
-    TRACK_NAMES[2]: pygame.Rect(1056, 994, 200, 50),
-    TRACK_NAMES[3]: pygame.Rect(3950, 1350, 250, 50)
-}
-
-CHECKPOINT_ANGLES: dict[str, int] = {TRACK_NAMES[0]: 180, TRACK_NAMES[1]: 90, TRACK_NAMES[2]: 180, TRACK_NAMES[3]: 180}
-
-FINISH_LINE_LOCATIONS: dict[str, pygame.Rect] = {
-    TRACK_NAMES[0]: pygame.Rect(1068, 994, 180, 50),
-    TRACK_NAMES[1]: pygame.Rect(1736, 1184, 50, 180),
-    TRACK_NAMES[2]: pygame.Rect(2276, 924, 180, 50),
-    TRACK_NAMES[3]: pygame.Rect(675, 1176, 400, 50)
-}
-TRACK_IMAGE_SCALE_FACTOR: dict[str, tuple[float, float]] = {
-    TRACK_NAMES[0]: (2.5, 2.5), TRACK_NAMES[1]: (2.5, 2.5), TRACK_NAMES[2]: (2.5, 2.5), TRACK_NAMES[3]: (3.5, 3.5)
-}
-TRACK_IMAGE_PATH: str = "assets/images/tracks/{track_name}/{image_type}.png"
-TRACK_IMAGE_TYPES: list[str] = ["track_image", "track_image_mask"]
 
 # Car parameters
 CAR_WIDTH: int = 30
@@ -149,16 +68,6 @@ MAX_DRIFT_ANGLE: float = 50.0
 MIN_DRIFT_ANGLE: float = 15.0
 DRIFT_RECOVERY_SPEED: float = 1.5
 
-START_X: dict[str, float] = {
-    TRACK_NAMES[0]: 1156.0, TRACK_NAMES[1]: 1836.0, TRACK_NAMES[2]: 2366.0, TRACK_NAMES[3]: 875.0
-}
-START_Y: dict[str, float] = {
-    TRACK_NAMES[0]: 1094.0, TRACK_NAMES[1]: 1264.0, TRACK_NAMES[2]: 1044.0, TRACK_NAMES[3]: 1275.0
-}
-START_ROTATION: dict[str, int] = {
-    TRACK_NAMES[0]: 0, TRACK_NAMES[1]: 270, TRACK_NAMES[2]: 0, TRACK_NAMES[3]: 0
-}
-CAR_COLOR: tuple[int, int, int] = (200, 0, 0)
 CAR_IMAGE_PATH: str = "assets/images/cars/{car_type}.png"
 
 # CAR DEFINITIONS
@@ -196,46 +105,10 @@ CAR_DEFINITIONS = [
     { "name": "DeLorean", "stats": { "Speed": 7, "Acceleration": 10, "Handling": 6 }, "styles": [{"name": "delorean_car_grey", "color": (132, 132, 132)}] }
 ]
 
-# Pause Menu
-PAUSE_MENU_IMAGE_PATH: str = "assets/images/pause/{image_name}.png"
-PAUSE_OVERLAY_OPACITY: int = 100
-PAUSE_TITLE_COLOR: tuple[int, int, int] = (255, 255, 255)
-PAUSE_BUTTON_COLOR: tuple[int, int, int] = (200, 200, 200)
-PAUSE_BUTTON_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)
-PAUSE_BUTTON_WIDTH: int = 720
-PAUSE_BUTTON_HEIGHT: int = 85
-PAUSE_RESUME_Y: int = 288
-PAUSE_REPLAY_Y: int = 419
-PAUSE_EXIT_Y: int = 548
-
-# Race Over Menu
-RACE_OVER_IMAGE_PATH: str = "assets/images/race_over/{image_name}.png"
-RACE_OVER_BUTTON_WIDTH: int = 720
-RACE_OVER_BUTTON_HEIGHT: int = 85
-RACE_OVER_RETRY_Y: int = 419
-RACE_OVER_EXIT_Y: int = 548
-
 # Replay files
 REPLAY_FILE_PATH: str = "assets/replays/{track_name}/current_race.csv"
-PERSONAL_BEST_FILE_PATH: str = "assets/replays/{track_name}/personal_best.csv"
-PERSONAL_BEST_FILE_NAME: str = "personal_best.csv"
 PERSONAL_BEST_METADATA_FILE_PATH: str = "assets/replays/{track_name}/personal_best.json"
-
-# Ghost / CPU files
-CPU_GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/track_path.csv"
-GHOST_DIFFICULTY_PERSONAL_BEST: str = "personal_best"
-
-# CPU Difficulty Settings
-CPU_DIFFICULTY_SETTINGS: dict = {
-    Difficulty.EASY.value:   {"speed_multiplier": 1.50, "accel_multiplier": 1.75, "turn_multiplier": 1.50, "lookahead": 20},
-    Difficulty.MEDIUM.value: {"speed_multiplier": 1.63, "accel_multiplier": 2.00, "turn_multiplier": 1.50, "lookahead": 40},
-    Difficulty.HARD.value:   {"speed_multiplier": 1.75, "accel_multiplier": 2.25, "turn_multiplier": 1.50, "lookahead": 60},
-}
 
 # Music and audio paths
 TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.mp3"
-TRACK_SONG_TYPES: list[str] = ["before_race", "track_start", "loop", "final_lap", "fast", "track_complete"]
 GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
-ENGINE_IDLE_SOUND_PATH: str = "assets/audio/general/engine_idle.mp3"
-ENGINE_OFF_SOUND_PATH: str = "assets/audio/general/engine_off.mp3"
-ENGINE_REV_SOUND_PATH: str = "assets/audio/general/engine_rev.mp3"

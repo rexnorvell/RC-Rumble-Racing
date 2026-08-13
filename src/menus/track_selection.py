@@ -10,6 +10,8 @@ from ..types.menu_results import MenuResults
 class TrackSelection:
     """Handles the track selection screen"""
 
+    TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{number}_{type}.png"
+
     def __init__(self, game, screen, save_manager) -> None:
 
         # General
@@ -30,33 +32,33 @@ class TrackSelection:
 
         # First track
         self.first_default_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="default"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="default"), True, button_width, button_height)
         self.first_hover_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="hover"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=1, type="hover"), True, button_width, button_height)
 
         # Second track
         self.second_default_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="default"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="default"), True, button_width, button_height)
         self.second_hover_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="hover"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="hover"), True, button_width, button_height)
         self.second_locked_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="locked"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=2, type="locked"), True, button_width, button_height)
 
         # Third track
         self.third_default_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="default"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="default"), True, button_width, button_height)
         self.third_hover_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="hover"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="hover"), True, button_width, button_height)
         self.third_locked_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="locked"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=3, type="locked"), True, button_width, button_height)
 
         # Fourth track
         self.fourth_default_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="default"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="default"), True, button_width, button_height)
         self.fourth_hover_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="hover"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="hover"), True, button_width, button_height)
         self.fourth_locked_image: pygame.Surface = utilities.load_image(
-            constants.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="locked"), True, button_width, button_height)
+            self.TRACK_SELECTION_IMAGE_PATH.format(number=4, type="locked"), True, button_width, button_height)
 
         # Back Button
         self.back_button_x: int = 10

@@ -10,6 +10,11 @@ from ..types.menu_results import MenuResults
 class TitleScreen:
     """Handles the title screen."""
 
+    SETTINGS_ICON_PATH: str = "assets/images/general/setting_icon.png"
+    TITLE_IMAGE_PATH: str = "assets/images/title_screen/{image_type}.png"
+    INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
+    INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
+
     def __init__(self, game, screen, save_manager) -> None:
 
         # General
@@ -26,13 +31,13 @@ class TitleScreen:
 
         # Foreground images
         self.title_default_image: pygame.Surface = pygame.image.load(
-            constants.TITLE_IMAGE_PATH.format(image_type="default")).convert_alpha()
+            self.TITLE_IMAGE_PATH.format(image_type="default")).convert_alpha()
         self.title_default_image = pygame.transform.scale(self.title_default_image, (constants.WIDTH, constants.HEIGHT))
         self.title_hover_image: pygame.Surface = pygame.image.load(
-            constants.TITLE_IMAGE_PATH.format(image_type="hover")).convert_alpha()
+            self.TITLE_IMAGE_PATH.format(image_type="hover")).convert_alpha()
         self.title_hover_image = pygame.transform.scale(self.title_hover_image, (constants.WIDTH, constants.HEIGHT))
         self.title_click_image: pygame.Surface = pygame.image.load(
-            constants.TITLE_IMAGE_PATH.format(image_type="click")).convert_alpha()
+            self.TITLE_IMAGE_PATH.format(image_type="click")).convert_alpha()
         self.title_click_image = pygame.transform.scale(self.title_click_image, (constants.WIDTH, constants.HEIGHT))
         self.current_image: pygame.Surface = self.title_default_image
 
@@ -45,11 +50,11 @@ class TitleScreen:
 
         # Settings Button
         try:
-            self.settings_icon_default = pygame.image.load(constants.SETTINGS_ICON_PATH).convert_alpha()
+            self.settings_icon_default = pygame.image.load(self.SETTINGS_ICON_PATH).convert_alpha()
             self.settings_icon_default = pygame.transform.scale(self.settings_icon_default, (50, 50))
 
             # Load the hover icon, but do NOT apply the tint
-            self.settings_icon_hover = pygame.image.load(constants.SETTINGS_ICON_PATH).convert_alpha()
+            self.settings_icon_hover = pygame.image.load(self.SETTINGS_ICON_PATH).convert_alpha()
             self.settings_icon_hover = pygame.transform.scale(self.settings_icon_hover, (50, 50))
 
             # Position at the BOTTOM RIGHT
@@ -64,7 +69,7 @@ class TitleScreen:
             self.settings_icon_rect = pygame.Rect(0, 0, 0, 0)  # dummy rect
 
         # Intro video
-        self.intro_clip: VideoFileClip = VideoFileClip(constants.INTRO_VIDEO_PATH)
+        self.intro_clip: VideoFileClip = VideoFileClip(self.INTRO_VIDEO_PATH)
 
         # Button hovering
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
@@ -74,7 +79,7 @@ class TitleScreen:
 
     def play_intro(self, screen: pygame.Surface) -> bool:
         """Plays the intro video before displaying the title screen."""
-        intro_sound = pygame.mixer.Sound(constants.INTRO_AUDIO_PATH)
+        intro_sound = pygame.mixer.Sound(self.INTRO_AUDIO_PATH)
         intro_sound.play()
         clock = pygame.time.Clock()
         try:

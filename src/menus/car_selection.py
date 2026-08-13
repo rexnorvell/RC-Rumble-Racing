@@ -9,6 +9,17 @@ from ..types.menu_results import MenuResults
 class CarSelection:
     """Handles the car selection screen"""
 
+    HOVER_2_SOUND_PATH: str = "assets/audio/general/hover_2.mp3"
+    SELECT_PAINT_SOUND_PATH: str = "assets/audio/general/select_paint.mp3"
+    CAR_STAT_BAR_COLOR: tuple[int, int, int] = (185, 5, 5)
+    CAR_STAT_BAR_BG_COLOR: tuple[int, int, int] = (50, 50, 50)
+    CAR_STAT_BAR_WIDTH: int = 300
+    CAR_STAT_BAR_HEIGHT: int = 25
+    CAR_STAT_MAX_VALUE: int = 10
+    CAR_SELECTION_IMAGE_PATH: str = "assets/images/car_selection/{image_name}.png"
+    CAR_SELECTION_ARROW_LEFT_PATH: str = "assets/images/car_selection/arrow_left.png"
+    CAR_SELECTION_ARROW_RIGHT_PATH: str = "assets/images/car_selection/arrow_right.png"
+
     def __init__(self, game, screen, save_manager) -> None:
 
         # General
@@ -17,7 +28,7 @@ class CarSelection:
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
-        self.background_image: pygame.Surface = utilities.load_image(constants.CAR_SELECTION_IMAGE_PATH.format(image_name="default"), False, constants.WIDTH, constants.HEIGHT)
+        self.background_image: pygame.Surface = utilities.load_image(self.CAR_SELECTION_IMAGE_PATH.format(image_name="default"), False, constants.WIDTH, constants.HEIGHT)
         self.car_sprites: dict[str, pygame.Surface] = {}
 
         # We need to iterate through all cars and their styles to load all possible sprites
@@ -38,8 +49,8 @@ class CarSelection:
         # --- Load UI Elements ---
         arrow_width: int = 64
         arrow_height: int = arrow_width
-        self.arrow_left_img: pygame.Surface = utilities.load_image(constants.CAR_SELECTION_ARROW_LEFT_PATH, True, arrow_width, arrow_height)
-        self.arrow_right_img: pygame.Surface = utilities.load_image(constants.CAR_SELECTION_ARROW_RIGHT_PATH, True, arrow_width, arrow_height)
+        self.arrow_left_img: pygame.Surface = utilities.load_image(self.CAR_SELECTION_ARROW_LEFT_PATH, True, arrow_width, arrow_height)
+        self.arrow_right_img: pygame.Surface = utilities.load_image(self.CAR_SELECTION_ARROW_RIGHT_PATH, True, arrow_width, arrow_height)
         self.garage_door: pygame.Surface = utilities.load_image(constants.GENERAL_IMAGE_PATH.format(name="garage"), False, constants.WIDTH, constants.HEIGHT)
 
         # --- State ---
@@ -99,9 +110,9 @@ class CarSelection:
         # --- Sound ---
         self.hover_sound_nav = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound_nav.set_volume(self.save_manager.get_volumes()["sfx"])
-        self.hover_sound_arrow = pygame.mixer.Sound(constants.HOVER_2_SOUND_PATH)
+        self.hover_sound_arrow = pygame.mixer.Sound(self.HOVER_2_SOUND_PATH)
         self.hover_sound_arrow.set_volume(self.save_manager.get_volumes()["sfx"])
-        self.select_sound_color = pygame.mixer.Sound(constants.SELECT_PAINT_SOUND_PATH)
+        self.select_sound_color = pygame.mixer.Sound(self.SELECT_PAINT_SOUND_PATH)
         self.select_sound_color.set_volume(self.save_manager.get_volumes()["sfx"])
 
     def _update_color_buttons(self):
@@ -186,12 +197,12 @@ class CarSelection:
             self.screen.blit(label_surf, (stats_x, stats_y))
             stats_y += label_surf.get_height() + 10
 
-            bar_bg_rect = pygame.Rect(stats_x, stats_y, constants.CAR_STAT_BAR_WIDTH, constants.CAR_STAT_BAR_HEIGHT)
-            pygame.draw.rect(self.screen, constants.CAR_STAT_BAR_BG_COLOR, bar_bg_rect, border_radius=5)
+            bar_bg_rect = pygame.Rect(stats_x, stats_y, self.CAR_STAT_BAR_WIDTH, self.CAR_STAT_BAR_HEIGHT)
+            pygame.draw.rect(self.screen, self.CAR_STAT_BAR_BG_COLOR, bar_bg_rect, border_radius=5)
 
-            fill_width = (stat_value / constants.CAR_STAT_MAX_VALUE) * constants.CAR_STAT_BAR_WIDTH
-            bar_fill_rect = pygame.Rect(stats_x, stats_y, fill_width, constants.CAR_STAT_BAR_HEIGHT)
-            pygame.draw.rect(self.screen, constants.CAR_STAT_BAR_COLOR, bar_fill_rect, border_radius=5)
+            fill_width = (stat_value / self.CAR_STAT_MAX_VALUE) * self.CAR_STAT_BAR_WIDTH
+            bar_fill_rect = pygame.Rect(stats_x, stats_y, fill_width, self.CAR_STAT_BAR_HEIGHT)
+            pygame.draw.rect(self.screen, self.CAR_STAT_BAR_COLOR, bar_fill_rect, border_radius=5)
 
             stats_y += bar_bg_rect.height + 25
 

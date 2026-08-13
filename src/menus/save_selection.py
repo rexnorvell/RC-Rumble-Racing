@@ -10,6 +10,8 @@ from ..types.menu_results import MenuResults
 class SaveSelection:
     """Screen for selecting one of three save files."""
 
+    NUM_SAVE_SLOTS: int = 3
+
     def __init__(self, game, screen: pygame.Surface, save_manager) -> None:
 
         self.name: str = "save_selection"
@@ -45,7 +47,7 @@ class SaveSelection:
         center_x = constants.WIDTH // 2
         slot_x = center_x - (slot_width / 2)
         self.slot_rects: list[pygame.Rect] = []
-        for i in range(constants.NUM_SAVE_SLOTS):
+        for i in range(self.NUM_SAVE_SLOTS):
             rect = pygame.Rect(slot_x, start_y + i * (slot_height + slot_gap), slot_width, slot_height)
             self.slot_rects.append(rect)
 
@@ -57,7 +59,7 @@ class SaveSelection:
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
     def load_summaries(self) -> None:
-        self.summaries = [self.save_manager.get_save_summary(i) for i in range(constants.NUM_SAVE_SLOTS)]
+        self.summaries = [self.save_manager.get_save_summary(i) for i in range(self.NUM_SAVE_SLOTS)]
         self.show_delete_button = any(not s["empty"] for s in self.summaries)
 
         if self.delete_mode and not self.show_delete_button:

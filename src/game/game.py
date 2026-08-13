@@ -22,6 +22,11 @@ from ..types.menu_results import MenuResults
 class Game:
     """Manages the overall game state, main loop, and coordination between Car and Track"""
 
+    GAME_TITLE: str = "RC Rumble Racing"
+    CURSOR_WIDTH: int = 40
+    CURSOR_HEIGHT: int = 40
+    CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
+
     width: int
     height: int
     screen: pygame.Surface
@@ -59,7 +64,7 @@ class Game:
         pygame.init()
         pygame.font.init()
         pygame.mixer.init()
-        pygame.display.set_caption(constants.GAME_TITLE)
+        pygame.display.set_caption(self.GAME_TITLE)
 
         # Create the window
         self.width = constants.WIDTH
@@ -92,8 +97,8 @@ class Game:
         self.next_state = None
 
         self.custom_cursor_image = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
-        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
-        self.click_sound = pygame.mixer.Sound(constants.CLICK_SOUND_PATH)
+        self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (self.CURSOR_WIDTH, self.CURSOR_HEIGHT))
+        self.click_sound = pygame.mixer.Sound(self.CLICK_SOUND_PATH)
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
 
         # Apply volumes immediately
