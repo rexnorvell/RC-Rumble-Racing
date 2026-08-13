@@ -57,18 +57,6 @@ class ControlsMenu:
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
-        # Transitions
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 0
-        self.transition_prev_pause_time: int = 0
-        self.transition_next_duration_ms: int = 0
-        self.transition_next_pause_time: int = 0
-
     def generate_rects(self):
         """Creates the rects for the key binding buttons."""
         start_x = constants.WIDTH // 2 + 100
@@ -198,21 +186,3 @@ class ControlsMenu:
 
         if self.dialog:
             self.dialog.draw()
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        """Set flags and store the starting time of the transition"""
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-        self.end_transition()
-
-    def end_transition(self) -> None:
-        """Reset flags after the transition is complete"""
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False

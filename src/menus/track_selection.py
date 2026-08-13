@@ -111,23 +111,8 @@ class TrackSelection:
         self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
-        # Transitions
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 0
-        self.transition_next_duration_ms: int = 400
-        self.transition_next_pause_time: int = 400
-
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         """Handles events like button presses"""
-
-        if self.transitioning:
-            return None
 
         hovered_index: int = self.nothing_hovered_index
 
@@ -190,46 +175,7 @@ class TrackSelection:
     def draw(self) -> None:
         """Draws the track selection screen"""
         self.screen.blit(self.background_image, (0, 0))
-        if self.transitioning:
-            self.handle_transitions()
-        else:
-            self.blit_current_images(0)
-
-    def handle_transitions(self):
-        """Handles the four kinds of transitions:
-            - Transitioning from the previous screen to the current screen (self.transitioning_from_prev)
-            - Transitioning from the current screen to the next screen (self.transitioning_to_next)
-            - Transitioning from the current screen to the previous screen (self.transitioning_to_prev)
-            - Transitioning from the next screen to the current screen (self.transitioning_from_next)
-        """
-        foreground_x: int = 0
-        current_time: int = pygame.time.get_ticks()
-        time_elapsed_ms: int = current_time - self.transition_start_time_ms
-
-        if self.transitioning_from_prev:
-            if time_elapsed_ms >= self.transition_prev_duration_ms:
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
-                foreground_x = constants.WIDTH - int(percent_progress * constants.WIDTH)
-        elif self.transitioning_to_prev:
-            if time_elapsed_ms >= self.transition_prev_duration_ms:
-                foreground_x = constants.WIDTH
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
-                foreground_x = int(percent_progress * constants.WIDTH)
-        self.blit_current_images(foreground_x)
-
-        if self.transitioning_to_next or self.transitioning_from_next:
-            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms,
-                                                             self.transition_next_duration_ms,
-                                                             self.transitioning_to_next,
-                                                             self.transition_next_pause_time, self.game.garage_door)
-            if is_over:
-                self.end_transition()
+        self.blit_current_images(0)
 
     def blit_current_images(self, x: int) -> None:
         """Draws the current images to the screen with an optional x offset"""
@@ -238,21 +184,3 @@ class TrackSelection:
         self.screen.blit(self.third_image, (x + 302, 420))
         self.screen.blit(self.fourth_image, (x + 727, 420))
         self.screen.blit(self.back_current_image, (x + self.back_button_x, self.back_button_y))
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        """Set flags and store the starting time of the transition"""
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-
-    def end_transition(self) -> None:
-        """Reset flags after the transition is complete"""
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False
-        self.set_current_images(self.nothing_hovered_index)

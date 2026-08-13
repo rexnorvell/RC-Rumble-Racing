@@ -104,18 +104,6 @@ class CarSelection:
         self.select_sound_color = pygame.mixer.Sound(constants.SELECT_PAINT_SOUND_PATH)
         self.select_sound_color.set_volume(self.save_manager.get_volumes()["sfx"])
 
-        # Transitions
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 400
-        self.transition_next_duration_ms: int = 400
-        self.transition_next_pause_time: int = 400
-
     def _update_color_buttons(self):
         """Recalculates color button positions based on the current car"""
         styles = constants.CAR_DEFINITIONS[self.current_car_index]["styles"]
@@ -133,9 +121,6 @@ class CarSelection:
             self.color_buttons.append((rect, i))
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
-
-        if self.transitioning:
-            return None
 
         self._update_color_buttons()
 
@@ -257,40 +242,3 @@ class CarSelection:
 
         self.select_current_image = self.select_hover_image if self.last_hovered == "select" else self.select_default_image
         self.screen.blit(self.select_current_image, (self.select_button_x, self.select_button_y))
-
-        # Handle transitions
-        if self.transitioning:
-            self.handle_transitions()
-
-    def handle_transitions(self):
-        """Handles the four kinds of transitions:
-            - Transitioning from the previous screen to the current screen (self.transitioning_from_prev)
-            - Transitioning from the current screen to the next screen (self.transitioning_to_next)
-            - Transitioning from the current screen to the previous screen (self.transitioning_to_prev)
-            - Transitioning from the next screen to the current screen (self.transitioning_from_next)
-        """
-        if self.transitioning_from_prev or self.transitioning_to_prev:
-            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms, self.transition_prev_duration_ms, self.transitioning_to_prev, self.transition_prev_pause_time, self.game.garage_door)
-            if is_over:
-                self.end_transition()
-        elif self.transitioning_from_next or self.transitioning_to_next:
-            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms, self.transition_next_duration_ms, self.transitioning_to_next, self.transition_next_pause_time, self.game.garage_door)
-            if is_over:
-                self.end_transition()
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        """Set flags and store the starting time of the transition"""
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-
-    def end_transition(self) -> None:
-        """Reset flags after the transition is complete"""
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False

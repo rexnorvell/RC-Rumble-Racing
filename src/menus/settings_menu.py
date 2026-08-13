@@ -48,18 +48,6 @@ class SettingsMenu:
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
-        # Transitions
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 400
-        self.transition_next_duration_ms: int = 400
-        self.transition_next_pause_time: int = 400
-
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         hovered: GameState | None = None
 
@@ -103,35 +91,3 @@ class SettingsMenu:
         back_color = constants.TRACK_SELECTION_EXIT_HOVER_COLOR if self.last_hovered == constants.TITLE_SCREEN_NAME else constants.TRACK_SELECTION_EXIT_COLOR
         back_surf = self.button_font.render("Back", True, back_color)
         self.screen.blit(back_surf, back_surf.get_rect(center=self.back_button_rect.center))
-
-        if self.transitioning:
-            self.handle_transitions()
-
-    def handle_transitions(self):
-        if self.transitioning_to_next or self.transitioning_from_next:
-            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms,
-                                                                    self.transition_next_duration_ms,
-                                                                    self.transitioning_to_next,
-                                                                    self.transition_next_pause_time,
-                                                                    self.game.dark_overlay)
-            if is_over:
-                self.end_transition()
-        elif self.transitioning_from_prev or self.transitioning_to_prev:
-            self.end_transition()
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        """Set flags and store the starting time of the transition"""
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-
-    def end_transition(self) -> None:
-        """Reset flags after the transition is complete"""
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False

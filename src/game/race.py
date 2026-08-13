@@ -208,18 +208,6 @@ class Race:
         self.lap_shadow: pygame.Surface = None
         self.countdown_font: pygame.font.Font = pygame.font.Font(constants.TEXT_FONT_PATH, 120)
 
-        # Transitions
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 400
-        self.transition_next_duration_ms: int = 400
-        self.transition_next_pause_time: int = 400
-
     def _get_current_time(self):
         self.current_time = pygame.time.get_ticks()
 
@@ -350,9 +338,6 @@ class Race:
         if self.race_over and not self.is_paused:
             self._draw_race_over_menu()
 
-        if self.transitioning:
-            self.handle_transition()
-
         if self.is_paused or self.race_over:
             self.game.draw_cursor()
 
@@ -428,7 +413,6 @@ class Race:
                     getattr(self.opponent, 'path_points', False) or getattr(self.opponent, 'recording_data', False)))
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
-        self.initialize_transition(start_transition=False, backwards=False)
         self._play_next_track()
 
     def _get_personal_best_time(self) -> None:
@@ -748,29 +732,3 @@ class Race:
                 self.game.game_surface.blit(self.btn_exit_hover, self.exit_race_over_button_rect)
             else:
                 self.game.game_surface.blit(self.btn_exit_default, self.exit_race_over_button_rect)
-
-    def handle_transition(self):
-        if self.transitioning_from_prev or self.transitioning_to_prev:
-            is_over: bool = utilities.draw_fade_to_black_transition(self.game.game_surface,
-                                                                    self.transition_start_time_ms,
-                                                                    self.transition_next_duration_ms,
-                                                                    self.transitioning_to_prev,
-                                                                    self.transition_next_pause_time,
-                                                                    self.game.dark_overlay)
-            if is_over:
-                self.end_transition()
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-
-    def end_transition(self) -> None:
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False

@@ -177,11 +177,6 @@ class Game:
                 self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
         return events
 
-    def _is_transition_backwards(self) -> bool:
-        current_index: int = self.game_states.get(self.current_state, GameStateInfo(None, 0)).index
-        next_index: int = 100 if self.next_state == GameState.RACE_MENU else self.game_states.get(self.next_state, GameStateInfo(None, 0)).index
-        return next_index <= current_index
-
     def start(self) -> None:
         pygame.mouse.set_visible(False)
         self._play_intro_music()
@@ -196,27 +191,17 @@ class Game:
             events = self._handle_events()
             self.set_scaled_mouse_pos()
 
-            menu_results: MenuResults | None = None
-            if not self.game_states[self.current_state].screen.transitioning:
-                menu_results = self.game_states[self.current_state].screen.handle_events(events, self.scaled_mouse_pos)
+            menu_results: MenuResults | None = self.game_states[self.current_state].screen.handle_events(events, self.scaled_mouse_pos)
 
             if menu_results is not None:
                 self._handle_menu_results(menu_results)
                 self.click_sound.play()
                 self.next_state = menu_results.next_state
-                start_transition: bool = True
-                backwards: bool = self._is_transition_backwards()
-                self.game_states[self.current_state].screen.initialize_transition(start_transition=start_transition, backwards=backwards)
 
-            if self.next_state != None and not self.game_states[self.current_state].screen.transitioning:
+            if self.next_state != None:
                 if self.next_state != GameState.RACE_MENU:
-                    start_transition: bool = False
-                    backwards: bool = self._is_transition_backwards()
-
                     if self.current_state == GameState.SAVE_FILE_MENU:
                         self.save_selection.load_summaries()
-
-                    self.game_states[self.next_state].screen.initialize_transition(start_transition=start_transition, backwards=backwards)
                     self.current_state = self.next_state
                     self.next_state = None
                 else:
@@ -263,3 +248,37 @@ class Game:
             self.race = Race(self, self.track_name, self.car_index, self.style_index, self.difficulty,
                              self.save_manager)
             racing = self.race.start()
+
+"""
+    def handle_transitions(self):
+        if self.transitioning_to_prev or self.transitioning_from_prev:
+            is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms,
+                                                                self.transition_prev_duration_ms,
+                                                                self.transitioning_to_prev,
+                                                                self.transition_prev_pause_time, self.game.garage_door)
+            if is_over:
+                self.end_transition()
+        elif self.transitioning_to_next or self.transitioning_from_next:
+            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms,
+                                                                    self.transition_next_duration_ms,
+                                                                    self.transitioning_to_next,
+                                                                    self.transition_next_pause_time,
+                                                                    self.game.dark_overlay)
+            if is_over:
+                self.end_transition()
+
+    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
+        self.transition_start_time_ms: int = pygame.time.get_ticks()
+        self.transitioning = True
+        self.transitioning_to_prev = start_transition and backwards
+        self.transitioning_from_prev = not start_transition and not backwards
+        self.transitioning_to_next = start_transition and not backwards
+        self.transitioning_from_next = not start_transition and backwards
+
+    def end_transition(self) -> None:
+        self.transitioning = False
+        self.transitioning_to_prev = False
+        self.transitioning_from_prev = False
+        self.transitioning_to_next = False
+        self.transitioning_from_next = False
+    """

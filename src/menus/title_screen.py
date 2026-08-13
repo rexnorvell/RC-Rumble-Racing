@@ -72,18 +72,6 @@ class TitleScreen:
         self.hover_sound_played: bool = False
         self.last_hovered: int = 0  # 0=None, 1=Start, 2=Settings
 
-        # Transitions
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 0
-        self.transition_next_duration_ms: int = 400
-        self.transition_next_pause_time: int = 0
-
     def play_intro(self, screen: pygame.Surface) -> bool:
         """Plays the intro video before displaying the title screen."""
         intro_sound = pygame.mixer.Sound(constants.INTRO_AUDIO_PATH)
@@ -134,9 +122,6 @@ class TitleScreen:
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         """Handles events like button presses."""
 
-        if self.transitioning:
-            return None
-
         hovered_index: int
 
         if self.button_rect.collidepoint(mouse_pos):
@@ -183,67 +168,7 @@ class TitleScreen:
             icon_rect = self.settings_icon_rect.move(x_offset, 0)
             self.screen.blit(icon_to_draw, icon_rect)
 
-    def handle_transitions(self):
-        foreground_image_x: int = 0
-
-        # SLIDE: To Save Selection (Slide out to left)
-        if self.transitioning_to_next:
-            current_time: int = pygame.time.get_ticks()
-            time_elapsed_ms: int = current_time - self.transition_start_time_ms
-            if time_elapsed_ms >= self.transition_next_duration_ms + self.transition_next_pause_time:
-                foreground_image_x = -constants.WIDTH
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
-                foreground_image_x = int(-percent_progress * constants.WIDTH)
-            self._draw_content(foreground_image_x)  # Draw the content at the offset
-
-        # SLIDE: From Save Selection (Slide in from left)
-        elif self.transitioning_from_next:
-            current_time: int = pygame.time.get_ticks()
-            time_elapsed_ms: int = current_time - self.transition_start_time_ms
-            if time_elapsed_ms >= self.transition_next_duration_ms:
-                foreground_image_x = 0
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
-                foreground_image_x = int(percent_progress * constants.WIDTH) - constants.WIDTH
-            self._draw_content(foreground_image_x)  # Draw the content at the offset
-
-        # FADE: To/From Settings
-        if self.transitioning_to_prev or self.transitioning_from_prev:
-            is_over: bool = utilities.draw_fade_to_black_transition(self.screen, self.transition_start_time_ms,
-                                                                    self.transition_prev_duration_ms,
-                                                                    self.transitioning_to_prev,
-                                                                    self.transition_prev_pause_time,
-                                                                    self.game.dark_overlay)
-            if is_over:
-                self.end_transition()
-
     def draw(self) -> None:
         """Draws the title screen."""
         self.screen.blit(self.title_background_image, (0, 0))
-
-        if self.transitioning:
-            self.handle_transitions()
-        else:
-            self._draw_content(0)  # Draw content at rest
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        """Set flags and store the starting time of the transition"""
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-
-    def end_transition(self) -> None:
-        """Reset flags after the transition is complete"""
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False
+        self._draw_content(0)

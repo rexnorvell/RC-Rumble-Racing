@@ -57,17 +57,6 @@ class SaveSelection:
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
-        self.transitioning: bool = False
-        self.transitioning_from_prev: bool = False
-        self.transitioning_to_prev: bool = False
-        self.transitioning_to_next: bool = False
-        self.transitioning_from_next: bool = False
-        self.transition_start_time_ms: int = 0
-        self.transition_prev_duration_ms: int = 400
-        self.transition_prev_pause_time: int = 0
-        self.transition_next_duration_ms: int = 400
-        self.transition_next_pause_time: int = 0
-
     def load_summaries(self) -> None:
         self.summaries = [self.save_manager.get_save_summary(i) for i in range(constants.NUM_SAVE_SLOTS)]
         self.show_delete_button = any(not s["empty"] for s in self.summaries)
@@ -86,9 +75,6 @@ class SaveSelection:
             elif action == "no":
                 self.dialog = None
                 self.pending_delete_slot = -1
-            return None
-
-        if self.transitioning:
             return None
 
         hovered = "none"
@@ -215,73 +201,6 @@ class SaveSelection:
 
     def draw(self) -> None:
         self.screen.blit(self.background, (0, 0))
-
-        if self.transitioning:
-            self.handle_transitions()
-        else:
-            self._draw_content(0)
-            if self.dialog:
-                self.dialog.draw()
-
-    def handle_transitions(self):
-        current_time: int = pygame.time.get_ticks()
-        time_elapsed_ms: int = current_time - self.transition_start_time_ms
-        foreground_x: int
-
-        if self.transitioning_from_prev:
-            if time_elapsed_ms >= self.transition_prev_duration_ms:
-                foreground_x = 0
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
-                foreground_x = constants.WIDTH - int(percent_progress * constants.WIDTH)
-            self._draw_content(foreground_x)
-
-        elif self.transitioning_to_prev:
-            if time_elapsed_ms >= self.transition_prev_duration_ms:
-                foreground_x = constants.WIDTH
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_prev_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_prev_duration_ms
-                foreground_x = int(percent_progress * constants.WIDTH)
-            self._draw_content(foreground_x)
-
-        elif self.transitioning_to_next:
-            if time_elapsed_ms >= self.transition_next_duration_ms:
-                foreground_x = -constants.WIDTH
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
-                foreground_x = int(-percent_progress * constants.WIDTH)
-            self._draw_content(foreground_x)
-
-        elif self.transitioning_from_next:
-            if time_elapsed_ms >= self.transition_next_duration_ms:
-                foreground_x = 0
-                self.end_transition()
-            else:
-                transition_time_elapsed_ms: int = min(time_elapsed_ms, self.transition_next_duration_ms)
-                percent_progress: float = transition_time_elapsed_ms / self.transition_next_duration_ms
-                foreground_x = int(percent_progress * constants.WIDTH) - constants.WIDTH
-            self._draw_content(foreground_x)
-
-    def initialize_transition(self, start_transition: bool, backwards: bool) -> None:
-        self.transition_start_time_ms: int = pygame.time.get_ticks()
-        self.transitioning = True
-        self.transitioning_to_prev = start_transition and backwards
-        self.transitioning_from_prev = not start_transition and not backwards
-        self.transitioning_to_next = start_transition and not backwards
-        self.transitioning_from_next = not start_transition and backwards
-
-    def end_transition(self) -> None:
-        self.transitioning = False
-        self.transitioning_to_prev = False
-        self.transitioning_from_prev = False
-        self.transitioning_to_next = False
-        self.transitioning_from_next = False
-        if self.transitioning_from_prev:
-            self.load_summaries()
-            self.delete_mode = False
+        self._draw_content(0)
+        if self.dialog:
+            self.dialog.draw()
