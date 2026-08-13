@@ -15,6 +15,7 @@ from .race import Race
 from ..enums.difficulty import Difficulty
 from ..enums.track_name import TrackName
 from ..enums.game_state import GameState
+from ..types.game_state_info import GameStateInfo
 
 
 class Game:
@@ -34,7 +35,7 @@ class Game:
     settings_menu: SettingsMenu
     controls_menu: ControlsMenu
     sound_menu: SoundMenu
-    game_states: dict[GameState, tuple[object, int]]
+    game_states: dict[GameState, GameStateInfo]
     custom_cursor_image: pygame.Surface
     current_state: GameState | None
     next_state: GameState | None
@@ -76,15 +77,15 @@ class Game:
         self.settings_menu = SettingsMenu(self, self.game_surface, self.save_manager)
         self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
         self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
-        self.game_states: dict[str, tuple[object, int]] = {
-            GameState.TITLE_MENU: (self.title_screen, 0),
-            GameState.SAVE_FILE_MENU: (self.save_selection, 1),
-            GameState.TRACK_SELECTION_MENU: (self.track_selection, 2),
-            GameState.VEHICLE_SELECTION_MENU: (self.car_selection, 3),
-            GameState.DIFFICULTY_SELECTION_MENU: (self.difficulty_selection, 4),
-            GameState.SETTINGS_MENU: (self.settings_menu, -1),
-            GameState.KEYBINDS_MENU: (self.controls_menu, -2),
-            GameState.SOUND_MENU: (self.sound_menu, -3)
+        self.game_states: dict[GameState, tuple[object, int]] = {
+            GameState.TITLE_MENU: GameStateInfo(self.title_screen, 0),
+            GameState.SAVE_FILE_MENU: GameStateInfo(self.save_selection, 1),
+            GameState.TRACK_SELECTION_MENU: GameStateInfo(self.track_selection, 2),
+            GameState.VEHICLE_SELECTION_MENU: GameStateInfo(self.car_selection, 3),
+            GameState.DIFFICULTY_SELECTION_MENU: GameStateInfo(self.difficulty_selection, 4),
+            GameState.SETTINGS_MENU: GameStateInfo(self.settings_menu, -1),
+            GameState.KEYBINDS_MENU: GameStateInfo(self.controls_menu, -2),
+            GameState.SOUND_MENU: GameStateInfo(self.sound_menu, -3)
         }
         self.current_state = None
         self.next_state = None
@@ -126,14 +127,14 @@ class Game:
         self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
 
         self.game_states: dict[str, tuple[object, int]] = {
-            GameState.TITLE_MENU: (self.title_screen, 0),
-            GameState.SAVE_FILE_MENU: (self.save_selection, 1),
-            GameState.TRACK_SELECTION_MENU: (self.track_selection, 2),
-            GameState.VEHICLE_SELECTION_MENU: (self.car_selection, 3),
-            GameState.DIFFICULTY_SELECTION_MENU: (self.difficulty_selection, 4),
-            GameState.SETTINGS_MENU: (self.settings_menu, -1),
-            GameState.KEYBINDS_MENU: (self.controls_menu, -2),
-            GameState.SOUND_MENU: (self.sound_menu, -3)
+            GameState.TITLE_MENU: GameStateInfo(self.title_screen, 0),
+            GameState.SAVE_FILE_MENU: GameStateInfo(self.save_selection, 1),
+            GameState.TRACK_SELECTION_MENU: GameStateInfo(self.track_selection, 2),
+            GameState.VEHICLE_SELECTION_MENU: GameStateInfo(self.car_selection, 3),
+            GameState.DIFFICULTY_SELECTION_MENU: GameStateInfo(self.difficulty_selection, 4),
+            GameState.SETTINGS_MENU: GameStateInfo(self.settings_menu, -1),
+            GameState.KEYBINDS_MENU: GameStateInfo(self.controls_menu, -2),
+            GameState.SOUND_MENU: GameStateInfo(self.sound_menu, -3)
         }
 
     def set_track_name(self, track_name: TrackName) -> None:
@@ -186,8 +187,8 @@ class Game:
         return events
 
     def _is_transition_backwards(self) -> bool:
-        current_index: int = self.game_states.get(self.current_state, [None, 0])[1]
-        next_index: int = 100 if self.next_state == GameState.RACE_MENU else self.game_states.get(self.next_state, [None, 0])[1]
+        current_index: int = self.game_states.get(self.current_state, GameStateInfo(None, 0)).index
+        next_index: int = 100 if self.next_state == GameState.RACE_MENU else self.game_states.get(self.next_state, GameStateInfo(None, 0)).index
         return next_index <= current_index
 
     def start(self) -> None:
@@ -205,8 +206,8 @@ class Game:
             self.set_scaled_mouse_pos()
 
             next_action: str = constants.NO_ACTION_CODE
-            if not self.game_states[self.current_state][0].transitioning:
-                next_action = self.game_states[self.current_state][0].handle_events(events, self.scaled_mouse_pos)
+            if not self.game_states[self.current_state].screen.transitioning:
+                next_action = self.game_states[self.current_state].screen.handle_events(events, self.scaled_mouse_pos)
 
             if next_action == constants.EXIT_GAME_CODE:
                 utilities.quit_game()
@@ -215,9 +216,9 @@ class Game:
                 self.next_state = next_action
                 start_transition: bool = True
                 backwards: bool = self._is_transition_backwards()
-                self.game_states[self.current_state][0].initialize_transition(start_transition=start_transition, backwards=backwards)
+                self.game_states[self.current_state].screen.initialize_transition(start_transition=start_transition, backwards=backwards)
 
-            if self.next_state != None and not self.game_states[self.current_state][0].transitioning:
+            if self.next_state != None and not self.game_states[self.current_state].screen.transitioning:
                 if self.next_state != GameState.RACE_MENU:
                     start_transition: bool = False
                     backwards: bool = self._is_transition_backwards()
@@ -225,7 +226,7 @@ class Game:
                     if self.current_state == GameState.SAVE_FILE_MENU:
                         self.save_selection.load_summaries()
 
-                    self.game_states[self.next_state][0].initialize_transition(start_transition=start_transition, backwards=backwards)
+                    self.game_states[self.next_state].screen.initialize_transition(start_transition=start_transition, backwards=backwards)
                     self.current_state = self.next_state
                     self.next_state = None
                 else:
@@ -236,7 +237,7 @@ class Game:
                     self.current_state = GameState.TRACK_SELECTION_MENU
                     self.next_state = None
 
-            self.game_states[self.current_state][0].draw()
+            self.game_states[self.current_state].screen.draw()
             self.draw_cursor()
             self.draw_letterboxed_surface()
             pygame.display.flip()
