@@ -28,7 +28,8 @@
             "hard"
         ],
         "glistening_glacier": [
-            "easy"
+            "easy",
+            "medium"
         ]
     }
 }

@@ -2,6 +2,7 @@ import pygame
 
 from ..utilities import constants
 from ..utilities.ui_elements import ConfirmationDialog
+from ..enums.game_state import GameState
 
 
 class ControlsMenu:
@@ -49,8 +50,8 @@ class ControlsMenu:
         self.back_button_rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
         self.save_button_rect = pygame.Rect(constants.WIDTH - 170, constants.HEIGHT - 70, 150, 50)
 
-        self.last_hovered = "none"  # "back", "save", or action_key
-        self.awaiting_input_for = None  # Stores the action_key (e.g., "FORWARD")
+        self.last_hovered: int | GameState | str = constants.NO_ACTION_CODE
+        self.awaiting_input_for = None
         self.dialog = None
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
@@ -84,9 +85,7 @@ class ControlsMenu:
         """Checks if settings are different from initial."""
         return self.current_bindings != self.initial_bindings
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
-        """Returns 'back', 'exit', or ''."""
-
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
         if self.dialog:
             action = self.dialog.handle_events(events, mouse_pos)
             if action == "yes":
@@ -101,21 +100,21 @@ class ControlsMenu:
         if self.awaiting_input_for:
             for event in events:
                 if event.type == pygame.KEYDOWN:
-                    if event.key != pygame.K_ESCAPE:  # Not allowed
+                    if event.key != pygame.K_ESCAPE:
                         # Check if key is already used
                         for action, key in self.current_bindings.items():
                             if key == event.key and action != self.awaiting_input_for:
-                                self.current_bindings[action] = -1  # Unbind old one (set to invalid)
+                                self.current_bindings[action] = -1
 
                         self.current_bindings[self.awaiting_input_for] = event.key
                         self.awaiting_input_for = None
                     elif event.key == pygame.K_ESCAPE:
-                        self.awaiting_input_for = None  # Cancel binding
+                        self.awaiting_input_for = None
             return constants.NO_ACTION_CODE
 
         hovered = constants.NO_ACTION_CODE
         if self.back_button_rect.collidepoint(mouse_pos):
-            hovered = constants.SETTINGS_MENU_NAME
+            hovered = GameState.SETTINGS_MENU
         elif self.settings_changed() and self.save_button_rect.collidepoint(mouse_pos):
             hovered = "save"
         else:
@@ -131,10 +130,9 @@ class ControlsMenu:
         for event in events:
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if hovered == constants.SETTINGS_MENU_NAME:
-                    # Discard changes
+                if hovered == GameState.SETTINGS_MENU:
                     self.current_bindings = self.initial_bindings.copy()
-                    return constants.SETTINGS_MENU_NAME
+                    return GameState.SETTINGS_MENU
                 elif hovered == "save":
                     self.save_manager.game.click_sound.play()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)

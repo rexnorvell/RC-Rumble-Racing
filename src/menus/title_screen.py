@@ -3,6 +3,7 @@ import pygame
 
 from ..utilities import constants
 from ..utilities import utilities
+from ..enums.game_state import GameState
 
 
 class TitleScreen:
@@ -129,7 +130,7 @@ class TitleScreen:
             self.intro_clip.close()
         return True
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
         """Handles events like button presses."""
 
         if self.transitioning:
@@ -152,7 +153,7 @@ class TitleScreen:
                 self.current_image = self.title_hover_image
             elif hovered_index == 2:
                 self.hover_sound.play()
-                self.current_image = self.title_default_image  # Keep default bg
+                self.current_image = self.title_default_image
             else:
                 self.current_image = self.title_default_image
 
@@ -165,9 +166,9 @@ class TitleScreen:
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == 1:
                     self.current_image = self.title_default_image
-                    return constants.SAVE_SELECTION_NAME
+                    return GameState.SAVE_FILE_MENU
                 elif hovered_index == 2:
-                    return constants.SETTINGS_MENU_NAME
+                    return GameState.SETTINGS_MENU
         return constants.NO_ACTION_CODE
 
     def _draw_content(self, x_offset: int = 0):

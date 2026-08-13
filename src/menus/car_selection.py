@@ -2,6 +2,7 @@ import pygame
 
 from ..utilities import constants
 from ..utilities import utilities
+from ..enums.game_state import GameState
 
 
 class CarSelection:
@@ -15,10 +16,7 @@ class CarSelection:
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
-        # --- Load Background ---
         self.background_image: pygame.Surface = utilities.load_image(constants.CAR_SELECTION_IMAGE_PATH.format(image_name="default"), False, constants.WIDTH, constants.HEIGHT)
-
-        # --- Load Car Sprites ---
         self.car_sprites: dict[str, pygame.Surface] = {}
 
         # We need to iterate through all cars and their styles to load all possible sprites
@@ -97,14 +95,13 @@ class CarSelection:
         # Color buttons are now dynamic, stored in a list of (Rect, index)
         self.color_buttons: list[tuple[pygame.Rect, int]] = []
 
-        # --- MODIFIED: Sound ---
-        self.hover_sound_nav = pygame.mixer.Sound(constants.HOVER_SOUND_PATH) # For Back/Select
+        # --- Sound ---
+        self.hover_sound_nav = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound_nav.set_volume(self.save_manager.get_volumes()["sfx"])
-        self.hover_sound_arrow = pygame.mixer.Sound(constants.HOVER_2_SOUND_PATH) # For car arrows
+        self.hover_sound_arrow = pygame.mixer.Sound(constants.HOVER_2_SOUND_PATH)
         self.hover_sound_arrow.set_volume(self.save_manager.get_volumes()["sfx"])
-        self.select_sound_color = pygame.mixer.Sound(constants.SELECT_PAINT_SOUND_PATH) # For colors
+        self.select_sound_color = pygame.mixer.Sound(constants.SELECT_PAINT_SOUND_PATH)
         self.select_sound_color.set_volume(self.save_manager.get_volumes()["sfx"])
-        # --- END MODIFIED ---
 
         # Transitions
         self.transitioning: bool = False
@@ -134,15 +131,12 @@ class CarSelection:
             rect = pygame.Rect(x, y, button_size, button_size)
             self.color_buttons.append((rect, i))
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str | dict:
-        """
-        Returns 'exit', 'back', '', or a dict {'car_index': int, 'style_index': int} on select.
-        """
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
 
         if self.transitioning:
             return constants.NO_ACTION_CODE
 
-        self._update_color_buttons()  # Ensure buttons are up to date
+        self._update_color_buttons()
 
         hovered_key: str = "none"
         hovered_style_index = -1
@@ -151,8 +145,7 @@ class CarSelection:
         if self.current_car_index > 0 and self.arrow_left_rect.collidepoint(mouse_pos):
             hovered_key = "arrow_left"
         # Only interact with right arrow if we are NOT at the last car
-        elif self.current_car_index < len(constants.CAR_DEFINITIONS) - 1 and self.arrow_right_rect.collidepoint(
-                mouse_pos):
+        elif self.current_car_index < len(constants.CAR_DEFINITIONS) - 1 and self.arrow_right_rect.collidepoint(mouse_pos):
             hovered_key = "arrow_right"
         elif self.back_button_rect.collidepoint(mouse_pos):
             hovered_key = "back"
@@ -165,7 +158,6 @@ class CarSelection:
                     hovered_style_index = idx
                     break
 
-        # --- MODIFIED: Play conditional hover sound ---
         if hovered_key != self.last_hovered:
             if hovered_key in ["arrow_left", "arrow_right"]:
                 self.hover_sound_arrow.play()
@@ -173,7 +165,6 @@ class CarSelection:
                 self.hover_sound_nav.play()
             # Removed color_button hover sound
         self.last_hovered = hovered_key
-        # --- END MODIFIED ---
 
         for event in events:
             if event.type == pygame.QUIT:
@@ -187,13 +178,13 @@ class CarSelection:
                     self.current_car_index += 1
                     self.current_style_index = 0
                 elif hovered_key == "color_button":
-                    self.select_sound_color.play() # <-- MOVED SOUND HERE
+                    self.select_sound_color.play()
                     self.current_style_index = hovered_style_index
                 elif hovered_key == "back":
-                    return constants.TRACK_SELECTION_NAME
+                    return GameState.TRACK_SELECTION_MENU
                 elif hovered_key == "select":
                     self.game.set_car_style(self.current_car_index, self.current_style_index)
-                    return constants.DIFFICULTY_SELECTION_NAME
+                    return GameState.DIFFICULTY_SELECTION_MENU
 
         return constants.NO_ACTION_CODE
 

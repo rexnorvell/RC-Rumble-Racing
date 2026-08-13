@@ -2,6 +2,7 @@ import pygame
 
 from ..utilities import constants
 from ..utilities.ui_elements import Slider, ConfirmationDialog
+from ..enums.game_state import GameState
 
 
 class SoundMenu:
@@ -46,7 +47,7 @@ class SoundMenu:
         self.back_button_rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
         self.save_button_rect = pygame.Rect(constants.WIDTH - 170, constants.HEIGHT - 70, 150, 50)
 
-        self.last_hovered = "none"  # "back", "save"
+        self.last_hovered: int | GameState | str = constants.NO_ACTION_CODE
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.current_volumes["sfx"])  # Use current SFX
 
@@ -68,7 +69,7 @@ class SoundMenu:
         """Checks if settings are different from initial."""
         return self.current_volumes != self.initial_volumes
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
         """Returns 'back', 'exit', or ''."""
 
         if self.dialog:
@@ -82,12 +83,12 @@ class SoundMenu:
                 self.dialog = None
             return constants.NO_ACTION_CODE
 
-        hovered = constants.NO_ACTION_CODE
+        hovered: int | GameState | str = constants.NO_ACTION_CODE
         slider_dragging = any(s.dragging for s in self.sliders)
 
         if not slider_dragging:
             if self.back_button_rect.collidepoint(mouse_pos):
-                hovered = constants.SETTINGS_MENU_NAME
+                hovered = GameState.SETTINGS_MENU
             elif self.settings_changed() and self.save_button_rect.collidepoint(mouse_pos):
                 hovered = "save"
 
@@ -114,12 +115,12 @@ class SoundMenu:
                 self.hover_sound.set_volume(self.current_volumes["sfx"])
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if hovered == constants.SETTINGS_MENU_NAME:
+                if hovered == GameState.SETTINGS_MENU:
                     # If changed, revert to initial settings
                     if self.settings_changed():
                         self.save_manager.update_volumes(self.initial_volumes)
                         self.save_manager.apply_volume_settings()  # Apply the revert
-                    return constants.SETTINGS_MENU_NAME
+                    return GameState.SETTINGS_MENU
                 elif hovered == "save":
                     self.save_manager.game.click_sound.play()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)

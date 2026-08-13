@@ -244,7 +244,7 @@ class Race:
             self._next_frame()
             self._get_current_time()
             self._get_elapsed_race_time()
-            self.game.get_scaled_mouse_pos()
+            self.game.set_scaled_mouse_pos()
             self._handle_race_events()
             if not pygame.mixer.music.get_busy() and not self.race_over and not self.is_paused:
                 self._play_next_track()

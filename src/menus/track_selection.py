@@ -2,6 +2,7 @@ import pygame
 
 from ..utilities import constants
 from ..utilities import utilities
+from ..enums.game_state import GameState
 
 
 class TrackSelection:
@@ -120,7 +121,7 @@ class TrackSelection:
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 400
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
         """Handles events like button presses"""
 
         if self.transitioning:
@@ -129,7 +130,7 @@ class TrackSelection:
         hovered_index: int = self.nothing_hovered_index
 
         # Check button hovers
-        for i, btn in enumerate(self.buttons):
+        for _, btn in enumerate(self.buttons):
             if btn["rect"].collidepoint(mouse_pos):
                 # Only allow hovering if the track is unlocked
                 if self.save_manager.is_track_unlocked(btn["track"]):
@@ -153,10 +154,10 @@ class TrackSelection:
                 return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == self.back_button_index:
-                    return constants.SAVE_SELECTION_NAME
+                    return GameState.SAVE_FILE_MENU
                 elif hovered_index > self.nothing_hovered_index:
                     self.game.set_track_name(self.buttons[hovered_index]["track"])
-                    return constants.CAR_SELECTION_NAME
+                    return GameState.VEHICLE_SELECTION_MENU
 
         return constants.NO_ACTION_CODE
 

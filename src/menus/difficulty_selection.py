@@ -4,6 +4,7 @@ from pathlib import Path
 from ..utilities import constants
 from ..utilities import utilities
 from ..enums.difficulty import Difficulty
+from ..enums.game_state import GameState
 
 
 class DifficultySelection:
@@ -77,7 +78,7 @@ class DifficultySelection:
         pb_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.game.track_name.value))
         return pb_path.exists()
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
         if self.transitioning:
             return constants.NO_ACTION_CODE
 
@@ -116,9 +117,9 @@ class DifficultySelection:
                 if hovered_index > 0:
                     selected_btn = self.buttons[hovered_index - 1]
                     self.game.set_difficulty(selected_btn["key"])
-                    return constants.RACE_SCREEN_NAME
+                    return GameState.RACE_MENU
                 elif hovered_index == 0:
-                    return constants.CAR_SELECTION_NAME
+                    return GameState.VEHICLE_SELECTION_MENU
 
         return constants.NO_ACTION_CODE
 

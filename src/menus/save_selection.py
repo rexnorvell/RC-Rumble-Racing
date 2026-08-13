@@ -3,6 +3,7 @@ import pygame
 from ..utilities import constants
 from ..utilities import utilities
 from ..utilities.ui_elements import ConfirmationDialog
+from ..enums.game_state import GameState
 
 
 class SaveSelection:
@@ -73,7 +74,7 @@ class SaveSelection:
         if self.delete_mode and not self.show_delete_button:
             self.delete_mode = False
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> str:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
         if self.dialog:
             action = self.dialog.handle_events(events, mouse_pos)
             if action == "yes":
@@ -111,7 +112,7 @@ class SaveSelection:
                 return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered == "back":
-                    return constants.TITLE_SCREEN_NAME
+                    return GameState.TITLE_MENU
                 elif hovered == "delete":
                     self.delete_mode = not self.delete_mode
                 elif "slot_" in hovered:
@@ -122,7 +123,7 @@ class SaveSelection:
                             self.dialog = ConfirmationDialog(self.screen, "Delete this save file?", self.button_font)
                     else:
                         self.game.set_save_slot_and_load(slot_index)
-                        return constants.TRACK_SELECTION_NAME
+                        return GameState.TRACK_SELECTION_MENU
 
         return constants.NO_ACTION_CODE
 

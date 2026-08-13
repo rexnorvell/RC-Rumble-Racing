@@ -14,6 +14,7 @@ from ..utilities import utilities
 from .race import Race
 from ..enums.difficulty import Difficulty
 from ..enums.track_name import TrackName
+from ..enums.game_state import GameState
 
 
 class Game:
@@ -33,11 +34,10 @@ class Game:
     settings_menu: SettingsMenu
     controls_menu: ControlsMenu
     sound_menu: SoundMenu
-    menu_screens: dict[str, object]
-    menu_screen_indices: dict[str, int]
+    game_states: dict[GameState, tuple[object, int]]
     custom_cursor_image: pygame.Surface
-    current_screen: str
-    next_screen: str
+    current_state: GameState | None
+    next_state: GameState | None
     click_sound: pygame.mixer.Sound
     hover_sound: pygame.mixer.Sound
     scale_factor: float
@@ -76,29 +76,18 @@ class Game:
         self.settings_menu = SettingsMenu(self, self.game_surface, self.save_manager)
         self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
         self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
-        self.menu_screens: dict[str, object] = {
-            constants.TITLE_SCREEN_NAME: self.title_screen,
-            constants.SAVE_SELECTION_NAME: self.save_selection,
-            constants.TRACK_SELECTION_NAME: self.track_selection,
-            constants.CAR_SELECTION_NAME: self.car_selection,
-            constants.DIFFICULTY_SELECTION_NAME: self.difficulty_selection,
-            constants.SETTINGS_MENU_NAME: self.settings_menu,
-            constants.CONTROLS_MENU_NAME: self.controls_menu,
-            constants.SOUND_MENU_NAME: self.sound_menu
+        self.game_states: dict[str, tuple[object, int]] = {
+            GameState.TITLE_MENU: (self.title_screen, 0),
+            GameState.SAVE_FILE_MENU: (self.save_selection, 1),
+            GameState.TRACK_SELECTION_MENU: (self.track_selection, 2),
+            GameState.VEHICLE_SELECTION_MENU: (self.car_selection, 3),
+            GameState.DIFFICULTY_SELECTION_MENU: (self.difficulty_selection, 4),
+            GameState.SETTINGS_MENU: (self.settings_menu, -1),
+            GameState.KEYBINDS_MENU: (self.controls_menu, -2),
+            GameState.SOUND_MENU: (self.sound_menu, -3)
         }
-        self.menu_screen_indices = {
-            constants.TITLE_SCREEN_NAME: 0,
-            constants.SAVE_SELECTION_NAME: 1,
-            constants.TRACK_SELECTION_NAME: 2,
-            constants.CAR_SELECTION_NAME: 3,
-            constants.DIFFICULTY_SELECTION_NAME: 4,
-            constants.RACE_SCREEN_NAME: 5,
-            constants.SETTINGS_MENU_NAME: -1,
-            constants.CONTROLS_MENU_NAME: -2,
-            constants.SOUND_MENU_NAME: -3
-        }
-        self.current_screen = ""
-        self.next_screen = ""
+        self.current_state = None
+        self.next_state = None
 
         self.custom_cursor_image = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
         self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (constants.CURSOR_WIDTH, constants.CURSOR_HEIGHT))
@@ -120,8 +109,7 @@ class Game:
         self.difficulty = None
 
         # Transitions
-        self.garage_door = utilities.load_image(constants.GENERAL_IMAGE_PATH.format(name="garage"),
-                                                                False, constants.WIDTH, constants.HEIGHT)
+        self.garage_door = utilities.load_image(constants.GENERAL_IMAGE_PATH.format(name="garage"), False, constants.WIDTH, constants.HEIGHT)
         self.dark_overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
 
     def set_save_slot_and_load(self, slot_index: int) -> None:
@@ -137,15 +125,15 @@ class Game:
         self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
         self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
 
-        self.menu_screens = {
-            constants.TITLE_SCREEN_NAME: self.title_screen,
-            constants.SAVE_SELECTION_NAME: self.save_selection,
-            constants.TRACK_SELECTION_NAME: self.track_selection,
-            constants.CAR_SELECTION_NAME: self.car_selection,
-            constants.DIFFICULTY_SELECTION_NAME: self.difficulty_selection,
-            constants.SETTINGS_MENU_NAME: self.settings_menu,
-            constants.CONTROLS_MENU_NAME: self.controls_menu,
-            constants.SOUND_MENU_NAME: self.sound_menu
+        self.game_states: dict[str, tuple[object, int]] = {
+            GameState.TITLE_MENU: (self.title_screen, 0),
+            GameState.SAVE_FILE_MENU: (self.save_selection, 1),
+            GameState.TRACK_SELECTION_MENU: (self.track_selection, 2),
+            GameState.VEHICLE_SELECTION_MENU: (self.car_selection, 3),
+            GameState.DIFFICULTY_SELECTION_MENU: (self.difficulty_selection, 4),
+            GameState.SETTINGS_MENU: (self.settings_menu, -1),
+            GameState.KEYBINDS_MENU: (self.controls_menu, -2),
+            GameState.SOUND_MENU: (self.sound_menu, -3)
         }
 
     def set_track_name(self, track_name: TrackName) -> None:
@@ -193,9 +181,14 @@ class Game:
         for event in events:
             if event.type == pygame.QUIT:
                 utilities.quit_game()
-            if event.type == pygame.VIDEORESIZE:
+            elif event.type == pygame.VIDEORESIZE:
                 self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
         return events
+
+    def _is_transition_backwards(self) -> bool:
+        current_index: int = self.game_states.get(self.current_state, [None, 0])[1]
+        next_index: int = 100 if self.next_state == GameState.RACE_MENU else self.game_states.get(self.next_state, [None, 0])[1]
+        return next_index <= current_index
 
     def start(self) -> None:
         pygame.mouse.set_visible(False)
@@ -204,67 +197,59 @@ class Game:
             utilities.quit_game()
         pygame.mouse.set_visible(False)
 
-        self.current_screen = self.title_screen.name
+        self.current_state = GameState.TITLE_MENU
         running: bool = True
         while running:
             self._play_intro_music()
             events = self._handle_events()
-            self.get_scaled_mouse_pos()
+            self.set_scaled_mouse_pos()
 
             next_action: str = constants.NO_ACTION_CODE
-            if not self.menu_screens[self.current_screen].transitioning:
-                next_action = self.menu_screens[self.current_screen].handle_events(events, self.scaled_mouse_pos)
+            if not self.game_states[self.current_state][0].transitioning:
+                next_action = self.game_states[self.current_state][0].handle_events(events, self.scaled_mouse_pos)
 
             if next_action == constants.EXIT_GAME_CODE:
                 utilities.quit_game()
             elif next_action != constants.NO_ACTION_CODE:
                 self.click_sound.play()
-                self.next_screen = next_action
+                self.next_state = next_action
                 start_transition: bool = True
-                backwards: bool = False if self.menu_screen_indices.get(self.next_screen, 0) > self.menu_screen_indices.get(self.current_screen, 0) else True
-                self.menu_screens[self.current_screen].initialize_transition(start_transition=start_transition,
-                                                                             backwards=backwards)
+                backwards: bool = self._is_transition_backwards()
+                self.game_states[self.current_state][0].initialize_transition(start_transition=start_transition, backwards=backwards)
 
-            if self.next_screen != "" and not self.menu_screens[self.current_screen].transitioning:
-                if self.next_screen != constants.RACE_SCREEN_NAME:
+            if self.next_state != None and not self.game_states[self.current_state][0].transitioning:
+                if self.next_state != GameState.RACE_MENU:
                     start_transition: bool = False
-                    backwards: bool = False if self.menu_screen_indices.get(self.next_screen,
-                                                                            0) > self.menu_screen_indices.get(
-                        self.current_screen, 0) else True
+                    backwards: bool = self._is_transition_backwards()
 
-                    if self.current_screen == constants.SAVE_SELECTION_NAME:
+                    if self.current_state == GameState.SAVE_FILE_MENU:
                         self.save_selection.load_summaries()
 
-                    self.menu_screens[self.next_screen].initialize_transition(start_transition=start_transition,
-                                                                              backwards=backwards)
-                    self.current_screen = self.next_screen
-                    self.next_screen = ""
+                    self.game_states[self.next_state][0].initialize_transition(start_transition=start_transition, backwards=backwards)
+                    self.current_state = self.next_state
+                    self.next_state = None
                 else:
                     self._start_race()
-                    # After race, reload screens to reflect unlocks
                     if self.save_manager.current_slot != -1:
                         self.set_save_slot_and_load(self.save_manager.current_slot - 1)
 
-                    self.current_screen = constants.TRACK_SELECTION_NAME
-                    self.next_screen = ""
+                    self.current_state = GameState.TRACK_SELECTION_MENU
+                    self.next_state = None
 
-            self.menu_screens[self.current_screen].draw()
+            self.game_states[self.current_state][0].draw()
             self.draw_cursor()
             self.draw_letterboxed_surface()
             pygame.display.flip()
             self.ui_clock.tick(60)
 
-    def get_scaled_mouse_pos(self) -> None:
+    def set_scaled_mouse_pos(self) -> None:
+        game_x = 0
+        game_y = 0
         pos = pygame.mouse.get_pos()
-        if self.scale_factor == 0:
-            self._set_scaled_mouse_pos(x=0, y=0)
-        else:
+        if self.scale_factor != 0:
             game_x = (pos[0] - self.offset_x) / self.scale_factor
             game_y = (pos[1] - self.offset_y) / self.scale_factor
-            self._set_scaled_mouse_pos(int(game_x), int(game_y))
-
-    def _set_scaled_mouse_pos(self, x: int, y: int) -> None:
-        self.scaled_mouse_pos = (x, y)
+        self.scaled_mouse_pos = (int(game_x), int(game_y))
 
     def draw_cursor(self) -> None:
         if (0 <= self.scaled_mouse_pos[0] < constants.WIDTH and
