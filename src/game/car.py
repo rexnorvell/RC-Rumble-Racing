@@ -3,6 +3,7 @@ import math
 import pygame
 
 from ..utilities import constants
+from ..enums.track_name import TrackName
 
 
 class Car:
@@ -135,8 +136,8 @@ class Car:
         self.respawn_y = y
         self.respawn_angle = angle
 
-    def log_properties(self, track_name: str) -> None:
+    def log_properties(self, track_name: TrackName) -> None:
         """Write the car's position and angle to the .csv file"""
-        with open(constants.REPLAY_FILE_PATH.format(track_name=track_name), "a", newline="") as replay_file:
+        with open(constants.REPLAY_FILE_PATH.format(track_name=track_name.value), "a", newline="") as replay_file:
             csv_writer = csv.writer(replay_file)
             csv_writer.writerow([self.x, self.y, self.move_angle, self.car_angle])

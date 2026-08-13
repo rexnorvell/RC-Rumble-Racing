@@ -73,7 +73,7 @@ class Race:
         self.pause_image_right: pygame.Surface = self.pause_default_image_right
 
         # Replay
-        self.current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
+        self.current_race_file: Path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name.value))
 
         # Race Over Menu Variables
         self.race_over_hover_index: int = 0
@@ -153,7 +153,7 @@ class Race:
         if self.difficulty == constants.GHOST_DIFFICULTY_PERSONAL_BEST:
             # -- GHOST MODE (Playback) --
             # Read metadata to find which car/style was used
-            meta_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+            meta_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
             pb_car_idx = 0
             pb_style_idx = 0
             if meta_path.exists():
@@ -433,7 +433,7 @@ class Race:
 
     def _get_personal_best_time(self) -> None:
         personal_best_metadata_path: Path = Path(
-            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+            constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
         self.personal_best_time = float("inf")
         if personal_best_metadata_path.exists():
             try:
@@ -444,7 +444,7 @@ class Race:
                 print("Error loading personal best metadata")
 
     def _create_replay_file(self) -> None:
-        replay_path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name))
+        replay_path = Path(constants.REPLAY_FILE_PATH.format(track_name=self.track.name.value))
         replay_path.parent.mkdir(parents=True, exist_ok=True)
         with replay_path.open("w", newline=""):
             pass
@@ -595,7 +595,7 @@ class Race:
         self.compared_to_best = True
         if self.elapsed_race_time_s < self.personal_best_time:
             personal_best_metadata_path: Path = Path(
-                constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name))
+                constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
             metadata = {
                 "time": self.elapsed_race_time_s,
                 "car_type_index": self.user_car_index,
