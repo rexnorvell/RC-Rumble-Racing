@@ -3,6 +3,7 @@ import pygame
 from ..utilities import constants
 from ..utilities.ui_elements import Slider, ConfirmationDialog
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class SoundMenu:
@@ -69,7 +70,7 @@ class SoundMenu:
         """Checks if settings are different from initial."""
         return self.current_volumes != self.initial_volumes
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         """Returns 'back', 'exit', or ''."""
 
         if self.dialog:
@@ -81,7 +82,7 @@ class SoundMenu:
                 self.dialog = None
             elif action == "no":
                 self.dialog = None
-            return constants.NO_ACTION_CODE
+            return None
 
         hovered: int | GameState | str = constants.NO_ACTION_CODE
         slider_dragging = any(s.dragging for s in self.sliders)
@@ -120,11 +121,11 @@ class SoundMenu:
                     if self.settings_changed():
                         self.save_manager.update_volumes(self.initial_volumes)
                         self.save_manager.apply_volume_settings()  # Apply the revert
-                    return GameState.SETTINGS_MENU
+                    return MenuResults(next_state=GameState.SETTINGS_MENU)
                 elif hovered == "save":
                     self.save_manager.game.click_sound.play()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)
-        return constants.NO_ACTION_CODE
+        return None
 
     def draw(self) -> None:
         self.screen.blit(self.background, (0, 0))

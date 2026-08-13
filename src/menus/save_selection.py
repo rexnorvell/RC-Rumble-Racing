@@ -4,6 +4,7 @@ from ..utilities import constants
 from ..utilities import utilities
 from ..utilities.ui_elements import ConfirmationDialog
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class SaveSelection:
@@ -74,7 +75,7 @@ class SaveSelection:
         if self.delete_mode and not self.show_delete_button:
             self.delete_mode = False
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         if self.dialog:
             action = self.dialog.handle_events(events, mouse_pos)
             if action == "yes":
@@ -85,10 +86,10 @@ class SaveSelection:
             elif action == "no":
                 self.dialog = None
                 self.pending_delete_slot = -1
-            return constants.NO_ACTION_CODE
+            return None
 
         if self.transitioning:
-            return constants.NO_ACTION_CODE
+            return None
 
         hovered = "none"
         if self.back_button_rect.collidepoint(mouse_pos):
@@ -108,11 +109,9 @@ class SaveSelection:
         self.last_hovered = hovered
 
         for event in events:
-            if event.type == pygame.QUIT:
-                return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered == "back":
-                    return GameState.TITLE_MENU
+                    return MenuResults(next_state=GameState.TITLE_MENU)
                 elif hovered == "delete":
                     self.delete_mode = not self.delete_mode
                 elif "slot_" in hovered:
@@ -123,9 +122,9 @@ class SaveSelection:
                             self.dialog = ConfirmationDialog(self.screen, "Delete this save file?", self.button_font)
                     else:
                         self.game.set_save_slot_and_load(slot_index)
-                        return GameState.TRACK_SELECTION_MENU
+                        return MenuResults(next_state=GameState.TRACK_SELECTION_MENU)
 
-        return constants.NO_ACTION_CODE
+        return None
 
     def _draw_content(self, x_offset: int = 0):
         self.screen.blit(self.overlay, (x_offset, 0))

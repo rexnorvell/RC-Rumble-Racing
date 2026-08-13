@@ -3,6 +3,7 @@ import pygame
 from ..utilities import constants
 from ..utilities.ui_elements import ConfirmationDialog
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class ControlsMenu:
@@ -85,7 +86,7 @@ class ControlsMenu:
         """Checks if settings are different from initial."""
         return self.current_bindings != self.initial_bindings
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         if self.dialog:
             action = self.dialog.handle_events(events, mouse_pos)
             if action == "yes":
@@ -95,7 +96,7 @@ class ControlsMenu:
                 self.dialog = None
             elif action == "no":
                 self.dialog = None
-            return constants.NO_ACTION_CODE
+            return None
 
         if self.awaiting_input_for:
             for event in events:
@@ -110,7 +111,7 @@ class ControlsMenu:
                         self.awaiting_input_for = None
                     elif event.key == pygame.K_ESCAPE:
                         self.awaiting_input_for = None
-            return constants.NO_ACTION_CODE
+            return None
 
         hovered = constants.NO_ACTION_CODE
         if self.back_button_rect.collidepoint(mouse_pos):
@@ -132,14 +133,14 @@ class ControlsMenu:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered == GameState.SETTINGS_MENU:
                     self.current_bindings = self.initial_bindings.copy()
-                    return GameState.SETTINGS_MENU
+                    return MenuResults(next_state=GameState.SETTINGS_MENU)
                 elif hovered == "save":
                     self.save_manager.game.click_sound.play()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)
                 elif hovered in self.binding_rects:
                     self.save_manager.game.click_sound.play()
                     self.awaiting_input_for = hovered
-        return constants.NO_ACTION_CODE
+        return None
 
     def draw(self) -> None:
         self.screen.blit(self.background, (0, 0))

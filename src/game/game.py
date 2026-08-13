@@ -16,6 +16,7 @@ from ..enums.difficulty import Difficulty
 from ..enums.track_name import TrackName
 from ..enums.game_state import GameState
 from ..types.game_state_info import GameStateInfo
+from ..types.menu_results import MenuResults
 
 
 class Game:
@@ -137,16 +138,6 @@ class Game:
             GameState.SOUND_MENU: GameStateInfo(self.sound_menu, -3)
         }
 
-    def set_track_name(self, track_name: TrackName) -> None:
-        self.track_name = track_name
-
-    def set_difficulty(self, difficulty: Difficulty) -> None:
-        self.difficulty = difficulty
-
-    def set_car_style(self, car_index: int, style_index: int) -> None:
-        self.car_index = car_index
-        self.style_index = style_index
-
     def draw_letterboxed_surface(self) -> None:
         window_width, window_height = self.screen.get_size()
         if window_width == 0 or window_height == 0:
@@ -205,15 +196,14 @@ class Game:
             events = self._handle_events()
             self.set_scaled_mouse_pos()
 
-            next_action: str = constants.NO_ACTION_CODE
+            menu_results: MenuResults | None = None
             if not self.game_states[self.current_state].screen.transitioning:
-                next_action = self.game_states[self.current_state].screen.handle_events(events, self.scaled_mouse_pos)
+                menu_results = self.game_states[self.current_state].screen.handle_events(events, self.scaled_mouse_pos)
 
-            if next_action == constants.EXIT_GAME_CODE:
-                utilities.quit_game()
-            elif next_action != constants.NO_ACTION_CODE:
+            if menu_results is not None:
+                self._handle_menu_results(menu_results)
                 self.click_sound.play()
-                self.next_state = next_action
+                self.next_state = menu_results.next_state
                 start_transition: bool = True
                 backwards: bool = self._is_transition_backwards()
                 self.game_states[self.current_state].screen.initialize_transition(start_transition=start_transition, backwards=backwards)
@@ -242,6 +232,16 @@ class Game:
             self.draw_letterboxed_surface()
             pygame.display.flip()
             self.ui_clock.tick(60)
+
+    def _handle_menu_results(self, menu_results: MenuResults) -> None:
+        if menu_results.track_name is not None:
+            self.track_name = menu_results.track_name
+        if menu_results.difficulty is not None:
+            self.difficulty = menu_results.difficulty
+        if menu_results.car_index is not None:
+            self.car_index = menu_results.car_index
+        if menu_results.style_index is not None:
+            self.style_index = menu_results.style_index
 
     def set_scaled_mouse_pos(self) -> None:
         game_x = 0

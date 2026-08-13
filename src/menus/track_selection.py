@@ -3,6 +3,8 @@ import pygame
 from ..utilities import constants
 from ..utilities import utilities
 from ..enums.game_state import GameState
+from ..enums.track_name import TrackName
+from ..types.menu_results import MenuResults
 
 
 class TrackSelection:
@@ -86,22 +88,22 @@ class TrackSelection:
         self.buttons = [
             {
                 "rect": pygame.Rect(302, 160, button_width, button_height),
-                "track": constants.TRACK_NAMES[0],
+                "track": TrackName.MM,
                 "index": 0
             },
             {
                 "rect": pygame.Rect(727, 160, button_width, button_height),
-                "track": constants.TRACK_NAMES[1],
+                "track": TrackName.DD,
                 "index": 1
             },
             {
                 "rect": pygame.Rect(302, 420, button_width, button_height),
-                "track": constants.TRACK_NAMES[2],
+                "track": TrackName.GG,
                 "index": 2
             },
             {
                 "rect": pygame.Rect(727, 420, button_width, button_height),
-                "track": constants.TRACK_NAMES[3],
+                "track": TrackName.FF,
                 "index": 3
             }
         ]
@@ -121,11 +123,11 @@ class TrackSelection:
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 400
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         """Handles events like button presses"""
 
         if self.transitioning:
-            return constants.NO_ACTION_CODE
+            return None
 
         hovered_index: int = self.nothing_hovered_index
 
@@ -150,16 +152,14 @@ class TrackSelection:
                 self.set_current_images(self.nothing_hovered_index)
 
         for event in events:
-            if event.type == pygame.QUIT:
-                return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == self.back_button_index:
-                    return GameState.SAVE_FILE_MENU
+                    return MenuResults(next_state=GameState.SAVE_FILE_MENU)
                 elif hovered_index > self.nothing_hovered_index:
-                    self.game.set_track_name(self.buttons[hovered_index]["track"])
-                    return GameState.VEHICLE_SELECTION_MENU
+                    track_name: TrackName = self.buttons[hovered_index]["track"]
+                    return MenuResults(next_state=GameState.VEHICLE_SELECTION_MENU, track_name=track_name)
 
-        return constants.NO_ACTION_CODE
+        return None
 
     def set_current_images(self, hovered_index: int) -> None:
         """Sets the styles of the images based on which one is being hovered over"""

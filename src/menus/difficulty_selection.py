@@ -5,6 +5,7 @@ from ..utilities import constants
 from ..utilities import utilities
 from ..enums.difficulty import Difficulty
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class DifficultySelection:
@@ -78,9 +79,9 @@ class DifficultySelection:
         pb_path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.game.track_name.value))
         return pb_path.exists()
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         if self.transitioning:
-            return constants.NO_ACTION_CODE
+            return None
 
         hovered_index: int = -1
         pb_available = self._is_personal_best_available()
@@ -111,17 +112,15 @@ class DifficultySelection:
         self.last_hovered_index = hovered_index
 
         for event in events:
-            if event.type == pygame.QUIT:
-                return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index > 0:
                     selected_btn = self.buttons[hovered_index - 1]
-                    self.game.set_difficulty(selected_btn["key"])
-                    return GameState.RACE_MENU
+                    difficulty: Difficulty = selected_btn["key"]
+                    return MenuResults(next_state=GameState.RACE_MENU, difficulty=difficulty)
                 elif hovered_index == 0:
-                    return GameState.VEHICLE_SELECTION_MENU
+                    return MenuResults(next_state=GameState.VEHICLE_SELECTION_MENU)
 
-        return constants.NO_ACTION_CODE
+        return None
 
     def draw(self) -> None:
         self.screen.blit(self.background, (0, 0))

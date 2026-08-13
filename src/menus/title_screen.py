@@ -4,6 +4,7 @@ import pygame
 from ..utilities import constants
 from ..utilities import utilities
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class TitleScreen:
@@ -130,11 +131,11 @@ class TitleScreen:
             self.intro_clip.close()
         return True
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         """Handles events like button presses."""
 
         if self.transitioning:
-            return constants.NO_ACTION_CODE
+            return None
 
         hovered_index: int
 
@@ -158,18 +159,16 @@ class TitleScreen:
                 self.current_image = self.title_default_image
 
         for event in events:
-            if event.type == pygame.QUIT:
-                return constants.EXIT_GAME_CODE
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if hovered_index == 1:
                     self.current_image = self.title_click_image
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_index == 1:
                     self.current_image = self.title_default_image
-                    return GameState.SAVE_FILE_MENU
+                    return MenuResults(next_state=GameState.SAVE_FILE_MENU)
                 elif hovered_index == 2:
-                    return GameState.SETTINGS_MENU
-        return constants.NO_ACTION_CODE
+                    return MenuResults(next_state=GameState.SETTINGS_MENU)
+        return None
 
     def _draw_content(self, x_offset: int = 0):
         """Draws the foreground and settings icon at the given offset."""

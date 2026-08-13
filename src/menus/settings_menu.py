@@ -3,6 +3,7 @@ import pygame
 from ..utilities import constants
 from ..utilities import utilities
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class SettingsMenu:
@@ -43,7 +44,7 @@ class SettingsMenu:
 
         self.back_button_rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
 
-        self.last_hovered: GameState | int = constants.NO_ACTION_CODE
+        self.last_hovered: GameState | None = None
         self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
         self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
@@ -59,9 +60,8 @@ class SettingsMenu:
         self.transition_next_duration_ms: int = 400
         self.transition_next_pause_time: int = 400
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> GameState | int:
-        """Returns constants.NO_ACTION_CODE or the name of a screen to navigate to"""
-        hovered: GameState | int = constants.NO_ACTION_CODE
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
+        hovered: GameState | None = None
 
         if self.controls_rect.collidepoint(mouse_pos):
             hovered = GameState.KEYBINDS_MENU
@@ -70,15 +70,15 @@ class SettingsMenu:
         elif self.back_button_rect.collidepoint(mouse_pos):
             hovered = GameState.TITLE_MENU
 
-        if hovered != self.last_hovered and hovered != constants.NO_ACTION_CODE:
+        if hovered is not None and hovered != self.last_hovered:
             self.hover_sound.play()
         self.last_hovered = hovered
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
-                if hovered:
-                    return hovered
-        return constants.NO_ACTION_CODE
+                if hovered is not None:
+                    return MenuResults(next_state=hovered)
+        return None
 
     def draw(self) -> None:
         self.screen.blit(self.background, (0, 0))

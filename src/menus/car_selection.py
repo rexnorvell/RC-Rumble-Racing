@@ -3,6 +3,7 @@ import pygame
 from ..utilities import constants
 from ..utilities import utilities
 from ..enums.game_state import GameState
+from ..types.menu_results import MenuResults
 
 
 class CarSelection:
@@ -131,10 +132,10 @@ class CarSelection:
             rect = pygame.Rect(x, y, button_size, button_size)
             self.color_buttons.append((rect, i))
 
-    def handle_events(self, events, mouse_pos: tuple[int, int]) -> int | GameState:
+    def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
 
         if self.transitioning:
-            return constants.NO_ACTION_CODE
+            return None
 
         self._update_color_buttons()
 
@@ -167,8 +168,6 @@ class CarSelection:
         self.last_hovered = hovered_key
 
         for event in events:
-            if event.type == pygame.QUIT:
-                return constants.EXIT_GAME_CODE
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered_key == "arrow_left":
@@ -181,12 +180,13 @@ class CarSelection:
                     self.select_sound_color.play()
                     self.current_style_index = hovered_style_index
                 elif hovered_key == "back":
-                    return GameState.TRACK_SELECTION_MENU
+                    return MenuResults(next_state=GameState.TRACK_SELECTION_MENU)
                 elif hovered_key == "select":
-                    self.game.set_car_style(self.current_car_index, self.current_style_index)
-                    return GameState.DIFFICULTY_SELECTION_MENU
+                    return MenuResults(next_state=GameState.DIFFICULTY_SELECTION_MENU, 
+                                       car_index=self.current_car_index, 
+                                       style_index=self.current_style_index)
 
-        return constants.NO_ACTION_CODE
+        return None
 
     def _draw_stats(self, car_data: dict) -> None:
         stats_x = constants.WIDTH - 400
