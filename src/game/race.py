@@ -10,6 +10,7 @@ from .cpu_car import CpuCar
 from .ghost_car import GhostCar
 from ..utilities import constants
 from ..utilities.save_manager import SaveManager
+from ..utilities.sound_manager import SoundManager
 from .track import Track
 from ..utilities import utilities
 from ..enums.difficulty import Difficulty
@@ -56,11 +57,12 @@ class Race:
     ENGINE_OFF_SOUND_PATH: str = "assets/audio/general/engine_off.mp3"
     ENGINE_REV_SOUND_PATH: str = "assets/audio/general/engine_rev.mp3"
 
-    def __init__(self, game, track_name: TrackName, car_index: int, style_index: int, difficulty: Difficulty,
+    def __init__(self, game, sound_manager: SoundManager, track_name: TrackName, car_index: int, style_index: int, difficulty: Difficulty,
                  save_manager: SaveManager) -> None:
 
         # General
         self.game = game
+        self.sound_manager = sound_manager
         self.save_manager: SaveManager = save_manager
         self.difficulty: Difficulty = difficulty
 
@@ -407,7 +409,7 @@ class Race:
 
     def _initialize_pause(self) -> None:
         pygame.mixer.music.pause()
-        self.game.click_sound.play()
+        self.sound_manager.play_click()
         self.engine_idle_sound.play(-1)
         self.pause_start_time_ms = pygame.time.get_ticks()
         self.pause_start_time_s = self.pause_start_time_ms / 1000.0
@@ -506,25 +508,25 @@ class Race:
             self.pause_image_right = self.pause_default_image_right
             self.pause_hover_index = 0
         if previous_index != self.pause_hover_index and self.pause_hover_index != 0:
-            self.game.hover_sound.play()
+            self.sound_manager.play_hover()
         for event in self.events:
             if event.type == pygame.QUIT:
                 self.game.quit()
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if self.pause_hover_index == 1:
-                    self.game.click_sound.play()
+                    self.sound_manager.play_click()
                     self.is_paused = False
                     self.engine_idle_sound.fadeout(1000)
                     return "resume"
                 elif self.pause_hover_index == 2:
-                    self.game.click_sound.play()
+                    self.sound_manager.play_click()
                     self.engine_idle_sound.stop()
                     self.engine_rev_sound.play()
                     pygame.time.wait(int(self.engine_rev_sound.get_length() * 1000))
                     return "replay"
                 elif self.pause_hover_index == 3:
-                    self.game.click_sound.play()
+                    self.sound_manager.play_click()
                     self.engine_idle_sound.stop()
                     self.engine_off_sound.play()
                     pygame.time.wait(int(self.engine_off_sound.get_length() * 1000))
@@ -640,17 +642,17 @@ class Race:
             self.race_over_hover_index = 0
 
         if previous_index != self.race_over_hover_index and self.race_over_hover_index != 0:
-            self.game.hover_sound.play()
+            self.sound_manager.play_hover()
 
         for event in self.events:
             if event.type == pygame.QUIT:
                 self.game.quit()
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if self.race_over_hover_index == 1:
-                    self.game.click_sound.play()
+                    self.sound_manager.play_click()
                     return "replay"
                 elif self.race_over_hover_index == 2:
-                    self.game.click_sound.play()
+                    self.sound_manager.play_click()
                     return "exit_to_menu"
         return ""
 

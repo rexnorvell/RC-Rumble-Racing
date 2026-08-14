@@ -9,12 +9,13 @@ from ..types.menu_results import MenuResults
 class SoundMenu:
     """Screen for adjusting sound volumes."""
 
-    def __init__(self, screen: pygame.Surface, save_manager) -> None:
+    def __init__(self, sound_manager, screen: pygame.Surface, save_manager) -> None:
 
         # General
         self.name: str = "sound_menu"
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
+        self.sound_manager = sound_manager
 
         # Use the title screen's background
         self.background: pygame.Surface = pygame.image.load(
@@ -49,8 +50,6 @@ class SoundMenu:
         self.save_button_rect = pygame.Rect(constants.WIDTH - 170, constants.HEIGHT - 70, 150, 50)
 
         self.last_hovered: int | GameState | str = constants.NO_ACTION_CODE
-        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.current_volumes["sfx"])  # Use current SFX
 
         self.dialog = None
 
@@ -82,7 +81,7 @@ class SoundMenu:
                 hovered = "save"
 
         if hovered != self.last_hovered and hovered != constants.NO_ACTION_CODE:
-            self.hover_sound.play()
+            self.sound_manager.play_hover()
         self.last_hovered = hovered
 
         for event in events:
@@ -101,7 +100,6 @@ class SoundMenu:
             if sfx_changed:
                 # Update all sounds
                 self.save_manager.apply_volume_settings()
-                self.hover_sound.set_volume(self.current_volumes["sfx"])
 
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if hovered == GameState.SETTINGS_MENU:
@@ -111,7 +109,7 @@ class SoundMenu:
                         self.save_manager.apply_volume_settings()  # Apply the revert
                     return MenuResults(next_state=GameState.SETTINGS_MENU)
                 elif hovered == "save":
-                    self.save_manager.game.click_sound.play()
+                    self.sound_manager.play_click()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)
         return None
 

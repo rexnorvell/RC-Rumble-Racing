@@ -5,6 +5,7 @@ from ..menus.car_selection import CarSelection
 from ..menus.controls_menu import ControlsMenu
 from ..menus.difficulty_selection import DifficultySelection
 from ..utilities.save_manager import SaveManager
+from ..utilities.sound_manager import SoundManager
 from ..menus.settings_menu import SettingsMenu
 from ..menus.sound_menu import SoundMenu
 from ..menus.title_screen import TitleScreen
@@ -25,7 +26,6 @@ class Game:
     GAME_TITLE: str = "RC Rumble Racing"
     CURSOR_WIDTH: int = 40
     CURSOR_HEIGHT: int = 40
-    CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
 
     width: int
     height: int
@@ -45,8 +45,6 @@ class Game:
     custom_cursor_image: pygame.Surface
     current_state: GameState | None
     next_state: GameState | None
-    click_sound: pygame.mixer.Sound
-    hover_sound: pygame.mixer.Sound
     scale_factor: float
     offset_x: int
     offset_y: int
@@ -55,6 +53,7 @@ class Game:
     car_index: int
     style_index: int
     difficulty: Difficulty | None
+    sound_manager: SoundManager
     garage_door: pygame.Surface
     dark_overlay: pygame.Surface
 
@@ -74,15 +73,18 @@ class Game:
         self.ui_clock = pygame.time.Clock()
         self.save_manager = SaveManager(0)
 
+        # Sound
+        self.sound_manager = SoundManager()
+
         # Create menu screens and initialize menu state variables
-        self.title_screen = TitleScreen(self, self.game_surface, self.save_manager)
-        self.save_selection = SaveSelection(self, self.game_surface, self.save_manager)
-        self.track_selection = TrackSelection(self, self.game_surface, self.save_manager)
-        self.car_selection = CarSelection(self, self.game_surface, self.save_manager)
-        self.difficulty_selection  = DifficultySelection(self, self.game_surface, self.save_manager)
-        self.settings_menu = SettingsMenu(self, self.game_surface, self.save_manager)
-        self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
-        self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
+        self.title_screen = TitleScreen(self.sound_manager, self.game_surface, self.save_manager)
+        self.save_selection = SaveSelection(self.sound_manager, self, self.game_surface, self.save_manager)
+        self.track_selection = TrackSelection(self.sound_manager, self.game_surface, self.save_manager)
+        self.car_selection = CarSelection(self.sound_manager, self.game_surface, self.save_manager)
+        self.difficulty_selection = DifficultySelection(self.sound_manager, self, self.game_surface, self.save_manager)
+        self.settings_menu = SettingsMenu(self.sound_manager, self.game_surface, self.save_manager)
+        self.controls_menu = ControlsMenu(self.sound_manager, self.game_surface, self.save_manager)
+        self.sound_menu = SoundMenu(self.sound_manager, self.game_surface, self.save_manager)
         self.game_states: dict[GameState, tuple[object, int]] = {
             GameState.TITLE_MENU: GameStateInfo(self.title_screen, 0),
             GameState.SAVE_FILE_MENU: GameStateInfo(self.save_selection, 1),
@@ -98,8 +100,6 @@ class Game:
 
         self.custom_cursor_image = pygame.image.load(constants.GENERAL_IMAGE_PATH.format(name="cursor")).convert_alpha()
         self.custom_cursor_image = pygame.transform.scale(self.custom_cursor_image, (self.CURSOR_WIDTH, self.CURSOR_HEIGHT))
-        self.click_sound = pygame.mixer.Sound(self.CLICK_SOUND_PATH)
-        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
 
         # Apply volumes immediately
         self.save_manager.apply_all_settings()
@@ -123,14 +123,14 @@ class Game:
         """Sets the active save slot and re-initializes screens."""
         self.save_manager.set_save_slot(slot_index)
 
-        self.title_screen = TitleScreen(self, self.game_surface, self.save_manager)
-        self.save_selection = SaveSelection(self, self.game_surface, self.save_manager)
-        self.track_selection = TrackSelection(self, self.game_surface, self.save_manager)
-        self.car_selection = CarSelection(self, self.game_surface, self.save_manager)
-        self.difficulty_selection = DifficultySelection(self, self.game_surface, self.save_manager)
-        self.settings_menu = SettingsMenu(self, self.game_surface, self.save_manager)
-        self.controls_menu = ControlsMenu(self.game_surface, self.save_manager)
-        self.sound_menu = SoundMenu(self.game_surface, self.save_manager)
+        self.title_screen = TitleScreen(self.sound_manager, self.game_surface, self.save_manager)
+        self.save_selection = SaveSelection(self.sound_manager, self, self.game_surface, self.save_manager)
+        self.track_selection = TrackSelection(self.sound_manager, self.game_surface, self.save_manager)
+        self.car_selection = CarSelection(self.sound_manager, self.game_surface, self.save_manager)
+        self.difficulty_selection = DifficultySelection(self.sound_manager, self, self.game_surface, self.save_manager)
+        self.settings_menu = SettingsMenu(self.sound_manager, self.game_surface, self.save_manager)
+        self.controls_menu = ControlsMenu(self.sound_manager, self.game_surface, self.save_manager)
+        self.sound_menu = SoundMenu(self.sound_manager, self.game_surface, self.save_manager)
 
         self.game_states: dict[str, tuple[object, int]] = {
             GameState.TITLE_MENU: GameStateInfo(self.title_screen, 0),
@@ -200,7 +200,7 @@ class Game:
 
             if menu_results is not None:
                 self._handle_menu_results(menu_results)
-                self.click_sound.play()
+                self.sound_manager.play_click()
                 self.next_state = menu_results.next_state
 
             if self.next_state != None:
@@ -250,7 +250,7 @@ class Game:
     def _start_race(self) -> None:
         racing: bool = True
         while racing:
-            self.race = Race(self, self.track_name, self.car_index, self.style_index, self.difficulty, self.save_manager)
+            self.race = Race(self, self.sound_manager, self.track_name, self.car_index, self.style_index, self.difficulty, self.save_manager)
             racing = self.race.start()
 
 """

@@ -12,11 +12,11 @@ class TrackSelection:
 
     TRACK_SELECTION_IMAGE_PATH: str = "assets/images/track_selection/{number}_{type}.png"
 
-    def __init__(self, game, screen, save_manager) -> None:
+    def __init__(self, sound_manager, screen, save_manager) -> None:
 
         # General
         self.name: str = "track_selection"
-        self.game = game
+        self.sound_manager = sound_manager
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
         self.num_unlocked: int = self.save_manager.num_unlocked
@@ -110,9 +110,6 @@ class TrackSelection:
             }
         ]
 
-        self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
-
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         """Handles events like button presses"""
 
@@ -133,7 +130,7 @@ class TrackSelection:
         if hovered_index != self.last_hovered_index:
             self.last_hovered_index = hovered_index
             if hovered_index > self.nothing_hovered_index:
-                self.hover_sound.play()
+                self.sound_manager.play_hover()
                 self.set_current_images(hovered_index)
             else:
                 self.set_current_images(self.nothing_hovered_index)

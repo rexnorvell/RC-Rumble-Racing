@@ -13,10 +13,11 @@ class DifficultySelection:
 
     BUTTON_DISABLED_COLOR: tuple[int, int, int] = (100, 100, 100)
 
-    def __init__(self, game, screen: pygame.Surface, save_manager) -> None:
+    def __init__(self, sound_manager, game, screen: pygame.Surface, save_manager) -> None:
 
         self.name: str = "difficulty_selection"
         self.game = game
+        self.sound_manager = sound_manager
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
@@ -60,8 +61,6 @@ class DifficultySelection:
         self.back_current_image: pygame.Surface = self.back_default_image
 
         self.last_hovered_index: int = -1
-        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
     def _is_personal_best_available(self) -> bool:
         if not hasattr(self.game, "track_name"):
@@ -97,7 +96,7 @@ class DifficultySelection:
                     break
 
         if hovered_index != self.last_hovered_index and hovered_index != -1:
-            self.hover_sound.play()
+            self.sound_manager.play_hover()
         self.last_hovered_index = hovered_index
 
         for event in events:

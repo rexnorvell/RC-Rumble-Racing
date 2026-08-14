@@ -9,12 +9,13 @@ from ..types.menu_results import MenuResults
 class ControlsMenu:
     """Screen for re-binding controls."""
 
-    def __init__(self, screen: pygame.Surface, save_manager) -> None:
+    def __init__(self, sound_manager, screen: pygame.Surface, save_manager) -> None:
 
         # General
         self.name: str = "controls_menu"
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
+        self.sound_manager = sound_manager
 
         # Use the title screen's background
         self.background: pygame.Surface = pygame.image.load(
@@ -54,8 +55,6 @@ class ControlsMenu:
         self.last_hovered: int | GameState | str = constants.NO_ACTION_CODE
         self.awaiting_input_for = None
         self.dialog = None
-        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
     def generate_rects(self):
         """Creates the rects for the key binding buttons."""
@@ -113,7 +112,7 @@ class ControlsMenu:
                     break
 
         if hovered != self.last_hovered and hovered != constants.NO_ACTION_CODE:
-            self.hover_sound.play()
+            self.sound_manager.play_hover()
         self.last_hovered = hovered
 
         for event in events:
@@ -123,10 +122,10 @@ class ControlsMenu:
                     self.current_bindings = self.initial_bindings.copy()
                     return MenuResults(next_state=GameState.SETTINGS_MENU)
                 elif hovered == "save":
-                    self.save_manager.game.click_sound.play()
+                    self.sound_manager.play_click()
                     self.dialog = ConfirmationDialog(self.screen, "Save changes?", self.button_font)
                 elif hovered in self.binding_rects:
-                    self.save_manager.game.click_sound.play()
+                    self.sound_manager.play_click()
                     self.awaiting_input_for = hovered
         return None
 

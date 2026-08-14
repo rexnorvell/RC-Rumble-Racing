@@ -12,10 +12,11 @@ class SaveSelection:
 
     NUM_SAVE_SLOTS: int = 3
 
-    def __init__(self, game, screen: pygame.Surface, save_manager) -> None:
+    def __init__(self, sound_manager, game, screen: pygame.Surface, save_manager) -> None:
 
         self.name: str = "save_selection"
         self.game = game
+        self.sound_manager = sound_manager
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
@@ -55,9 +56,6 @@ class SaveSelection:
         self.back_button_rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
         self.delete_button_rect = pygame.Rect(constants.WIDTH - 220, constants.HEIGHT - 70, 200, 50)
 
-        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
-
     def load_summaries(self) -> None:
         self.summaries = [self.save_manager.get_save_summary(i) for i in range(self.NUM_SAVE_SLOTS)]
         self.show_delete_button = any(not s["empty"] for s in self.summaries)
@@ -92,7 +90,7 @@ class SaveSelection:
                     break
 
         if hovered != self.last_hovered and hovered != "none":
-            self.hover_sound.play()
+            self.sound_manager.play_hover()
         self.last_hovered = hovered
 
         for event in events:

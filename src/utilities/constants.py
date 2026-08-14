@@ -40,9 +40,6 @@ DEFAULT_KEY_BINDINGS: dict[str, int] = {
 # General
 GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
 
-# Hover Sounds
-HOVER_SOUND_PATH: str = "assets/audio/general/hover.mp3"
-
 # Track Selection Exit/Back button
 TRACK_SELECTION_EXIT_COLOR: tuple[int, int, int] = (200, 200, 200)
 TRACK_SELECTION_EXIT_HOVER_COLOR: tuple[int, int, int] = (255, 255, 0)

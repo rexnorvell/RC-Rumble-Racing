@@ -9,11 +9,11 @@ from ..types.menu_results import MenuResults
 class SettingsMenu:
     """Main settings hub screen."""
 
-    def __init__(self, game, screen: pygame.Surface, save_manager) -> None:
+    def __init__(self, sound_manager, screen: pygame.Surface, save_manager) -> None:
 
         # General
         self.name: str = "settings_menu"
-        self.game = game
+        self.sound_manager = sound_manager
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
@@ -45,8 +45,6 @@ class SettingsMenu:
         self.back_button_rect = pygame.Rect(20, constants.HEIGHT - 70, 150, 50)
 
         self.last_hovered: GameState | None = None
-        self.hover_sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
 
     def handle_events(self, events, mouse_pos: tuple[int, int]) -> MenuResults | None:
         hovered: GameState | None = None
@@ -59,7 +57,7 @@ class SettingsMenu:
             hovered = GameState.TITLE_MENU
 
         if hovered is not None and hovered != self.last_hovered:
-            self.hover_sound.play()
+            self.sound_manager.play_hover()
         self.last_hovered = hovered
 
         for event in events:

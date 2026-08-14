@@ -20,11 +20,11 @@ class CarSelection:
     CAR_SELECTION_ARROW_LEFT_PATH: str = "assets/images/car_selection/arrow_left.png"
     CAR_SELECTION_ARROW_RIGHT_PATH: str = "assets/images/car_selection/arrow_right.png"
 
-    def __init__(self, game, screen, save_manager) -> None:
+    def __init__(self, sound_manager, screen, save_manager) -> None:
 
         # General
         self.name: str = "car_selection"
-        self.game = game
+        self.sound_manager = sound_manager
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
@@ -108,8 +108,6 @@ class CarSelection:
         self.color_buttons: list[tuple[pygame.Rect, int]] = []
 
         # --- Sound ---
-        self.hover_sound_nav = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound_nav.set_volume(self.save_manager.get_volumes()["sfx"])
         self.hover_sound_arrow = pygame.mixer.Sound(self.HOVER_2_SOUND_PATH)
         self.hover_sound_arrow.set_volume(self.save_manager.get_volumes()["sfx"])
         self.select_sound_color = pygame.mixer.Sound(self.SELECT_PAINT_SOUND_PATH)
@@ -159,7 +157,7 @@ class CarSelection:
             if hovered_key in ["arrow_left", "arrow_right"]:
                 self.hover_sound_arrow.play()
             elif hovered_key in ["back", "select"]:
-                self.hover_sound_nav.play()
+                self.sound_manager.play_hover()
             # Removed color_button hover sound
         self.last_hovered = hovered_key
 

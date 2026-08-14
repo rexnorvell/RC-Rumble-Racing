@@ -15,11 +15,11 @@ class TitleScreen:
     INTRO_VIDEO_PATH: str = "assets/videos/intro.mp4"
     INTRO_AUDIO_PATH: str = "assets/videos/intro.mp3"
 
-    def __init__(self, game, screen, save_manager) -> None:
+    def __init__(self, sound_manager, screen, save_manager) -> None:
 
         # General
         self.name: str = "title_screen"
-        self.game = game
+        self.sound_manager = sound_manager
         self.screen: pygame.Surface = screen
         self.save_manager = save_manager
 
@@ -72,8 +72,6 @@ class TitleScreen:
         self.intro_clip: VideoFileClip = VideoFileClip(self.INTRO_VIDEO_PATH)
 
         # Button hovering
-        self.hover_sound: pygame.mixer.Sound = pygame.mixer.Sound(constants.HOVER_SOUND_PATH)
-        self.hover_sound.set_volume(self.save_manager.get_volumes()["sfx"])
         self.hover_sound_played: bool = False
         self.last_hovered: int = 0  # 0=None, 1=Start, 2=Settings
 
@@ -140,10 +138,10 @@ class TitleScreen:
             self.last_hovered = hovered_index
 
             if hovered_index == 1:
-                self.hover_sound.play()
+                self.sound_manager.play_hover()
                 self.current_image = self.title_hover_image
             elif hovered_index == 2:
-                self.hover_sound.play()
+                self.sound_manager.play_hover()
                 self.current_image = self.title_default_image
             else:
                 self.current_image = self.title_default_image
