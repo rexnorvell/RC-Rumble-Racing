@@ -15,6 +15,8 @@ from .track import Track
 from ..utilities import utilities
 from ..enums.difficulty import Difficulty
 from ..enums.track_name import TrackName
+from ..types.menu_results import MenuResults
+from ..enums.game_state import GameState
 
 
 class Race:
@@ -258,87 +260,57 @@ class Race:
         if isinstance(self.opponent, CpuCar):
             self.opponent.is_off_road = True if self.track.is_off_road(self.opponent.x, self.opponent.y) else False
 
-    def start(self) -> bool:
+    def process(self) -> bool:
         """The main game loop when the user is racing on a track"""
+        self._next_frame()
+        self._get_current_time()
+        self._get_elapsed_race_time()
 
-        self._initialize_race()
-        self.countdown_start_time = pygame.time.get_ticks()
+        if not pygame.mixer.music.get_busy() and not self.race_over and not self.is_paused:
+            self._play_next_track()
 
-        while self.running:
-            self._next_frame()
-            self._get_current_time()
-            self._get_elapsed_race_time()
-            self.game.set_scaled_mouse_pos()
-            self._handle_race_events()
-            if not pygame.mixer.music.get_busy() and not self.race_over and not self.is_paused:
+        if self.is_paused:
+            return
+        elif self.during_race:
+            self._set_max_speed()
+            self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
+            self.user_car.update_position()
+
+            # UPDATE OPPONENT (CPU or GHOST)
+            if self.ghost_found and self.show_ghost:
+                self.opponent.update()
+
+            self._check_out_of_bounds()
+            self._check_user_lap_completion()
+            self._check_cpu_progress()
+
+            if self.elapsed_race_time_s < (self.personal_best_time + 1):
+                self.user_car.log_properties(self.track_name)
+
+        elif self.race_over:
+            # --- COASTING LOGIC ---
+            self._set_max_speed()
+
+            self.user_car.handle_input({}, False)
+            self.user_car.update_position()
+
+            # Coast Opponent (Only if it's CPU, Ghost just stops or finishes replay)
+            if self.ghost_found and self.show_ghost and isinstance(self.opponent, CpuCar):
+                if self.opponent.speed > 0:
+                    self.opponent.speed -= constants.FRICTION * 1.5
+                    if self.opponent.speed < 0: self.opponent.speed = 0
+                elif self.opponent.speed < 0:
+                    self.opponent.speed += constants.FRICTION * 1.5
+                    if self.opponent.speed > 0: self.opponent.speed = 0
+                self.opponent.move_angle = self.opponent.car_angle
+                self.opponent.update_position()
+
+            if not self.compared_to_best and self.race_result == "win":
+                self._compare_to_best()
+                self._check_unlocks()
+            if not self.applause_played:
+                self.applause_played = True
                 self._play_next_track()
-            if self.is_paused:
-                match self._pause():
-                    case "replay":
-                        self._clean_up()
-                        return True
-                    case "exit_to_menu":
-                        self._clean_up()
-                        return False
-                    case "resume":
-                        self._unpause()
-
-            elif self.during_race:
-                self._set_max_speed()
-                self.user_car.handle_input(pygame.key.get_pressed(), self.during_race)
-                self.user_car.update_position()
-
-                # UPDATE OPPONENT (CPU or GHOST)
-                if self.ghost_found and self.show_ghost:
-                    self.opponent.update()
-
-                self._check_out_of_bounds()
-                self._check_user_lap_completion()
-                self._check_cpu_progress()
-
-                if self.elapsed_race_time_s < (self.personal_best_time + 1):
-                    self.user_car.log_properties(self.track_name)
-
-            elif self.race_over:
-                # --- COASTING LOGIC ---
-                self._set_max_speed()
-
-                self.user_car.handle_input({}, False)
-                self.user_car.update_position()
-
-                # Coast Opponent (Only if it's CPU, Ghost just stops or finishes replay)
-                if self.ghost_found and self.show_ghost and isinstance(self.opponent, CpuCar):
-                    if self.opponent.speed > 0:
-                        self.opponent.speed -= constants.FRICTION * 1.5
-                        if self.opponent.speed < 0: self.opponent.speed = 0
-                    elif self.opponent.speed < 0:
-                        self.opponent.speed += constants.FRICTION * 1.5
-                        if self.opponent.speed > 0: self.opponent.speed = 0
-                    self.opponent.move_angle = self.opponent.car_angle
-                    self.opponent.update_position()
-
-                if not self.compared_to_best and self.race_result == "win":
-                    self._compare_to_best()
-                    self._check_unlocks()
-                if not self.applause_played:
-                    self.applause_played = True
-                    self._play_next_track()
-
-                # Handle Menu Inputs
-                match self._handle_race_over_menu():
-                    case "replay":
-                        self._clean_up()
-                        return True
-                    case "exit_to_menu":
-                        self._clean_up()
-                        return False
-
-            self._draw_race()
-
-        pygame.mixer.music.stop()
-        pygame.mixer.music.load(constants.GENERAL_AUDIO_PATH.format(song_name="intro"))
-        pygame.mixer.music.play(-1)
-        return False
 
     def _clean_up(self):
         if self.current_race_file.exists():
@@ -353,7 +325,7 @@ class Race:
             self.elapsed_race_time_ms = self.pause_start_time_ms - self.race_start_time_ms
         self.elapsed_race_time_s = self.elapsed_race_time_ms / 1000.0
 
-    def _draw_race(self) -> None:
+    def draw(self) -> None:
         self.camera_x = self.user_car.x - (constants.WIDTH / 2)
         self.camera_y = self.user_car.y - (constants.HEIGHT / 2)
         self.track.draw(self.game.game_surface, self.camera_x, self.camera_y)
@@ -422,13 +394,17 @@ class Race:
         if self.race_start_time_ms is not None:
             self.race_start_time_ms += pause_duration
 
-    def _handle_race_events(self) -> None:
-        self.events = pygame.event.get()
-        for event in self.events:
-            if event.type == pygame.QUIT:
-                self._clean_up()
-                utilities.quit_game()
-            elif event.type == pygame.KEYDOWN:
+    def handle_events(self, events: list[pygame.event.Event], scaled_mouse_pos) -> MenuResults | None:
+        if self.is_paused:
+            return self._handle_pause(events, scaled_mouse_pos)
+        elif self.race_over:
+            return self._handle_race_over_menu(events, scaled_mouse_pos)
+        else:
+            return self._handle_race(events)
+
+    def _handle_race(self, events: list[pygame.event.Event]) -> None:
+        for event in events:
+            if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     if not self.race_over:
                         self.is_paused = not self.is_paused
@@ -437,18 +413,17 @@ class Race:
                         else:
                             self.engine_idle_sound.fadeout(1000)
                             self._unpause()
-                if event.key == self.key_bindings[constants.KEY_ACTION_TOGGLE_GHOST]:
+                elif event.key == self.key_bindings[constants.KEY_ACTION_TOGGLE_GHOST]:
                     self.show_ghost = not self.show_ghost
-            if event.type == pygame.VIDEORESIZE:
-                self.game.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
 
-    def _initialize_race(self) -> None:
+    def initialize(self) -> None:
         self._get_personal_best_time()
         self._create_replay_file()
         self.ghost_found = (self.opponent and (getattr(self.opponent, 'path_points', False) or getattr(self.opponent, 'recording_data', False)))
         self._render_lap_text()
         self.user_car.set_respawn_point(self.user_car.start_x, self.user_car.start_y, self.user_car.start_angle)
         self._play_next_track()
+        self.countdown_start_time = pygame.time.get_ticks()
 
     def _get_personal_best_time(self) -> None:
         personal_best_metadata_path: Path = Path(constants.PERSONAL_BEST_METADATA_FILE_PATH.format(track_name=self.track.name.value))
@@ -470,21 +445,13 @@ class Race:
     def _check_unlocks(self):
         """Unlocks difficulties and tracks based on race result"""
         if self.race_result == "win":
-
             if self.difficulty == Difficulty.EASY:
                 self.save_manager.unlock_difficulty(self.track_name, Difficulty.MEDIUM)
-
             elif self.difficulty == Difficulty.MEDIUM:
                 self.save_manager.unlock_difficulty(self.track_name, Difficulty.HARD)
-
-                # ...AND unlocks the Next Track
                 next_track = self.save_manager.get_next_track_name(self.track_name)
                 if next_track:
                     self.save_manager.unlock_track(next_track)
-
-            #elif self.difficulty == Difficulty.HARD:
-                # Winning Hard marks the track as fully COMPLETE
-                #self.save_manager.unlock_difficulty(self.track_name, "complete")
 
     def _play_next_track(self) -> None:
         if self.current_track_index < len(self.track.playlist):
@@ -493,15 +460,15 @@ class Race:
             pygame.mixer.music.play(loops)
             self.current_track_index += 1
 
-    def _pause(self) -> str:
+    def _handle_pause(self, events: list[pygame.event.Event], scaled_mouse_pos: tuple[int, int]) -> MenuResults | None:
         previous_index: int = self.pause_hover_index
-        if self.resume_button_rect.collidepoint(self.game.scaled_mouse_pos):
+        if self.resume_button_rect.collidepoint(scaled_mouse_pos):
             self.pause_image_right = self.pause_image_hover_1
             self.pause_hover_index = 1
-        elif self.replay_button_rect.collidepoint(self.game.scaled_mouse_pos):
+        elif self.replay_button_rect.collidepoint(scaled_mouse_pos):
             self.pause_image_right = self.pause_image_hover_2
             self.pause_hover_index = 2
-        elif self.exit_button_rect.collidepoint(self.game.scaled_mouse_pos):
+        elif self.exit_button_rect.collidepoint(scaled_mouse_pos):
             self.pause_image_right = self.pause_image_hover_3
             self.pause_hover_index = 3
         else:
@@ -509,29 +476,29 @@ class Race:
             self.pause_hover_index = 0
         if previous_index != self.pause_hover_index and self.pause_hover_index != 0:
             self.sound_manager.play_hover()
-        for event in self.events:
-            if event.type == pygame.QUIT:
-                self.game.quit()
-
+        for event in events:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if self.pause_hover_index == 1:
                     self.sound_manager.play_click()
                     self.is_paused = False
                     self.engine_idle_sound.fadeout(1000)
-                    return "resume"
+                    self._unpause()
+                    return None
                 elif self.pause_hover_index == 2:
                     self.sound_manager.play_click()
                     self.engine_idle_sound.stop()
                     self.engine_rev_sound.play()
                     pygame.time.wait(int(self.engine_rev_sound.get_length() * 1000))
-                    return "replay"
+                    self._clean_up()
+                    return MenuResults(next_state=GameState.RACE_MENU)
                 elif self.pause_hover_index == 3:
                     self.sound_manager.play_click()
                     self.engine_idle_sound.stop()
                     self.engine_off_sound.play()
                     pygame.time.wait(int(self.engine_off_sound.get_length() * 1000))
-                    return "exit_to_menu"
-        return ""
+                    self._clean_up()
+                    return MenuResults(next_state=GameState.TRACK_SELECTION_MENU)
+        return None
 
     def _check_out_of_bounds(self) -> None:
         if self.track.is_out_of_bounds(self.user_car.x, self.user_car.y):
@@ -628,15 +595,15 @@ class Race:
         if self.current_race_file.exists():
             self.current_race_file.unlink()
 
-    def _handle_race_over_menu(self) -> str:
+    def _handle_race_over_menu(self, events: list[pygame.event.Event], scaled_mouse_pos: tuple[int, int]) -> MenuResults | None:
         current_time = pygame.time.get_ticks()
         if current_time - self.race_end_time_ms < 2500:
-            return ""
+            return None
 
         previous_index: int = self.race_over_hover_index
-        if self.retry_button_rect.collidepoint(self.game.scaled_mouse_pos):
+        if self.retry_button_rect.collidepoint(scaled_mouse_pos):
             self.race_over_hover_index = 1
-        elif self.exit_race_over_button_rect.collidepoint(self.game.scaled_mouse_pos):
+        elif self.exit_race_over_button_rect.collidepoint(scaled_mouse_pos):
             self.race_over_hover_index = 2
         else:
             self.race_over_hover_index = 0
@@ -644,17 +611,17 @@ class Race:
         if previous_index != self.race_over_hover_index and self.race_over_hover_index != 0:
             self.sound_manager.play_hover()
 
-        for event in self.events:
-            if event.type == pygame.QUIT:
-                self.game.quit()
+        for event in events:
             if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 if self.race_over_hover_index == 1:
                     self.sound_manager.play_click()
-                    return "replay"
+                    self._clean_up()
+                    return MenuResults(next_state=GameState.RACE_MENU)
                 elif self.race_over_hover_index == 2:
                     self.sound_manager.play_click()
-                    return "exit_to_menu"
-        return ""
+                    self._clean_up()
+                return MenuResults(next_state=GameState.TRACK_SELECTION_MENU)
+        return None
 
     def _format_time_simple(self) -> str:
         minutes: int = int(self.elapsed_race_time_s // 60)
