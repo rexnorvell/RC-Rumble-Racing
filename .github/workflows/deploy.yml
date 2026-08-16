@@ -3,7 +3,7 @@ name: Build and Deploy Pygame
 on:
   push:
     branches:
-      - refactor
+      - main
   workflow_dispatch:
 
 permissions:
