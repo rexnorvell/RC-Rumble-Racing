@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import pygame
 
-from ..utilities import constants
-from ..utilities import utilities
-from ..enums.game_state import GameState
-from ..types.menu_results import MenuResults
+from utilities import constants
+from utilities import utilities
+from enums.game_state import GameState
+from game_types.menu_results import MenuResults
 
 
 class SettingsMenu:

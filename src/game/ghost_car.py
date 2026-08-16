@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import csv
 import pygame
 from pathlib import Path
 
-from .car import Car
-from ..utilities import constants
+from game.car import Car
 
 
 class GhostCar(Car):

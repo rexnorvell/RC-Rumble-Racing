@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import sys
 
 import pygame
 
-from . import constants
+from utilities import constants
 
 
 def load_image(image_path: str, is_alpha: bool, width: int, height: int) -> pygame.Surface:

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import pygame
 
 
 class SoundManager:
-    HOVER_SOUND_PATH: str = "assets/audio/general/hover.mp3"
-    CLICK_SOUND_PATH: str = "assets/audio/general/click.mp3"
+    HOVER_SOUND_PATH: str = "assets/audio/general/hover.ogg"
+    CLICK_SOUND_PATH: str = "assets/audio/general/click.ogg"
 
     hover_sound: pygame.mixer.Sound
     click_sound: pygame.mixer.Sound

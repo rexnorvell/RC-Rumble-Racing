@@ -1,22 +1,22 @@
-import csv
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Optional
 
 import pygame
 
-from .car import Car
-from .cpu_car import CpuCar
-from .ghost_car import GhostCar
-from ..utilities import constants
-from ..utilities.save_manager import SaveManager
-from ..utilities.sound_manager import SoundManager
-from .track import Track
-from ..utilities import utilities
-from ..enums.difficulty import Difficulty
-from ..enums.track_name import TrackName
-from ..types.menu_results import MenuResults
-from ..enums.game_state import GameState
+from game.car import Car
+from game.cpu_car import CpuCar
+from game.ghost_car import GhostCar
+from utilities import constants
+from utilities.save_manager import SaveManager
+from utilities.sound_manager import SoundManager
+from game.track import Track
+from enums.difficulty import Difficulty
+from enums.track_name import TrackName
+from game_types.menu_results import MenuResults
+from enums.game_state import GameState
 
 
 class Race:
@@ -55,9 +55,9 @@ class Race:
 
     CPU_GHOST_FILE_PATH: str = "assets/ghosts/{track_name}/track_path.csv"
 
-    ENGINE_IDLE_SOUND_PATH: str = "assets/audio/general/engine_idle.mp3"
-    ENGINE_OFF_SOUND_PATH: str = "assets/audio/general/engine_off.mp3"
-    ENGINE_REV_SOUND_PATH: str = "assets/audio/general/engine_rev.mp3"
+    ENGINE_IDLE_SOUND_PATH: str = "assets/audio/general/engine_idle.ogg"
+    ENGINE_OFF_SOUND_PATH: str = "assets/audio/general/engine_off.ogg"
+    ENGINE_REV_SOUND_PATH: str = "assets/audio/general/engine_rev.ogg"
 
     def __init__(self, game, sound_manager: SoundManager, track_name: TrackName, car_index: int, style_index: int, difficulty: Difficulty,
                  save_manager: SaveManager) -> None:

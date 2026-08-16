@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import json
 import os
 import pygame
 
-from . import constants
-from ..enums.difficulty import Difficulty
-from ..enums.track_name import TrackName
+from utilities import constants
+from enums.difficulty import Difficulty
+from enums.track_name import TrackName
 
 
 class SaveManager:
@@ -64,6 +66,14 @@ class SaveManager:
             return self._create_default_dict()
 
     def _create_default_dict(self):
+        DEFAULT_KEY_BINDINGS: dict[str, int] = {
+            constants.KEY_ACTION_FORWARD: pygame.K_w,
+            constants.KEY_ACTION_BACKWARD: pygame.K_s,
+            constants.KEY_ACTION_LEFT: pygame.K_a,
+            constants.KEY_ACTION_RIGHT: pygame.K_d,
+            constants.KEY_ACTION_DRIFT: pygame.K_SPACE,
+            constants.KEY_ACTION_TOGGLE_GHOST: pygame.K_g,
+        }
         return {
             "unlocked_tracks": [constants.TRACK_NAMES[0].value],
             "unlocked_difficulties": {
@@ -72,7 +82,7 @@ class SaveManager:
                 constants.TRACK_NAMES[2].value: [Difficulty.EASY.value],
                 constants.TRACK_NAMES[3].value: [Difficulty.EASY.value]
             },
-            "key_bindings": constants.DEFAULT_KEY_BINDINGS.copy(),
+            "key_bindings": DEFAULT_KEY_BINDINGS.copy(),
             "volume_settings": {"music": self.DEFAULT_MUSIC_VOLUME, "sfx": self.DEFAULT_SFX_VOLUME}
         }
 
@@ -133,7 +143,15 @@ class SaveManager:
 
     # --- SETTINGS ---
     def get_key_bindings(self):
-        return self.data.get("key_bindings", constants.DEFAULT_KEY_BINDINGS)
+        DEFAULT_KEY_BINDINGS: dict[str, int] = {
+            constants.KEY_ACTION_FORWARD: pygame.K_w,
+            constants.KEY_ACTION_BACKWARD: pygame.K_s,
+            constants.KEY_ACTION_LEFT: pygame.K_a,
+            constants.KEY_ACTION_RIGHT: pygame.K_d,
+            constants.KEY_ACTION_DRIFT: pygame.K_SPACE,
+            constants.KEY_ACTION_TOGGLE_GHOST: pygame.K_g,
+        }
+        return self.data.get("key_bindings", DEFAULT_KEY_BINDINGS)
 
     def set_key_binding(self, action, key):
         self.data["key_bindings"][action] = key

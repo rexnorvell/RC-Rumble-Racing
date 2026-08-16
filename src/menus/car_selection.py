@@ -1,16 +1,18 @@
+from __future__ import annotations
+
 import pygame
 
-from ..utilities import constants
-from ..utilities import utilities
-from ..enums.game_state import GameState
-from ..types.menu_results import MenuResults
+from utilities import constants
+from utilities import utilities
+from enums.game_state import GameState
+from game_types.menu_results import MenuResults
 
 
 class CarSelection:
     """Handles the car selection screen"""
 
-    HOVER_2_SOUND_PATH: str = "assets/audio/general/hover_2.mp3"
-    SELECT_PAINT_SOUND_PATH: str = "assets/audio/general/select_paint.mp3"
+    HOVER_2_SOUND_PATH: str = "assets/audio/general/hover_2.ogg"
+    SELECT_PAINT_SOUND_PATH: str = "assets/audio/general/select_paint.ogg"
     CAR_STAT_BAR_COLOR: tuple[int, int, int] = (185, 5, 5)
     CAR_STAT_BAR_BG_COLOR: tuple[int, int, int] = (50, 50, 50)
     CAR_STAT_BAR_WIDTH: int = 300

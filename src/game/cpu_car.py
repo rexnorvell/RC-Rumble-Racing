@@ -1,12 +1,14 @@
+from __future__ import annotations
+
 import csv
 import math
 import random
 import pygame
 from pathlib import Path
 
-from ..utilities import constants
-from .car import Car
-from ..enums.difficulty import Difficulty
+from utilities import constants
+from game.car import Car
+from enums.difficulty import Difficulty
 
 
 class CpuCar(Car):

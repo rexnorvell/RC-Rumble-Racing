@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import pygame
 
-from . import constants
+from utilities import constants
 
 
 class Slider:

@@ -1,10 +1,18 @@
-from .game.game import Game
+
+import asyncio
+
+import pygame
+
+from game.game import Game
 
 
-def main() -> None:
+async def main() -> None:
+    pygame.init()
+    pygame.font.init()
+    pygame.mixer.init()
+
     game: Game = Game()
-    game.start()
+    await game.start()
 
 
-if __name__ == "__main__":
-    main()
+asyncio.run(main())

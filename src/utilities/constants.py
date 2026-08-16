@@ -1,6 +1,8 @@
-import pygame
+from __future__ import annotations
 
-from ..enums.track_name import TrackName
+from pathlib import Path
+
+from enums.track_name import TrackName
 
 
 # Display
@@ -27,15 +29,6 @@ KEY_ACTION_LEFT: str = "LEFT"
 KEY_ACTION_RIGHT: str = "RIGHT"
 KEY_ACTION_DRIFT: str = "DRIFT"
 KEY_ACTION_TOGGLE_GHOST: str = "TOGGLE_GHOST"
-
-DEFAULT_KEY_BINDINGS: dict[str, int] = {
-    KEY_ACTION_FORWARD: pygame.K_w,
-    KEY_ACTION_BACKWARD: pygame.K_s,
-    KEY_ACTION_LEFT: pygame.K_a,
-    KEY_ACTION_RIGHT: pygame.K_d,
-    KEY_ACTION_DRIFT: pygame.K_SPACE,
-    KEY_ACTION_TOGGLE_GHOST: pygame.K_g,
-}
 
 # General
 GENERAL_IMAGE_PATH: str = "assets/images/general/{name}.png"
@@ -107,5 +100,5 @@ REPLAY_FILE_PATH: str = "assets/replays/{track_name}/current_race.csv"
 PERSONAL_BEST_METADATA_FILE_PATH: str = "assets/replays/{track_name}/personal_best.json"
 
 # Music and audio paths
-TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.mp3"
-GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.mp3"
+TRACK_AUDIO_PATH: str = "assets/audio/tracks/{track_name}/{song_type}.ogg"
+GENERAL_AUDIO_PATH: str = "assets/audio/general/{song_name}.ogg"

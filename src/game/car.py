@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import csv
 import math
 import pygame
 
-from ..utilities import constants
-from ..enums.track_name import TrackName
+from utilities import constants
+from enums.track_name import TrackName
 
 
 class Car:

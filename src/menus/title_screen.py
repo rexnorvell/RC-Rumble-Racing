@@ -1,10 +1,11 @@
-from moviepy import VideoFileClip
+from __future__ import annotations
+
+#from moviepy import VideoFileClip
 import pygame
 
-from ..utilities import constants
-from ..utilities import utilities
-from ..enums.game_state import GameState
-from ..types.menu_results import MenuResults
+from utilities import constants
+from enums.game_state import GameState
+from game_types.menu_results import MenuResults
 
 
 class TitleScreen:
@@ -69,7 +70,7 @@ class TitleScreen:
             self.settings_icon_rect = pygame.Rect(0, 0, 0, 0)  # dummy rect
 
         # Intro video
-        self.intro_clip: VideoFileClip = VideoFileClip(self.INTRO_VIDEO_PATH)
+        #self.intro_clip: VideoFileClip = VideoFileClip(self.INTRO_VIDEO_PATH)
 
         # Button hovering
         self.hover_sound_played: bool = False

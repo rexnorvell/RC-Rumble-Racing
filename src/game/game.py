@@ -1,27 +1,31 @@
+from __future__ import annotations
+
 import pygame
 
-from ..utilities import constants
-from ..menus.car_selection import CarSelection
-from ..menus.controls_menu import ControlsMenu
-from ..menus.difficulty_selection import DifficultySelection
-from ..utilities.save_manager import SaveManager
-from ..utilities.sound_manager import SoundManager
-from ..menus.settings_menu import SettingsMenu
-from ..menus.sound_menu import SoundMenu
-from ..menus.title_screen import TitleScreen
-from ..menus.save_selection import SaveSelection
-from ..menus.track_selection import TrackSelection
-from ..utilities import utilities
-from .race import Race
-from ..enums.difficulty import Difficulty
-from ..enums.track_name import TrackName
-from ..enums.game_state import GameState
-from ..types.game_state_info import GameStateInfo
-from ..types.menu_results import MenuResults
+import asyncio
+
+from utilities import constants
+from menus.car_selection import CarSelection
+from menus.controls_menu import ControlsMenu
+from menus.difficulty_selection import DifficultySelection
+from utilities.save_manager import SaveManager
+from utilities.sound_manager import SoundManager
+from menus.settings_menu import SettingsMenu
+from menus.sound_menu import SoundMenu
+from menus.title_screen import TitleScreen
+from menus.save_selection import SaveSelection
+from menus.track_selection import TrackSelection
+from utilities import utilities
+from game.race import Race
+from enums.difficulty import Difficulty
+from enums.track_name import TrackName
+from enums.game_state import GameState
+from game_types.game_state_info import GameStateInfo
+from game_types.menu_results import MenuResults
 
 
 class Game:
-    """Manages the overall game state, main loop, and coordination between Car and Track"""
+    # Manages the overall game state, main loop, and coordination between Car and Track
 
     GAME_TITLE: str = "RC Rumble Racing"
     CURSOR_WIDTH: int = 40
@@ -62,9 +66,6 @@ class Game:
     def __init__(self) -> None:
 
         # Initialize Pygame
-        pygame.init()
-        pygame.font.init()
-        pygame.mixer.init()
         pygame.display.set_caption(self.GAME_TITLE)
 
         # Create the window
@@ -124,7 +125,7 @@ class Game:
         self.dark_overlay = pygame.Surface((constants.WIDTH, constants.HEIGHT), pygame.SRCALPHA)
 
     def set_save_slot_and_load(self, slot_index: int) -> None:
-        """Sets the active save slot and re-initializes screens."""
+        # Sets the active save slot and re-initializes screens
         self.save_manager.set_save_slot(slot_index)
 
         self.title_screen = TitleScreen(self.sound_manager, self.game_surface, self.save_manager)
@@ -187,11 +188,11 @@ class Game:
                 self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
         return events
 
-    def start(self) -> None:
+    async def start(self) -> None:
         pygame.mouse.set_visible(False)
         self._play_intro_music()
-        if not self.title_screen.play_intro(self.screen):
-            utilities.quit_game()
+        #if not self.title_screen.play_intro(self.screen):
+        #    utilities.quit_game()
         pygame.mouse.set_visible(False)
 
         self.current_state = GameState.TITLE_MENU
@@ -230,6 +231,7 @@ class Game:
             self.draw_letterboxed_surface()
             pygame.display.flip()
             self.ui_clock.tick(60)
+            await asyncio.sleep(0)
 
     def _handle_menu_results(self, menu_results: MenuResults) -> None:
         if menu_results.track_name is not None:
@@ -256,7 +258,7 @@ class Game:
         if (0 <= self.scaled_mouse_pos[0] < constants.WIDTH and 0 <= self.scaled_mouse_pos[1] < constants.HEIGHT):
             self.game_surface.blit(self.custom_cursor_image, self.scaled_mouse_pos)
 
-"""
+
     def handle_transitions(self):
         if self.transitioning_to_prev or self.transitioning_from_prev:
             is_over: bool = utilities.draw_garage_transition(self.screen, self.transition_start_time_ms,
@@ -288,4 +290,3 @@ class Game:
         self.transitioning_from_prev = False
         self.transitioning_to_next = False
         self.transitioning_from_next = False
-    """
