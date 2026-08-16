@@ -31,8 +31,6 @@ class Game:
     CURSOR_WIDTH: int = 40
     CURSOR_HEIGHT: int = 40
 
-    width: int
-    height: int
     screen: pygame.Surface
     game_surface: pygame.Surface
     ui_clock: pygame.time.Clock
@@ -69,10 +67,8 @@ class Game:
         pygame.display.set_caption(self.GAME_TITLE)
 
         # Create the window
-        self.width = constants.WIDTH
-        self.height = constants.HEIGHT
-        self.screen = pygame.display.set_mode((self.width, self.height), pygame.RESIZABLE)
-        self.game_surface = pygame.Surface((self.width, self.height))
+        self.screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
+        self.game_surface = pygame.Surface((self.screen.width, self.screen.height))
         self.ui_clock = pygame.time.Clock()
         self.save_manager = SaveManager(0)
 
